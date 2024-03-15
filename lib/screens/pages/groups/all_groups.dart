@@ -1,0 +1,195 @@
+import 'package:cached_network_image/cached_network_image.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:FashionTime/screens/pages/groups/add_group.dart';
+import 'package:FashionTime/screens/pages/groups/group_details.dart';
+import 'package:FashionTime/screens/pages/groups/group_message_screen.dart';
+import 'package:FashionTime/screens/pages/groups/search_friend.dart';
+import 'package:flutter/material.dart';
+import 'package:flutter_spinkit/flutter_spinkit.dart';
+import 'package:shared_preferences/shared_preferences.dart';
+
+import '../../../animations/bottom_animation.dart';
+import '../../../utils/constants.dart';
+
+class AllGroups extends StatefulWidget {
+  const AllGroups({Key? key}) : super(key: key);
+
+  @override
+  State<AllGroups> createState() => _AllGroupsState();
+}
+
+class _AllGroupsState extends State<AllGroups> {
+  bool progress1 = false;
+  String ownerName = "";
+  String ownerId = "";
+  String ownerToken = "";
+  String ownerEmail = "";
+  String ownerPic = "";
+  List<Map<String,dynamic>> members = [];
+  bool loading = false;
+
+  getCashedData() async {
+    SharedPreferences preferences = await SharedPreferences.getInstance();
+    ownerId = preferences.getString("id")!;
+    ownerToken = preferences.getString("fcm_token")!;
+    ownerName = preferences.getString("name")!;
+    ownerEmail = preferences.getString("email")!;
+    ownerPic = preferences.getString("pic")!;
+    print(ownerToken);
+    getGroups();
+  }
+
+  @override
+  void initState() {
+    // TODO: implement initState
+    super.initState();
+    getCashedData();
+  }
+
+  getGroups(){
+    setState(() {
+      loading = true;
+    });
+    FirebaseFirestore.instance.collection("groupChat").where('users', arrayContains: ownerEmail).get().then((value){
+      value.docs.forEach((element) {
+        setState(() {
+          members.add(element.data());
+        });
+        print("Members ==> "+members.length.toString());
+      });
+    }).then((value1){
+      FirebaseFirestore.instance.collection("groupChat").get().then((value2){
+        value2.docs.forEach((element1) {
+          if(element1.data()["owner"]["ownerEmail"] == ownerEmail){
+            setState(() {
+              members.add(element1.data());
+            });
+          }
+        });
+      }).catchError((e){
+        setState(() {
+          loading = false;
+        });
+        print(e.toString());
+      });
+      setState(() {
+        loading = false;
+      });
+    }).catchError((e){
+      setState(() {
+        loading = false;
+      });
+      print(e.toString());
+    });
+    print(members.length);
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      appBar: AppBar(
+        centerTitle: true,
+        flexibleSpace: Container(
+          decoration: BoxDecoration(
+              gradient: LinearGradient(
+                  begin: Alignment.topLeft,
+                  end: Alignment.topRight,
+                  stops: [0.0, 0.99],
+                  tileMode: TileMode.clamp,
+                  colors: <Color>[
+                    secondary,
+                    primary,
+                  ])
+          ),),
+        backgroundColor: primary,
+        title: Text("Groups",style: TextStyle(fontFamily: 'Montserrat'),),
+        actions: [
+          IconButton(icon: Icon(Icons.add),onPressed: (){
+            Navigator.push(context, MaterialPageRoute(builder: (context) => SearchFriend()));
+          },)
+        ],
+      ),
+      body: loading == true ? SpinKitCircle(size: 50,color: primary,) : (members.length<=0 ? Center(child: Text("No Groups")) :ListView.builder(
+          itemCount: members.length,
+          itemBuilder: (context,index) => WidgetAnimator(
+              GestureDetector(
+                onTap: (){
+                  Navigator.push(context, MaterialPageRoute(builder: (context) => GroupMessageScreen(
+                      name: members[index]["group_name"] == null ?"":members[index]["group_name"],
+                      pic: "https://cdn.raceroster.com/assets/images/team-placeholder.png",
+                      memberCount: members[index]["members"].length.toString(),
+                      chatRoomId: members[index]["roomID"],
+                      members: members[index]["members"])));
+                },
+                child: Padding(
+                  padding: const EdgeInsets.all(10.0),
+                  child: Row(
+                    children: [
+                      SizedBox(width: 20,),
+                      GestureDetector(
+                        onTap: (){
+                          Navigator.push(context, MaterialPageRoute(builder: (context) => GroupDetails(
+                              name: members[index]["group_name"] == null ?"":members[index]["group_name"],
+                              pic: "https://cdn.raceroster.com/assets/images/team-placeholder.png",
+                              memberCount: members[index]["members"].length.toString(),
+                              chatRoomId: members[index]["roomID"],
+                              members: members[index]["members"],
+                          )));
+                        },
+                        child: Container(
+                          decoration: BoxDecoration(
+                              borderRadius: BorderRadius.all(Radius.circular(120))
+                          ),
+                          child: ClipRRect(
+                            borderRadius: BorderRadius.all(Radius.circular(120)),
+                            child: CachedNetworkImage(
+                              imageUrl: "https://cdn.raceroster.com/assets/images/team-placeholder.png",
+                              imageBuilder: (context, imageProvider) => Container(
+                                height:50,
+                                width: 50,
+                                decoration: BoxDecoration(
+                                  borderRadius: BorderRadius.all(Radius.circular(120)),
+                                  image: DecorationImage(
+                                    image: imageProvider,
+                                    fit: BoxFit.cover,
+                                  ),
+                                ),
+                              ),
+                              placeholder: (context, url) => SpinKitCircle(color: primary,size: 20,),
+                              errorWidget: (context, url, error) => ClipRRect(
+                                  borderRadius: BorderRadius.all(Radius.circular(50)),
+                                  child: Image.network("https://firebasestorage.googleapis.com/v0/b/fashiontime-28e3a.appspot.com/o/WhatsApp_Image_2023-11-08_at_4.48.19_PM-removebg-preview.png?alt=media&token=215bdc12-d53a-4772-bca1-efbbdf6ee955&_gl=1*nea8nk*_ga*NDIyMTUzOTQ2LjE2OTkyODU3MDg.*_ga_CW55HF8NVT*MTY5OTQ0NDE2NS4zMy4xLjE2OTk0NDUxNzcuNTYuMC4w",width: 40,height: 40,)
+                              ),
+                            ),
+                          ),
+                        ),
+                      ),
+                      SizedBox(width: 20,),
+                      Center(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Row(
+                              mainAxisAlignment: MainAxisAlignment.start,
+                              children: [
+                                Text(members[index]["group_name"] == null ?"No Name":members[index]["group_name"],style: TextStyle(color: primary,fontSize: 20,fontWeight: FontWeight.bold,fontFamily: 'Montserrat'),textAlign: TextAlign.start),
+                              ],
+                            ),
+                            Row(
+                              mainAxisAlignment: MainAxisAlignment.start,
+                              children: [
+                                Text("${members[index]["members"].length} members",style: TextStyle(fontFamily: 'Montserrat'),),
+                              ],
+                            )
+                          ],
+                        ),
+                      )
+                    ],
+                  ),
+                ),
+              )
+          )
+      )),
+    );
+  }
+}

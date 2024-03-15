@@ -1,0 +1,79 @@
+import 'package:FashionTime/helpers/database_methods.dart';
+import 'package:flutter/material.dart';
+
+import '../../utils/constants.dart';
+
+class DestroyChat extends StatefulWidget {
+  final String? Channelname;
+  const DestroyChat({
+    this.Channelname,
+    super.key});
+
+  @override
+  State<DestroyChat> createState() => _DestroyChatState();
+}
+
+class _DestroyChatState extends State<DestroyChat> {
+  @override
+  Widget build(BuildContext context) {
+    return  Scaffold(
+      appBar: AppBar(
+        centerTitle: true,
+        automaticallyImplyLeading: false,
+        flexibleSpace: Container(
+          decoration: BoxDecoration(
+            gradient: LinearGradient(
+                begin: Alignment.topLeft,
+                end: Alignment.topRight,
+                stops: [0.0, 0.99],
+                tileMode: TileMode.clamp,
+                colors: <Color>[
+                  secondary,
+                  primary,
+                ]),
+          ),
+        ),
+        backgroundColor: primary,
+        title: Text("Video Call ", style: TextStyle(fontFamily: 'Montserrat')),
+      ),
+      body: Center(
+        child:
+        AlertDialog(
+          backgroundColor: primary,
+          title: Text("FashionTime",style: TextStyle(color: ascent,fontFamily: 'Montserrat',fontWeight: FontWeight.bold),),
+          content: Text("Video Call has been disconnected or the User is not answering the call.",style: TextStyle(color: ascent,fontFamily: 'Montserrat'),),
+          actions: [
+            TextButton(
+              child: Text("Yes",style: TextStyle(color: ascent,fontFamily: 'Montserrat'),),
+              onPressed:  () async {
+                DatabaseMethods().endCallRoom(widget.Channelname.toString());
+                Navigator.pop(context);
+
+                }
+              ,)
+          ],
+        ),
+        // child: Container(
+        //   child: Column(
+        //     mainAxisAlignment: MainAxisAlignment.center,
+        //     crossAxisAlignment: CrossAxisAlignment.center,
+        //     children: [
+        //       Text("Video Call has been disconnected or User is not answering.",style: TextStyle(fontFamily: 'Montserrat'),),
+        //       SizedBox(height: 20,),
+        //       ElevatedButton(
+        //         onPressed: () => DatabaseMethods().endCallRoom(widget.Channelname.toString()),
+        //         child: Text("OK"),
+        //         style: ElevatedButton.styleFrom(
+        //           backgroundColor: primary, // Set the background color to match your app's primary color
+        //           textStyle: TextStyle(
+        //             fontFamily: 'Montserrat', // Set the font family
+        //           ),
+        //         ),
+        //       )
+        //     ],
+        //   )
+        // ),
+      )
+    );
+  }
+}
