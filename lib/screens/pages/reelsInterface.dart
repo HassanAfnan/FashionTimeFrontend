@@ -153,11 +153,42 @@ class _ReelsInterfaceScreenState extends State<ReelsInterfaceScreen> {
   Widget build(BuildContext context) {
     return SafeArea(
       child:
-      Stack(
+      reels.length <= 0 ? GestureDetector(
+        onTap: (){
+          Navigator.push(
+              context,
+              MaterialPageRoute(
+                builder: (context) => CreateReelScreen(
+                  refreshReel: () {
+                    //widget.refreshReel!();
+                  },
+                ),
+              ));
+        },
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Row(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                Icon(Icons.add)
+              ],
+            ),
+            SizedBox(height: 10,),
+            Row(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                Text("Create a new reel.",style: TextStyle(
+                 fontSize: 14
+                ),)
+              ],
+            )
+          ],
+        ),
+      ) : Stack(
         children: [
           Swiper(
             itemBuilder: (BuildContext context, int index) {
-
               return
                 ReelsInitializerScreen(
                   videoLink:

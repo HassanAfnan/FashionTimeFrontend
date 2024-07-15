@@ -104,6 +104,7 @@ dependencies:
   showcaseview: ^2.1.0
   image_editor_plus: ^0.2.0
   image_cropper: ^4.0.1
+  social_media_recorder: ^1.1.13
 
 dev_dependencies:
   flutter_test:

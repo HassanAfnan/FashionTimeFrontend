@@ -14,6 +14,8 @@ import 'package:fluttertoast/fluttertoast.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:social_media_recorder/audio_encoder_type.dart';
+import 'package:social_media_recorder/screen/social_media_recorder.dart';
 import 'package:video_compress/video_compress.dart';
 import 'package:video_player/video_player.dart';
 import 'package:video_thumbnail/video_thumbnail.dart';
@@ -139,8 +141,6 @@ class _MessageScreenState extends State<MessageScreen> {
     });
     getUserInfogetChats();
   }
-
-//add reply field in all condition and on swipe the replying  to is showing everywhere
   addMessage() async {
     if (messageEditingController.text.isNotEmpty && repliedMessage != null) {
       Map<String, dynamic> chatMessageMap = {
@@ -272,8 +272,6 @@ class _MessageScreenState extends State<MessageScreen> {
       FocusScope.of(context).unfocus();
     }
   }
-  
-
   sendNotification(String name, String message, String token) async {
     print("Entered");
     print("1- $name");
@@ -306,7 +304,6 @@ class _MessageScreenState extends State<MessageScreen> {
       print(value1.body.toString());
     });
   }
-
   getUserInfogetChats() {
     DatabaseMethods().getChats(widget.chatRoomId!).then((val) {
       setState(() {
@@ -314,7 +311,6 @@ class _MessageScreenState extends State<MessageScreen> {
       });
     });
   }
-
   uploadFile(filePath) async {
     var decoded;
     final request = MultipartRequest(
@@ -372,7 +368,6 @@ class _MessageScreenState extends State<MessageScreen> {
       });
     });
   }
-
   _pickVideo() async {
     PickedFile? pickedFile = await picker.getVideo(source: ImageSource.gallery);
 
@@ -396,7 +391,6 @@ class _MessageScreenState extends State<MessageScreen> {
           "error compressing and uploading video received this error ${error.toString()}");
     }
   }
-
   pickFile() async {
     FilePickerResult? result = await FilePicker.platform.pickFiles(
       type: FileType.custom,
@@ -410,14 +404,12 @@ class _MessageScreenState extends State<MessageScreen> {
       debugPrint("=======>error received while uploading file");
     }
   }
-
   _pickVideoFromCamera() async {
     PickedFile? pickedFile = await picker.getVideo(source: ImageSource.camera);
 
     _cameraVideo = File(pickedFile!.path);
     uploadVideoMedia(pickedFile.path);
   }
-
   _pickImageFromGallery() async {
     PickedFile? pickedFile = await picker.getImage(
       source: ImageSource.gallery,
@@ -430,7 +422,6 @@ class _MessageScreenState extends State<MessageScreen> {
     });
     uploadMedia(File(pickedFile!.path).path);
   }
-
   uploadMedia(imagePath) async {
     Navigator.pop(context);
     var decoded;
@@ -492,9 +483,7 @@ class _MessageScreenState extends State<MessageScreen> {
       });
     });
   }
-
   uploadVideoMedia(imagePath) async {
-    // Navigator.pop(context);
 
     final request = MultipartRequest(
       'POST',
@@ -567,15 +556,12 @@ class _MessageScreenState extends State<MessageScreen> {
       });
     });
   }
-
-  // This function will helps you to pick and Image from Camera
   _pickImageFromCamera() async {
     PickedFile? pickedFile = await picker.getImage(source: ImageSource.camera);
 
     File image = File(pickedFile!.path);
     uploadMedia(File(pickedFile!.path).path);
   }
-
   Widget chatMessages() {
     return StreamBuilder(
       stream: chats,
@@ -616,6 +602,8 @@ class _MessageScreenState extends State<MessageScreen> {
       },
     );
   }
+
+  bool isRecording = false;
 
   @override
   Widget build(BuildContext context) {
@@ -848,17 +836,6 @@ class _MessageScreenState extends State<MessageScreen> {
                         ],
                       ),
                     );
-
-                    // CheckboxListTile(
-                    //   title: const Text("title text"),
-                    //   value: checkedValue,
-                    //   onChanged: (newValue) {
-                    //     setState(() {
-                    //       checkedValue = newValue!;
-                    //     });
-                    //   },
-                    //   controlAffinity: ListTileControlAffinity.leading,  //  <-- leading Checkbox
-                    // );
                   },
                   child: Text(
                     widget.name,
@@ -909,15 +886,15 @@ class _MessageScreenState extends State<MessageScreen> {
                           children: [
                             Container(
                               alignment: Alignment.bottomCenter,
-                              width: MediaQuery.of(context).size.width*0.98,
+                              width: MediaQuery.of(context).size.width,
                               child: Card(
                                 shape: const RoundedRectangleBorder(
                                   borderRadius:
                                       BorderRadius.all(Radius.circular(20)),
                                 ),
                                 child: Container(
-                                  padding:
-                                      const EdgeInsets.symmetric(horizontal: 8),
+                                  // padding:
+                                  //     const EdgeInsets.symmetric(horizontal: 8),
                                   decoration: BoxDecoration(
                                     borderRadius: const BorderRadius.all(
                                         Radius.circular(20)),
@@ -930,8 +907,8 @@ class _MessageScreenState extends State<MessageScreen> {
                                   child: Row(
                                     mainAxisAlignment: MainAxisAlignment.end,
                                     children: [
-                                      // const SizedBox(width: 16,),
-                                      Padding(
+
+                                      if(isRecording == false) Padding(
                                         padding:
                                             const EdgeInsets.only(bottom: 2),
                                         child: IconButton(
@@ -998,7 +975,7 @@ class _MessageScreenState extends State<MessageScreen> {
                                           },
                                         ),
                                       ),
-                                      Expanded(
+                                      if(isRecording == false) Expanded(
                                           child: AutoSizeTextField(
                                         textCapitalization:
                                             TextCapitalization.sentences,
@@ -1026,142 +1003,15 @@ class _MessageScreenState extends State<MessageScreen> {
                                             ),
                                             border: InputBorder.none),
                                       )),
-                                      // Padding(
-                                      //   padding:
-                                      //       const EdgeInsets.only(bottom: 2),
-                                      //   child: GestureDetector(
-                                      //     onTap: () async{
-                                      //       final gif =
-                                      //           await GiphyPicker.pickGif(
-                                      //           context: context,
-                                      //           apiKey: giphyKey,
-                                      //           sticker: false);
-                                      //       if (gif != null) {
-                                      //         setState(() {
-                                      //           _gif = gif;
-                                      //           debugPrint(
-                                      //               "gif link==========>${_gif?.images.original?.url}");
-                                      //         });
-                                      //         // ignore: use_build_context_synchronously
-                                      //         showDialog(
-                                      //           context: context,
-                                      //           builder:
-                                      //               (BuildContext context) {
-                                      //             return AlertDialog(
-                                      //               backgroundColor: primary,
-                                      //               title: const Text(
-                                      //                   'GIF Selected'),
-                                      //               content: _gif
-                                      //                   ?.images
-                                      //                   .original
-                                      //                   ?.url !=
-                                      //                   null
-                                      //                   ? Image(
-                                      //                   image: NetworkImage(
-                                      //                       _gif!
-                                      //                           .images
-                                      //                           .original!
-                                      //                           .url!))
-                                      //                   : const Text(
-                                      //                   'No GIF URL available'),
-                                      //               actions: <Widget>[
-                                      //                 IconButton(
-                                      //                   icon: const Icon(
-                                      //                       Icons.send),
-                                      //                   onPressed: () {
-                                      //                     addMessage();
-                                      //                     Navigator.of(context)
-                                      //                         .pop();
-                                      //                   },
-                                      //                 ),
-                                      //               ],
-                                      //             );
-                                      //           },
-                                      //         );
-                                      //       }
-                                      //     },
-                                      //     child: const SizedBox(
-                                      //       width: 24,
-                                      //         height: 24,
-                                      //         child: Image(image: AssetImage("assets/gif.png"),color: ascent,)),
-                                      //   ),
-                                      // ),
-                                      // const SizedBox(width: 8,),
-                                      // Padding(
-                                      //   padding:
-                                      //       const EdgeInsets.only(bottom: 2),
-                                      //   child: GestureDetector(
-                                      //     onTap: () async{
-                                      //       final sticker =
-                                      //           await GiphyPicker.pickGif(
-                                      //         context: context,
-                                      //         apiKey: giphyKey,
-                                      //         sticker: true,
-                                      //         searchHintText:
-                                      //         "Search for stickers",
-                                      //       );
-                                      //       if (sticker != null) {
-                                      //         setState(() {
-                                      //           _gif = sticker;
-                                      //           debugPrint(
-                                      //               "gif link==========>${_gif?.images.original?.url}");
-                                      //         });
-                                      //         // ignore: use_build_context_synchronously
-                                      //         showDialog(
-                                      //           context: context,
-                                      //           builder:
-                                      //               (BuildContext context) {
-                                      //             return AlertDialog(
-                                      //               backgroundColor: primary,
-                                      //               title: const Text(
-                                      //                   'Sticker Selected'),
-                                      //               content: _gif
-                                      //                   ?.images
-                                      //                   .original
-                                      //                   ?.url !=
-                                      //                   null
-                                      //                   ? Image(
-                                      //                   image: NetworkImage(
-                                      //                       _gif!
-                                      //                           .images
-                                      //                           .original!
-                                      //                           .url!))
-                                      //                   : const Text(
-                                      //                   'No Sticker URL available'),
-                                      //               actions: <Widget>[
-                                      //                 IconButton(
-                                      //                   icon: const Icon(
-                                      //                       Icons.send),
-                                      //                   onPressed: () {
-                                      //                     addMessage();
-                                      //                     Navigator.of(context)
-                                      //                         .pop();
-                                      //                   },
-                                      //                 ),
-                                      //               ],
-                                      //             );
-                                      //           },
-                                      //         );
-                                      //       }
-                                      //     },
-                                      //     child: Container(
-                                      //       padding: EdgeInsets.zero,
-                                      //       child: const Icon(
-                                      //           FontAwesomeIcons.noteSticky,
-                                      //           size: 20),
-                                      //
-                                      //     ),
-                                      //   ),
-                                      // ),
-                                      GestureDetector(
+                                      if(isRecording == false) GestureDetector(
                                         onTap: () {
                                           _pickImageFromCamera();
                                         },
                                         child: const Icon(
                                           Icons.camera_alt,color: ascent,),
                                       ),
-                                      const SizedBox(width: 8,),
-                                      Padding(
+                                      if(isRecording == false) const SizedBox(width: 2,),
+                                      if(isRecording == false) Padding(
                                         padding:
                                             const EdgeInsets.only(bottom: 2),
                                         child: GestureDetector(
@@ -1435,8 +1285,8 @@ class _MessageScreenState extends State<MessageScreen> {
                                           ),
                                         ),
                                       ),
-                                      const SizedBox(width: 14,),
-                                      GestureDetector(
+                                      if(isRecording == false) const SizedBox(width: 4,),
+                                      if(isRecording == false) GestureDetector(
                                         onTap: () {
                                           addMessage();
                                         },
@@ -1460,6 +1310,33 @@ class _MessageScreenState extends State<MessageScreen> {
                                               Icons.send,
                                               color: primary,
                                             ))),
+                                      ),
+                                      Padding(
+                                        padding: const EdgeInsets.all(8.0),
+                                        child: Container(
+                                          height: 50,
+                                          child: SocialMediaRecorder(
+                                              fullRecordPackageHeight:45,
+                                              initRecordPackageWidth:45,
+                                              radius: BorderRadius.all(Radius.circular(200)),
+                                              startRecording: () {
+                                                print("start called");
+                                                // setState(() {
+                                                //   isRecording = true;
+                                                // });
+                                              },
+                                              stopRecording: (_time) {
+                                                print("stop called");
+                                                // setState(() {
+                                                //   isRecording = false;
+                                                // });
+                                              },
+                                              sendRequestFunction: (soundFile, _time) {
+                                                //  print("the current path is ${soundFile.path}");
+                                              },
+                                            encode: AudioEncoderType.AAC
+                                          ),
+                                        ),
                                       ),
                                     ],
                                   ),
@@ -1958,3 +1835,11 @@ Reaction? getFakeInitialReaction(int index) {
   return null;
 }
 
+enum AudioEncoder {
+  AAC,
+  AAC_LD,
+  AAC_HE,
+  AMR_NB,
+  AMR_WB,
+  OPUS,
+}

@@ -842,132 +842,225 @@ class _GroupMessageScreenState extends State<GroupMessageScreen> {
                                   )),
                               // const SizedBox(width: 16,),
 
-                              Padding(
-                                padding:
-                                const EdgeInsets.only(bottom: 2),
-                                child: IconButton(
-                                  icon: const Icon(Icons.gif, size: 26),
-                                  onPressed: () async {
-                                    final gif =
-                                    await GiphyPicker.pickGif(
-                                        context: context,
-                                        apiKey: giphyKey,
-                                        sticker: false);
-                                    if (gif != null) {
-                                      setState(() {
-                                        _gif = gif;
-                                        debugPrint(
-                                            "gif link==========>${_gif?.images.original?.url}");
-                                      });
-                                      // ignore: use_build_context_synchronously
-                                      showDialog(
-                                        context: context,
-                                        builder:
-                                            (BuildContext context) {
-                                          return AlertDialog(
-                                            backgroundColor: primary,
-                                            title: const Text(
-                                                'GIF Selected'),
-                                            content: _gif
-                                                ?.images
-                                                .original
-                                                ?.url !=
-                                                null
-                                                ? Image(
-                                                image: NetworkImage(
-                                                    _gif!
-                                                        .images
-                                                        .original!
-                                                        .url!))
-                                                : const Text(
-                                                'No GIF URL available'),
-                                            actions: <Widget>[
-                                              IconButton(
-                                                icon: const Icon(
-                                                    Icons.send),
-                                                onPressed: () {
-                                                  addMessage();
-                                                  Navigator.of(context)
-                                                      .pop();
-                                                },
-                                              ),
-                                            ],
-                                          );
-                                        },
-                                      );
-                                    }
-                                  },
-                                ),
+                              // Padding(
+                              //   padding:
+                              //   const EdgeInsets.only(bottom: 2),
+                              //   child: IconButton(
+                              //     icon: const Icon(Icons.gif, size: 26),
+                              //     onPressed: () async {
+                              //       final gif =
+                              //       await GiphyPicker.pickGif(
+                              //           context: context,
+                              //           apiKey: giphyKey,
+                              //           sticker: false);
+                              //       if (gif != null) {
+                              //         setState(() {
+                              //           _gif = gif;
+                              //           debugPrint(
+                              //               "gif link==========>${_gif?.images.original?.url}");
+                              //         });
+                              //         // ignore: use_build_context_synchronously
+                              //         showDialog(
+                              //           context: context,
+                              //           builder:
+                              //               (BuildContext context) {
+                              //             return AlertDialog(
+                              //               backgroundColor: primary,
+                              //               title: const Text(
+                              //                   'GIF Selected'),
+                              //               content: _gif
+                              //                   ?.images
+                              //                   .original
+                              //                   ?.url !=
+                              //                   null
+                              //                   ? Image(
+                              //                   image: NetworkImage(
+                              //                       _gif!
+                              //                           .images
+                              //                           .original!
+                              //                           .url!))
+                              //                   : const Text(
+                              //                   'No GIF URL available'),
+                              //               actions: <Widget>[
+                              //                 IconButton(
+                              //                   icon: const Icon(
+                              //                       Icons.send),
+                              //                   onPressed: () {
+                              //                     addMessage();
+                              //                     Navigator.of(context)
+                              //                         .pop();
+                              //                   },
+                              //                 ),
+                              //               ],
+                              //             );
+                              //           },
+                              //         );
+                              //       }
+                              //     },
+                              //   ),
+                              // ),
+                              // Padding(
+                              //   padding:
+                              //   const EdgeInsets.only(bottom: 2),
+                              //   child: IconButton(
+                              //     icon: const Icon(
+                              //         FontAwesomeIcons.noteSticky,
+                              //         size: 20),
+                              //     onPressed: () async {
+                              //       final sticker =
+                              //       await GiphyPicker.pickGif(
+                              //         context: context,
+                              //         apiKey: giphyKey,
+                              //         sticker: true,
+                              //         searchHintText:
+                              //         "Search for stickers",
+                              //       );
+                              //       if (sticker != null) {
+                              //         setState(() {
+                              //           _gif = sticker;
+                              //           debugPrint(
+                              //               "gif link==========>${_gif?.images.original?.url}");
+                              //         });
+                              //         // ignore: use_build_context_synchronously
+                              //         showDialog(
+                              //           context: context,
+                              //           builder:
+                              //               (BuildContext context) {
+                              //             return AlertDialog(
+                              //               backgroundColor: primary,
+                              //               title: const Text(
+                              //                   'Sticker Selected'),
+                              //               content: _gif
+                              //                   ?.images
+                              //                   .original
+                              //                   ?.url !=
+                              //                   null
+                              //                   ? Image(
+                              //                   image: NetworkImage(
+                              //                       _gif!
+                              //                           .images
+                              //                           .original!
+                              //                           .url!))
+                              //                   : const Text(
+                              //                   'No Sticker URL available'),
+                              //               actions: <Widget>[
+                              //                 IconButton(
+                              //                   icon: const Icon(
+                              //                       Icons.send),
+                              //                   onPressed: () {
+                              //                     addMessage();
+                              //                     Navigator.of(context)
+                              //                         .pop();
+                              //                   },
+                              //                 ),
+                              //               ],
+                              //             );
+                              //           },
+                              //         );
+                              //       }
+                              //     },
+                              //   ),
+                              // ),
+                              // Padding(
+                              //   padding:
+                              //   const EdgeInsets.only(bottom: 2),
+                              //   child: IconButton(
+                              //     icon: const Icon(Icons.attach_file,
+                              //         size: 24),
+                              //     onPressed: () {
+                              //       FocusScope.of(context).unfocus();
+                              //       setState(() {
+                              //         // loading = true;
+                              //       });
+                              //       showModalBottomSheet(
+                              //           context: context,
+                              //           builder: (BuildContext bc) {
+                              //             return Wrap(
+                              //               children: <Widget>[
+                              //                 ListTile(
+                              //                   leading: const Icon(
+                              //                       Icons.file_present),
+                              //                   title: const Text(
+                              //                     'File upload',
+                              //                     style: TextStyle(
+                              //                         fontFamily:
+                              //                         'Montserrat'),
+                              //                   ),
+                              //                   onTap: () {
+                              //                     pickFile();
+                              //                   },
+                              //                 ),
+                              //                 ListTile(
+                              //                   leading: const Icon(
+                              //                       Icons.videocam),
+                              //                   title: const Text(
+                              //                     'Video from gallery',
+                              //                     style: TextStyle(
+                              //                         fontFamily:
+                              //                         'Montserrat'),
+                              //                   ),
+                              //                   onTap: () {
+                              //                     _pickVideo();
+                              //                   },
+                              //                 ),
+                              //                 ListTile(
+                              //                   leading: const Icon(Icons
+                              //                       .fiber_smart_record),
+                              //                   title: const Text(
+                              //                     'Record video',
+                              //                     style: TextStyle(
+                              //                         fontFamily:
+                              //                         'Montserrat'),
+                              //                   ),
+                              //                   onTap: () {
+                              //                     _pickVideoFromCamera();
+                              //                   },
+                              //                 ),
+                              //                 ListTile(
+                              //                     leading: const Icon(
+                              //                         Icons.image),
+                              //                     title: const Text(
+                              //                       'Image from Gallery',
+                              //                       style: TextStyle(
+                              //                           fontFamily:
+                              //                           'Montserrat'),
+                              //                     ),
+                              //                     onTap: () {
+                              //                       _pickImageFromGallery();
+                              //                     }),
+                              //                 ListTile(
+                              //                   leading: const Icon(
+                              //                       Icons.camera_alt),
+                              //                   title: const Text(
+                              //                     'Capture image',
+                              //                     style: TextStyle(
+                              //                         fontFamily:
+                              //                         'Montserrat'),
+                              //                   ),
+                              //                   onTap: () {
+                              //                     _pickImageFromCamera();
+                              //                   },
+                              //                 ),
+                              //               ],
+                              //             );
+                              //           });
+                              //     },
+                              //   ),
+                              // ),
+
+                              GestureDetector(
+                                onTap: () {
+                                  _pickImageFromCamera();
+                                },
+                                child: const Icon(
+                                  Icons.camera_alt,color: ascent,),
                               ),
+                              const SizedBox(width: 8,),
                               Padding(
                                 padding:
                                 const EdgeInsets.only(bottom: 2),
-                                child: IconButton(
-                                  icon: const Icon(
-                                      FontAwesomeIcons.noteSticky,
-                                      size: 20),
-                                  onPressed: () async {
-                                    final sticker =
-                                    await GiphyPicker.pickGif(
-                                      context: context,
-                                      apiKey: giphyKey,
-                                      sticker: true,
-                                      searchHintText:
-                                      "Search for stickers",
-                                    );
-                                    if (sticker != null) {
-                                      setState(() {
-                                        _gif = sticker;
-                                        debugPrint(
-                                            "gif link==========>${_gif?.images.original?.url}");
-                                      });
-                                      // ignore: use_build_context_synchronously
-                                      showDialog(
-                                        context: context,
-                                        builder:
-                                            (BuildContext context) {
-                                          return AlertDialog(
-                                            backgroundColor: primary,
-                                            title: const Text(
-                                                'Sticker Selected'),
-                                            content: _gif
-                                                ?.images
-                                                .original
-                                                ?.url !=
-                                                null
-                                                ? Image(
-                                                image: NetworkImage(
-                                                    _gif!
-                                                        .images
-                                                        .original!
-                                                        .url!))
-                                                : const Text(
-                                                'No Sticker URL available'),
-                                            actions: <Widget>[
-                                              IconButton(
-                                                icon: const Icon(
-                                                    Icons.send),
-                                                onPressed: () {
-                                                  addMessage();
-                                                  Navigator.of(context)
-                                                      .pop();
-                                                },
-                                              ),
-                                            ],
-                                          );
-                                        },
-                                      );
-                                    }
-                                  },
-                                ),
-                              ),
-                              Padding(
-                                padding:
-                                const EdgeInsets.only(bottom: 2),
-                                child: IconButton(
-                                  icon: const Icon(Icons.attach_file,
-                                      size: 24),
-                                  onPressed: () {
+                                child: GestureDetector(
+                                  onTap: () {
                                     FocusScope.of(context).unfocus();
                                     setState(() {
                                       // loading = true;
@@ -977,74 +1070,264 @@ class _GroupMessageScreenState extends State<GroupMessageScreen> {
                                         builder: (BuildContext bc) {
                                           return Wrap(
                                             children: <Widget>[
-                                              ListTile(
-                                                leading: const Icon(
-                                                    Icons.file_present),
-                                                title: const Text(
-                                                  'File upload',
-                                                  style: TextStyle(
-                                                      fontFamily:
-                                                      'Montserrat'),
+                                              SizedBox(height: 20,),
+                                              Padding(
+                                                padding: const EdgeInsets.all(8.0),
+                                                child: Row(
+                                                  mainAxisAlignment:MainAxisAlignment.spaceEvenly,
+                                                  children: [
+                                                    GestureDetector(
+                                                      onTap:(){
+                                                        pickFile();
+                                                      },
+                                                      child: CircleAvatar(
+                                                        backgroundColor: Colors.deepPurpleAccent,
+                                                        radius:30,
+                                                        child: const Icon(
+                                                          Icons.file_present,color: ascent,),
+                                                      ),
+                                                    ),
+                                                    GestureDetector(
+                                                      onTap: () {
+                                                        _pickVideo();
+                                                      },
+                                                      child: CircleAvatar(
+                                                        backgroundColor: Colors.pink,
+                                                        radius:30,
+                                                        child: const Icon(
+                                                          Icons.videocam,color: ascent,),
+                                                      ),
+                                                    ),
+                                                    GestureDetector(
+                                                      onTap: () {
+                                                        _pickVideoFromCamera();
+                                                      },
+                                                      child: CircleAvatar(
+                                                        backgroundColor: Colors.purpleAccent,
+                                                        radius:30,
+                                                        child: const Icon(Icons
+                                                            .fiber_smart_record,color: ascent,),
+                                                      ),
+                                                    ),
+                                                  ],
                                                 ),
-                                                onTap: () {
-                                                  pickFile();
-                                                },
                                               ),
-                                              ListTile(
-                                                leading: const Icon(
-                                                    Icons.videocam),
-                                                title: const Text(
-                                                  'Video from gallery',
-                                                  style: TextStyle(
-                                                      fontFamily:
-                                                      'Montserrat'),
+                                              SizedBox(height: 20,),
+                                              Padding(
+                                                padding: const EdgeInsets.all(8.0),
+                                                child: Row(
+                                                  mainAxisAlignment:MainAxisAlignment.spaceEvenly,
+                                                  children: [
+                                                    GestureDetector(
+                                                      onTap: () {
+                                                        _pickImageFromGallery();
+                                                      },
+                                                      child: CircleAvatar(
+                                                        backgroundColor: Colors.deepOrange,
+                                                        radius:30,
+                                                        child: const Icon(
+                                                          Icons.image,color: ascent,),
+                                                      ),
+                                                    ),
+                                                    GestureDetector(
+                                                      onTap: () async{
+                                                        final sticker =
+                                                        await GiphyPicker.pickGif(
+                                                          context: context,
+                                                          apiKey: giphyKey,
+                                                          sticker: true,
+                                                          searchHintText:
+                                                          "Search for stickers",
+                                                        );
+                                                        if (sticker != null) {
+                                                          setState(() {
+                                                            _gif = sticker;
+                                                            debugPrint(
+                                                                "gif link==========>${_gif?.images.original?.url}");
+                                                          });
+                                                          // ignore: use_build_context_synchronously
+                                                          showDialog(
+                                                            context: context,
+                                                            builder:
+                                                                (BuildContext context) {
+                                                              return AlertDialog(
+                                                                backgroundColor: primary,
+                                                                title: const Text(
+                                                                    'Sticker Selected'),
+                                                                content: _gif
+                                                                    ?.images
+                                                                    .original
+                                                                    ?.url !=
+                                                                    null
+                                                                    ? Image(
+                                                                    image: NetworkImage(
+                                                                        _gif!
+                                                                            .images
+                                                                            .original!
+                                                                            .url!))
+                                                                    : const Text(
+                                                                    'No Sticker URL available'),
+                                                                actions: <Widget>[
+                                                                  IconButton(
+                                                                    icon: const Icon(
+                                                                        Icons.send),
+                                                                    onPressed: () {
+                                                                      addMessage();
+                                                                      Navigator.of(context)
+                                                                          .pop();
+                                                                    },
+                                                                  ),
+                                                                ],
+                                                              );
+                                                            },
+                                                          );
+                                                        }
+                                                      },
+                                                      child: CircleAvatar(
+                                                        backgroundColor: Colors.green,
+                                                        radius:30,
+                                                        child: const Icon(
+                                                          Icons.image,color: ascent,),
+                                                      ),
+                                                    ),
+                                                    GestureDetector(
+                                                      onTap: () async{
+                                                        final gif =
+                                                        await GiphyPicker.pickGif(
+                                                            context: context,
+                                                            apiKey: giphyKey,
+                                                            sticker: false);
+                                                        if (gif != null) {
+                                                          setState(() {
+                                                            _gif = gif;
+                                                            debugPrint(
+                                                                "gif link==========>${_gif?.images.original?.url}");
+                                                          });
+                                                          // ignore: use_build_context_synchronously
+                                                          showDialog(
+                                                            context: context,
+                                                            builder:
+                                                                (BuildContext context) {
+                                                              return AlertDialog(
+                                                                backgroundColor: primary,
+                                                                title: const Text(
+                                                                    'GIF Selected'),
+                                                                content: _gif
+                                                                    ?.images
+                                                                    .original
+                                                                    ?.url !=
+                                                                    null
+                                                                    ? Image(
+                                                                    image: NetworkImage(
+                                                                        _gif!
+                                                                            .images
+                                                                            .original!
+                                                                            .url!))
+                                                                    : const Text(
+                                                                    'No GIF URL available'),
+                                                                actions: <Widget>[
+                                                                  IconButton(
+                                                                    icon: const Icon(
+                                                                        Icons.send),
+                                                                    onPressed: () {
+                                                                      addMessage();
+                                                                      Navigator.of(context)
+                                                                          .pop();
+                                                                    },
+                                                                  ),
+                                                                ],
+                                                              );
+                                                            },
+                                                          );
+                                                        }
+                                                      },
+                                                      child: CircleAvatar(
+                                                        backgroundColor: Colors.blue,
+                                                        radius:30,
+                                                        child: SizedBox(
+                                                            width: 24,
+                                                            height: 24,
+                                                            child: Image(image: AssetImage("assets/gif.png"),color: ascent,)),
+                                                      ),
+                                                    ),
+                                                  ],
                                                 ),
-                                                onTap: () {
-                                                  _pickVideo();
-                                                },
                                               ),
-                                              ListTile(
-                                                leading: const Icon(Icons
-                                                    .fiber_smart_record),
-                                                title: const Text(
-                                                  'Record video',
-                                                  style: TextStyle(
-                                                      fontFamily:
-                                                      'Montserrat'),
-                                                ),
-                                                onTap: () {
-                                                  _pickVideoFromCamera();
-                                                },
-                                              ),
-                                              ListTile(
-                                                  leading: const Icon(
-                                                      Icons.image),
-                                                  title: const Text(
-                                                    'Image from Gallery',
-                                                    style: TextStyle(
-                                                        fontFamily:
-                                                        'Montserrat'),
-                                                  ),
-                                                  onTap: () {
-                                                    _pickImageFromGallery();
-                                                  }),
-                                              ListTile(
-                                                leading: const Icon(
-                                                    Icons.camera_alt),
-                                                title: const Text(
-                                                  'Capture image',
-                                                  style: TextStyle(
-                                                      fontFamily:
-                                                      'Montserrat'),
-                                                ),
-                                                onTap: () {
-                                                  _pickImageFromCamera();
-                                                },
-                                              ),
+                                              SizedBox(height: 20,),
+                                              // ListTile(
+                                              //   leading: const Icon(
+                                              //       Icons.file_present),
+                                              //   title: const Text(
+                                              //     'File upload',
+                                              //     style: TextStyle(
+                                              //         fontFamily:
+                                              //         'Montserrat'),
+                                              //   ),
+                                              //   onTap: () {
+                                              //     pickFile();
+                                              //   },
+                                              // ),
+                                              // ListTile(
+                                              //   leading: const Icon(
+                                              //       Icons.videocam),
+                                              //   title: const Text(
+                                              //     'Video from gallery',
+                                              //     style: TextStyle(
+                                              //         fontFamily:
+                                              //         'Montserrat'),
+                                              //   ),
+                                              //   onTap: () {
+                                              //     _pickVideo();
+                                              //   },
+                                              // ),
+                                              // ListTile(
+                                              //   leading: const Icon(Icons
+                                              //       .fiber_smart_record),
+                                              //   title: const Text(
+                                              //     'Record video',
+                                              //     style: TextStyle(
+                                              //         fontFamily:
+                                              //         'Montserrat'),
+                                              //   ),
+                                              //   onTap: () {
+                                              //     _pickVideoFromCamera();
+                                              //   },
+                                              // ),
+                                              // ListTile(
+                                              //     leading: const Icon(
+                                              //         Icons.image),
+                                              //     title: const Text(
+                                              //       'Image from Gallery',
+                                              //       style: TextStyle(
+                                              //           fontFamily:
+                                              //           'Montserrat'),
+                                              //     ),
+                                              //     onTap: () {
+                                              //       _pickImageFromGallery();
+                                              //     }),
+                                              // ListTile(
+                                              //   leading: const Icon(
+                                              //       Icons.camera_alt),
+                                              //   title: const Text(
+                                              //     'Capture image',
+                                              //     style: TextStyle(
+                                              //         fontFamily:
+                                              //         'Montserrat'),
+                                              //   ),
+                                              //   onTap: () {
+                                              //     _pickImageFromCamera();
+                                              //   },
+                                              // ),
                                             ],
                                           );
                                         });
                                   },
+                                  child: Container(
+                                    padding: EdgeInsets.zero,
+                                    child: const Icon(Icons.attach_file,
+                                        size: 24),
+
+                                  ),
                                 ),
                               ),
                               GestureDetector(

@@ -241,6 +241,7 @@ class _ReelCommentScreenState extends State<ReelCommentScreen> {
           );
         });
       }
+      getReelComments(widget.reelId.toString());
     } catch (e) {
       setState(() {
         loading1 = false;
@@ -260,14 +261,18 @@ class _ReelCommentScreenState extends State<ReelCommentScreen> {
         setState(() {
           loading=false;
         });
-         results = json.decode(value.body)["results"];
+         setState(() {
+           results = json.decode(value.body)["results"];
+         });
         debugPrint("the response of reel comment is ======> ${value.body}");
         for(var result in results){
-          reelCommentId=result['id']as int;
-          reelComment=result['comment'].toString();
-          createdAt=result["created"].toString();
-          userName=result['user']['username'];
-          userPic=result['user']['pic'];
+          setState(() {
+            reelCommentId=result['id']as int;
+            reelComment=result['comment'].toString();
+            createdAt=result["created"].toString();
+            userName=result['user']['username'];
+            userPic=result['user']['pic'];
+          });
         }
       }
       else{

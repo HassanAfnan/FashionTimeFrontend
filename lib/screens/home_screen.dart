@@ -4,6 +4,7 @@ import 'package:FashionTime/authentication/login_screen.dart';
 import 'package:FashionTime/screens/pages/New_calender_screen.dart';
 import 'package:FashionTime/screens/pages/camera_screen.dart';
 import 'package:FashionTime/screens/pages/chat_screen.dart';
+import 'package:FashionTime/screens/pages/createReel.dart';
 import 'package:FashionTime/screens/pages/feed_screen.dart';
 import 'package:FashionTime/screens/pages/groups/all_groups.dart';
 import 'package:FashionTime/screens/pages/home_feed.dart';
