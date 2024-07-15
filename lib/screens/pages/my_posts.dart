@@ -1,6 +1,6 @@
 import 'dart:convert';
 
-import 'package:FashionTime/screens/pages/comment_screen.dart';
+import 'package:FashionTime/screens/pages/fashionComments/comment_screen.dart';
 import 'package:FashionTime/screens/pages/settings_pages/report_screen.dart';
 import 'package:FashionTime/screens/pages/videos/video_file.dart';
 import 'package:cached_network_image/cached_network_image.dart';
@@ -47,6 +47,7 @@ final CarouselController _controller = CarouselController();
 
 class _MyPostScreenState extends State<MyPostScreen> {
   getCashedData() async {
+    myPosts.clear();
     SharedPreferences preferences = await SharedPreferences.getInstance();
     id = preferences.getString("id")!;
     token = preferences.getString("token")!;
@@ -81,6 +82,7 @@ class _MyPostScreenState extends State<MyPostScreen> {
   getMyPosts(){
     setState(() {
       loading1 = true;
+
     });
     try{
       https.get(
@@ -124,7 +126,11 @@ class _MyPostScreenState extends State<MyPostScreen> {
                       value["created"],
                       value1!,
                       value["user"]["id"].toString(),
-                      value["myLike"] == null ? "like" : value["myLike"]));
+                      value["myLike"] ?? "like",
+                      value["eventData"],
+                    {},
+                    addMeInFashionWeek: value['addMeInWeekFashion'],
+                  ));
                 });
                 debugPrint("the length of posts is ${myPosts.length}");
               });
@@ -144,7 +150,10 @@ class _MyPostScreenState extends State<MyPostScreen> {
                     value["created"],
                     "",
                     value["user"]["id"].toString(),
-                    value["myLike"] == null ? "like" : value["myLike"]
+                    value["myLike"] ?? "like",
+                    value["eventData"],
+                  {},
+                  addMeInFashionWeek: value['addMeInWeekFashion']
                 ));
                 debugPrint("the length of posts is ${myPosts.length}");
               });
@@ -191,11 +200,18 @@ class _MyPostScreenState extends State<MyPostScreen> {
           style: TextStyle(fontFamily: 'Montserrat'),
         ),
       ),
-      body: ListView.builder(
+      body:
+      loading1?
+      SpinKitCircle(
+        color: primary,
+        size: 50,
+      ):
+      ListView.builder(
         itemCount: myPosts.length,
         itemBuilder: (context, index) {
         return
           Card(
+            color: Colors.transparent,
             elevation: 10,
             child: Column(
               children: [
@@ -373,7 +389,7 @@ class _MyPostScreenState extends State<MyPostScreen> {
                                                 FontWeight
                                                     .bold),
                                           ),
-                                          content: Container(
+                                          content: SizedBox(
                                             width: MediaQuery.of(
                                                 context)
                                                 .size
@@ -467,7 +483,7 @@ class _MyPostScreenState extends State<MyPostScreen> {
                                   value: 0,
                                   child: Row(
                                     children: const[
-                                      Icon(Icons.report),
+                                      Icon(Icons.delete),
                                       SizedBox(
                                         width: 10,
                                       ),
@@ -550,63 +566,68 @@ class _MyPostScreenState extends State<MyPostScreen> {
                                 UsingVideoControllerExample(
                                   path: i["video"],
                                 ))
-                                : Builder(
+                                : InteractiveViewer(
+                              panEnabled: true,
+                                  minScale: 1,
+                                  maxScale: 3,
+                                  child: Builder(
                               builder:
-                                  (BuildContext context) {
-                                return CachedNetworkImage(
-                                  imageUrl: i["image"],
-                                  imageBuilder: (context,
-                                      imageProvider) =>
-                                      Container(
-                                        height: MediaQuery.of(
-                                            context)
-                                            .size
-                                            .height,
-                                        width: MediaQuery.of(
-                                            context)
-                                            .size
-                                            .width,
-                                        decoration:
-                                        BoxDecoration(
-                                          image:
-                                          DecorationImage(
+                                    (BuildContext context) {
+                                  return CachedNetworkImage(
+                                    imageUrl: i["image"],
+                                    imageBuilder: (context,
+                                        imageProvider) =>
+                                        Container(
+                                          height: MediaQuery.of(
+                                              context)
+                                              .size
+                                              .height,
+                                          width: MediaQuery.of(
+                                              context)
+                                              .size
+                                              .width,
+                                          decoration:
+                                          BoxDecoration(
                                             image:
-                                            imageProvider,
-                                            fit: BoxFit.cover,
+                                            DecorationImage(
+                                              image:
+                                              imageProvider,
+                                              fit: BoxFit.cover,
+                                            ),
                                           ),
                                         ),
-                                      ),
-                                  placeholder:
-                                      (context, url) =>
-                                      SpinKitCircle(
-                                        color: primary,
-                                        size: 60,
-                                      ),
-                                  errorWidget: (context,
-                                      url, error) =>
-                                      Container(
-                                        height: MediaQuery.of(
-                                            context)
-                                            .size
-                                            .height *
-                                            0.84,
-                                        width: MediaQuery.of(
-                                            context)
-                                            .size
-                                            .width,
-                                        decoration:
-                                        BoxDecoration(
-                                          image: DecorationImage(
-                                              image: Image.network(
-                                                  "https://upload.wikimedia.org/wikipedia/commons/thumb/6/65/No-Image-Placeholder.svg/1665px-No-Image-Placeholder.svg.png")
-                                                  .image,
-                                              fit: BoxFit
-                                                  .fill),
+                                    placeholder:
+                                        (context, url) =>
+                                        SpinKitCircle(
+                                          color: primary,
+                                          size: 60,
                                         ),
-                                      ),
-                                );
+                                    errorWidget: (context,
+                                        url, error) =>
+                                        Container(
+                                          height: MediaQuery.of(
+                                              context)
+                                              .size
+                                              .height *
+                                              0.84,
+                                          width: MediaQuery.of(
+                                              context)
+                                              .size
+                                              .width,
+                                          decoration:
+                                          BoxDecoration(
+                                            image: DecorationImage(
+                                                image: Image.network(
+                                                    "https://upload.wikimedia.org/wikipedia/commons/thumb/6/65/No-Image-Placeholder.svg/1665px-No-Image-Placeholder.svg.png")
+                                                    .image,
+                                                fit: BoxFit
+                                                    .fill),
+                                          ),
+                                        ),
+                                  );
                               },
-                            );
+                            ),
+                                );
                           }).toList(),
 
                         ),
@@ -708,9 +729,9 @@ class _MyPostScreenState extends State<MyPostScreen> {
                         myPosts[index].likeCount == "0"
                             ?
 
-                        SizedBox()
+                        const SizedBox()
                             : Text(
-                            myPosts[index].likeCount),
+                            myPosts[index].likeCount.toString()),
                         IconButton(
                             onPressed: () {
                               Navigator.push(
@@ -735,7 +756,7 @@ class _MyPostScreenState extends State<MyPostScreen> {
                             child: Text(
                               DateFormat.yMMMEd().format(
                                   DateTime.parse(
-                                      myPosts[index].date)),
+                                      myPosts[index].date.toString())),
                               style: const TextStyle(
                                   fontFamily: 'Montserrat',
                                   fontSize: 12),
@@ -786,7 +807,7 @@ class _MyPostScreenState extends State<MyPostScreen> {
 
                         SizedBox()
                             : Text(
-                            "${myPosts[index].likeCount}"),
+                            myPosts[index].likeCount.toString()),
                         IconButton(
                             onPressed: () {
                               Navigator.push(
@@ -811,7 +832,7 @@ class _MyPostScreenState extends State<MyPostScreen> {
                             child: Text(
                               DateFormat.yMMMEd().format(
                                   DateTime.parse(
-                                      myPosts[index].date)),
+                                      myPosts[index].date.toString())),
                               style: const TextStyle(
                                   fontFamily: 'Montserrat',
                                   fontSize: 12),

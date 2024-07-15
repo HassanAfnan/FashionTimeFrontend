@@ -70,7 +70,7 @@ class _MyReelsInterfaceScreenState extends State<MyReelsInterfaceScreen> {
             // Example: fetchMoreData(nextUrl);
           }
           else{
-            showToast(Colors.green, "You are up to date");
+
           }
         } else {
           debugPrint("Unexpected data format or null value: $responseData");
@@ -139,6 +139,11 @@ class _MyReelsInterfaceScreenState extends State<MyReelsInterfaceScreen> {
   Widget build(BuildContext context) {
     return SafeArea(
       child:
+          reels.isEmpty?
+              Scaffold(
+                body: Center(child: Text("No flicks"),)
+              )
+         :
       Material(
         child: Stack(
           children: [
@@ -159,7 +164,7 @@ class _MyReelsInterfaceScreenState extends State<MyReelsInterfaceScreen> {
               },
               itemCount: reels.length,
               scrollDirection: Axis.vertical,
-              loop: true,
+              loop: false,
               onIndexChanged: (value) {
 
                 setState(() {

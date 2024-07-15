@@ -1,5 +1,7 @@
+import 'dart:async';
 import 'dart:convert';
 import 'dart:io';
+import 'package:FashionTime/screens/pages/add_hashtags.dart';
 import 'package:FashionTime/screens/pages/videos/video_file.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_spinkit/flutter_spinkit.dart';
@@ -36,7 +38,9 @@ class _CameraScreenState extends State<CameraScreen> {
   String result = "";
   bool loading = false;
   bool loading1 = false;
-  bool loading2 = false;
+  bool loading2 = true;
+  Timer? _timer;
+  bool _isDisposed = false;
   bool uploadedSuccess=false;
   bool capitalizeNext=false;
   List<Map<String, String>> media = [];
@@ -130,7 +134,7 @@ class _CameraScreenState extends State<CameraScreen> {
     var decoded;
     final request = MultipartRequest(
       'POST',
-      Uri.parse("${serverUrl}/fileUploader/"),
+      Uri.parse("$serverUrl/fileUploader/"),
       onProgress: (int bytes, int total) {
         setState(() {
           progress = bytes / total;
@@ -168,7 +172,7 @@ class _CameraScreenState extends State<CameraScreen> {
     var decoded;
     final request = MultipartRequest(
       'POST',
-      Uri.parse("${serverUrl}/fileUploader/"),
+      Uri.parse("$serverUrl/fileUploader/"),
       onProgress: (int bytes, int total) {
         setState(() {
           progress = bytes / total;
@@ -327,61 +331,18 @@ class _CameraScreenState extends State<CameraScreen> {
     setState(() {
       loading1 = true;
     });
-
     try {
       if (media.isEmpty) {
-        // Handle the case where media is empty
         setState(() {
           loading1 = false;
-          // Handle the error or show a dialog if needed
         });
-      } else if(isCommentEnable==true) {
-        Map<String, dynamic> body = {
-          "upload": {"media": media},
-          "description": description.text,
-          "addMeInWeekFashion": true,
-          "user": id,
-          "event": eventId,
-          "gender": gender
-        };
-
-        final response = await https.post(
-          Uri.parse("$serverUrl/fashionUpload/"),
-          body: json.encode(body),
-          headers: {
-            "Content-Type": "application/json",
-            "Authorization": "Bearer $token"
-          },
-        );
-
-        if (response.statusCode == 201) {
-          // Successful post
-          debugPrint("post created successfully");
-          showToast(Colors.green, "Style created successfully.");
-          setState(() {
-            loading1 = false;
-            description.clear();
-            media.clear();
-            media1.clear();
-            // Clear other necessary fields
-          });
-        } else if (response.statusCode >= 400) {
-          // Handle the case where the request is bad (status code 400)
-          debugPrint("response=========>${response.body}");
-          showToast(Colors.red, "Please provide all the fields.");
-          setState(() {
-            loading1 = false;
-          });
-
-        }
-      }
-      else{
+      } else  {
         Map<String, dynamic> body = {
           "upload": {"media": media},
           "description": description.text,
           "addMeInWeekFashion": value,
           "user": id,
-          "event": eventId,
+          "event": eventIdTemp,
           "gender": gender,
           "isCommentOff": isCommentEnable
         };
@@ -399,28 +360,106 @@ class _CameraScreenState extends State<CameraScreen> {
           // Successful post
           debugPrint("post created successfully");
           showToast(Colors.green, "Style created successfully.");
+          debugPrint("post response======>${response.body.toString()}");
+          final Map<String, dynamic> responseData = json.decode(response.body);
+          final int postId = responseData['id'];
+          // ignore: use_build_context_synchronously
+          showDialog(
+            context: context,
+            builder: (context) => AlertDialog(
+              backgroundColor: primary,
+              title: const Text(
+                "FashionTime",
+                style: TextStyle(
+                    color: ascent,
+                    fontFamily: 'Montserrat',
+                    fontWeight: FontWeight.bold),
+              ),
+              content: const Text(
+                "Do you want add hashtags to your style?",
+                style: TextStyle(color: ascent, fontFamily: 'Montserrat'),
+              ),
+              actions: [
+                TextButton(
+                  child: const Text("Yes",
+                      style: TextStyle(
+                          color: ascent, fontFamily: 'Montserrat')),
+                  onPressed: () {
+                Navigator.push(context, MaterialPageRoute(builder: (context) => AddHashTagScreen(postId: postId.toString()),));
+                  },
+                ),
+                TextButton(
+                  child: const Text("No",
+                      style: TextStyle(
+                          color: ascent, fontFamily: 'Montserrat')),
+                  onPressed: () {
+                    Navigator.pop(context);
+                  },
+                ),
+              ],
+            ),
+          );
           setState(() {
             loading1 = false;
             description.clear();
             media.clear();
             media1.clear();
-            // Clear other necessary fields
           });
-        } else if (response.statusCode >= 400) {
-          // Handle the case where the request is bad (status code 400)
-          debugPrint("response=========>$response");
-          showToast(Colors.red, "Please provide all the fields.");
+        } else if(response.statusCode==400) {
+          debugPrint("response=========>${response.statusCode.toString()}   ${response.body}");
+          showToast(Colors.red, "You have already participated in this event");
           setState(() {
             loading1 = false;
           });
+
         }
       }
+      // else{
+      //   Map<String, dynamic> body = {
+      //     "upload": {"media": media},
+      //     "description": description.text,
+      //     "addMeInWeekFashion": value,
+      //     "user": id,
+      //     "event": eventId,
+      //     "gender": gender,
+      //     "isCommentOff": isCommentEnable
+      //   };
+      //
+      //   final response = await https.post(
+      //     Uri.parse("$serverUrl/fashionUpload/"),
+      //     body: json.encode(body),
+      //     headers: {
+      //       "Content-Type": "application/json",
+      //       "Authorization": "Bearer $token"
+      //     },
+      //   );
+      //
+      //   if (response.statusCode == 201) {
+      //     // Successful post
+      //     debugPrint("post created successfully");
+      //     showToast(Colors.green, "Style created successfully.");
+      //     setState(() {
+      //       loading1 = false;
+      //       description.clear();
+      //       media.clear();
+      //       media1.clear();
+      //       // Clear other necessary fields
+      //     });
+      //   } else if (response.statusCode >= 400) {
+      //     // Handle the case where the request is bad (status code 400)
+      //     debugPrint("response=========>${response.statusCode}");
+      //     showToast(Colors.red, "Please provide all the fields.");
+      //     setState(() {
+      //       loading1 = false;
+      //     });
+      //   }
+      // }
     } catch (e) {
       // Handle any other errors
       setState(() {
         loading1 = false;
       });
-      debugPrint("error in create post api ${e.toString()}");
+      print("error in create post api ${e.toString()}");
     }
   }
 
@@ -436,6 +475,8 @@ class _CameraScreenState extends State<CameraScreen> {
   }
   @override
   void dispose() {
+    _isDisposed = true; // Set the flag to true when disposing
+    _timer?.cancel();
    // _descriptionFocusNode.removeListener(_onDescriptionFocusChange);
     //_descriptionFocusNode.dispose();
     description.dispose();
@@ -452,12 +493,12 @@ class _CameraScreenState extends State<CameraScreen> {
 
   getEvents() {
     setState(() {
-      loading2 = false;//this was true before
+      loading2 = true;//this was true before
     });
     try {
-      https.get(Uri.parse("${serverUrl}/fashionEvent-week/"), headers: {
+      https.get(Uri.parse("$serverUrl/fashionEvent-week/"), headers: {
         "Content-Type": "application/json",
-        "Authorization": "Bearer ${token}"
+        "Authorization": "Bearer $token"
       }).then((value) {
 
         print("all events of fashion"+jsonDecode(value.body).toString());
@@ -515,26 +556,26 @@ class _CameraScreenState extends State<CameraScreen> {
               const SizedBox(
                 height: 10,
               ),
-              Align(
-                alignment: Alignment.topLeft,
-                child: WidgetAnimator(
-                  Padding(
-                    padding: const EdgeInsets.only(
-                        left: 18.0, right: 18.0, top: 25, bottom: 18),
-                    child: Column(
-                      children: [
-                        Text(
-                          "Total Participants:$participants/100",
-                          style: TextStyle(
-                              fontSize: 20,
-                              fontWeight: FontWeight.w900,
-                              fontFamily: 'Montserrat',
-                              foreground: Paint()..shader = linearGradient),
-                        ),
-                        const SizedBox(
-                          height: 20,
-                        ),
-                        Text(
+              WidgetAnimator(
+                Column(
+                  mainAxisAlignment: MainAxisAlignment.start,
+                  children: [
+                    Text(
+                      "Trendsetters for the Event : $participants/ 100",
+                      style: TextStyle(
+                          fontSize: 20,
+                          fontWeight: FontWeight.w900,
+                          fontFamily: 'Montserrat',
+                          foreground: Paint()..shader = linearGradient),
+                    ),
+                    const SizedBox(
+                      height: 20,
+                    ),
+                    Align(
+                      alignment: Alignment.topLeft,
+                      child: Padding(
+                        padding:  EdgeInsets.only(left: MediaQuery.of(context).size.width*0.05),
+                        child: Text(
                           "Description of the style",
                           style: TextStyle(
                               fontSize: 20,
@@ -542,9 +583,9 @@ class _CameraScreenState extends State<CameraScreen> {
                               fontFamily: 'Montserrat',
                               foreground: Paint()..shader = linearGradient),
                         ),
-                      ],
+                      ),
                     ),
-                  ),
+                  ],
                 ),
               ),
               WidgetAnimator(
@@ -650,7 +691,7 @@ class _CameraScreenState extends State<CameraScreen> {
                       value: value,
                       onChanged: (bool? val) {
                         setState(() {
-                          debugPrint("fashion week bool=========>${val}");
+                          debugPrint("fashion week bool=========>$val");
                           value = val!;
                         });
                       },
@@ -958,12 +999,12 @@ class _CameraScreenState extends State<CameraScreen> {
                       mainAxisAlignment: MainAxisAlignment.center,
                       crossAxisAlignment: CrossAxisAlignment.center,
                       children: [
-                        // loading1 == true
-                        //     ? SpinKitCircle(
-                        //         color: primary,
-                        //         size: 70,
-                        //       )
-                        //     :_descriptionFocusNode.hasFocus?SizedBox():
+                        loading1 == true
+                            ? SpinKitCircle(
+                                color: primary,
+                                size: 70,
+                              )
+                          :
                         Padding(
                           padding: const EdgeInsets.all(8.0),
                           child: Container(
@@ -1013,7 +1054,8 @@ class _CameraScreenState extends State<CameraScreen> {
                                   if(media.length>0||media1.isNotEmpty){
                                     // _submittedStyle=true;
                                     setState(() {
-
+                                      debugPrint("value of add me in fashion week is ====>$value");
+                                      createPost();
                                     });
                                     // print(media.toString());
                                     // if(media.length<=0&&description.text.isEmpty){
@@ -1038,12 +1080,11 @@ class _CameraScreenState extends State<CameraScreen> {
                                     // if(_submittedStyle==true){
                                     //   createPost();
                                     // }
-                                    debugPrint("value of add me in fashion week is ====>$value");
-                                    createPost();
+
 
                                   }
 
-                                  else if(_description==false&& media.isEmpty&& gender==""){
+                                  else if(_description==false&& media.isEmpty|| gender==""){
                                     showToast(Colors.red, "Style could not be uploaded!");
                                   }
                                   else{

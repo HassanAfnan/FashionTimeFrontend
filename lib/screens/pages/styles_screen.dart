@@ -88,7 +88,10 @@ class _StylesScreenState extends State<StylesScreen> {
                       value["created"],
                       value1!,
                     value["user"]["id"].toString(),
-                      value["myLike"] == null ? "like" : value["myLike"]));
+                      value["myLike"] == null ? "like" : value["myLike"],
+                    value["eventData"],
+                    {}
+                  ));
                 });
               });
             }
@@ -107,7 +110,9 @@ class _StylesScreenState extends State<StylesScreen> {
                     value["created"],
                     "",
                   value["user"]["id"].toString(),
-                    value["myLike"] == null ? "like" : value["myLike"]
+                    value["myLike"] == null ? "like" : value["myLike"],
+                  value["eventData"],
+                  {}
                 ));
               });
             }

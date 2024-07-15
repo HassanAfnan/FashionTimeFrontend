@@ -3,7 +3,9 @@ import 'dart:convert';
 import 'package:FashionTime/animations/bottom_animation.dart';
 import 'package:FashionTime/models/fashion_week_model.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_spinkit/flutter_spinkit.dart';
 import 'package:http/http.dart'as https;
+import 'package:intl/intl.dart';
 import '../../utils/constants.dart';
 class AllFashionWeeks extends StatefulWidget {
   const AllFashionWeeks({super.key});
@@ -12,35 +14,60 @@ class AllFashionWeeks extends StatefulWidget {
   State<AllFashionWeeks> createState() => _AllFashionWeeksState();
 }
 List<FashionEvent> events = [];
-getAllEvents(){
-  const String url='$serverUrl/fashionEvents/';
-  try{
-    https.get(Uri.parse(url) ).then((value) {
-      debugPrint("the body of response is=========> ${value.body}");
-      List<dynamic> eventData = json.decode(value.body);
-      List<FashionEvent> eventsList = eventData.map((event) {
-        return FashionEvent(
-          id: event['id'],
-          title: event['title'],
-          eventStartDate: event['eventStartDate'],
-          eventEndDate: event['eventEndDate'],
-        );
-      }).toList();
-      events=eventsList;
-      debugPrint("events length is ${events.length}");
-
-    });
-
-
-  }
-  catch(e){
-    debugPrint("error received while getting events");
-  }
-}
-
-
+bool loading =false;
 
 class _AllFashionWeeksState extends State<AllFashionWeeks> {
+  getAllEvents(){
+    const String url='$serverUrl/fashionEvents/';
+    try{
+      loading=true;
+      https.get(Uri.parse(url) ).then((value) {
+        debugPrint("the body of response is=========> ${value.body}");
+        setState(() {
+          loading=false;
+        });
+        List<dynamic> eventData = json.decode(value.body);
+        List<FashionEvent> eventsList = eventData.map((event) {
+          return FashionEvent(
+            id: event['id'],
+            title: event['title'],
+            eventStartDate: event['eventStartDate'],
+            eventEndDate: event['eventEndDate'],
+          );
+        }).toList();
+        events=eventsList;
+        debugPrint("events length is ${events.length}");
+
+      });
+
+
+    }
+    catch(e){
+      debugPrint("error received while getting events");
+      setState(() {
+        loading=false;
+      });
+    }
+  }
+  String formatDateWithOrdinal(String inputDate) {
+    DateTime dateTime = DateTime.parse(inputDate);
+    String formattedDate = DateFormat('MMMM d\'\'\'\' yyyy').format(dateTime);
+    return formattedDate;
+  }
+  bool isCurrentDateInRange(String startDate, String endDate) {
+    DateTime currentDate = DateTime.now();
+    DateTime startDateTime = DateTime.parse(startDate);
+    DateTime endDateTime = DateTime.parse(endDate);
+
+    return currentDate.isAfter(startDateTime) && currentDate.isBefore(endDateTime);
+  }
+  bool isNextWeekEvent(String startDate) {
+    DateTime currentDate = DateTime.now();
+    DateTime startDateTime = DateTime.parse(startDate);
+    DateTime nextWeekStart = DateTime(currentDate.year, currentDate.month, currentDate.day + (DateTime.sunday - currentDate.weekday) + 1);
+    DateTime nextWeekEnd = nextWeekStart.add(const Duration(days: 7));
+    return startDateTime.isAfter(nextWeekStart) && startDateTime.isBefore(nextWeekEnd);
+  }
   @override
   void initState() {
 
@@ -70,40 +97,64 @@ class _AllFashionWeeksState extends State<AllFashionWeeks> {
         ),),
       ),
       body:
-          events.isEmpty?
-              Text("No events"):
+          loading?
+             Center(child:SpinKitCircle(
+               color: primary,
+               size: 50,
+             )):
       ListView.builder(
         itemCount: events.length,
         reverse: false,
         itemBuilder:(context, index){
           return WidgetAnimator(Card(
-            color: primary,
+            color:
+            isCurrentDateInRange(events[index].eventStartDate,events[index].eventEndDate)?Colors.blue:
+            primary,
             shape: RoundedRectangleBorder(
               borderRadius: BorderRadius.circular(12)
             ),
             child: ListTile(
 
               title:
-              Row(
+              Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Text("Week ${index+1}: ",style:const TextStyle(
+                  Row(
+                    children: [
+                      Text("Week ${index+1}: ",style:const TextStyle(
+                              fontSize: 14,
+                              fontWeight: FontWeight.w500,
+                              fontFamily: 'Montserrat'
+                          )),
+                      Flexible(
+                        child: Text(events[index].title,style:const TextStyle(
+                            fontSize: 14,
+                            fontWeight: FontWeight.w500,
+                            fontFamily: 'Montserrat'
+                        )),
+                      )
+                    ],
+                  ),
+                  isCurrentDateInRange(events[index].eventStartDate,events[index].eventEndDate)?
+                  const Text("(Current Event) ",style:TextStyle(
+                      fontSize: 14,
+                      fontWeight: FontWeight.w500,
+                      fontFamily: 'Montserrat'
+                  ))
+                      :
+                  isNextWeekEvent(events[index].eventStartDate)?const Text("(Next Event) ",style:TextStyle(
                           fontSize: 14,
                           fontWeight: FontWeight.w500,
                           fontFamily: 'Montserrat'
-                      )),
-                  Flexible(
-                    child: Text(events[index].title,style:const TextStyle(
-                        fontSize: 14,
-                        fontWeight: FontWeight.w500,
-                        fontFamily: 'Montserrat'
-                    )),
-                  )
+                      )):const SizedBox()
                 ],
               ),
               subtitle: Row(
                 mainAxisAlignment: MainAxisAlignment.end,
                 children: [
-                  Text(events[index].eventStartDate,style:const TextStyle(
+
+                  Text(formatDateWithOrdinal(events[index].eventStartDate),style:const TextStyle(
                       fontSize: 14,
                       fontWeight: FontWeight.bold,
                       fontFamily: 'Montserrat'

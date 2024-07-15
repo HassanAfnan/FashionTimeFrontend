@@ -5,6 +5,8 @@ class ChatModel {
   late String email;
   late String username;
   late String fcmToken;
+  bool? isfan;
+  bool? isCloseFriend;
 
   ChatModel(
       this.id,
@@ -12,7 +14,11 @@ class ChatModel {
       this.pic,
       this.email,
       this.username,
-      this.fcmToken
+      this.fcmToken,
+      {
+        this.isfan,
+        this.isCloseFriend
+      }
       );
 }
 

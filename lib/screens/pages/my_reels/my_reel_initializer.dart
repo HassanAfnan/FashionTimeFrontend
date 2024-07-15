@@ -11,7 +11,8 @@ import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:video_player/video_player.dart';
 import 'package:http/http.dart' as https;
 import '../../../utils/constants.dart';
-import '../liked_user_reel.dart';
+import '../post_like_user.dart';
+import 'my_reels.dart';
 
 class MyReelsInitializerScreen extends StatefulWidget {
   final String? videoLink;
@@ -142,7 +143,7 @@ class _MyReelsInitializerScreenState extends State<MyReelsInitializerScreen> {
         _togglePlayPause();
       },
       child: Stack(children: [
-        ReelScreen(controller: _videoPlayerController),
+        MyReelScreen(controller: _videoPlayerController),
         Padding(
           padding: const EdgeInsets.all(8.0),
           child: Column(
@@ -290,7 +291,7 @@ class _MyReelsInitializerScreenState extends State<MyReelsInitializerScreen> {
                               context,
                               MaterialPageRoute(
                                 builder: (context) =>
-                                    const LikedUserReelScreen(),
+                                     PostLikeUserScreen(),
                               ));
                         },
                         child: Text("${widget.likeCount}",

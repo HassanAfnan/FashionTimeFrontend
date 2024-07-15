@@ -5,6 +5,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_spinkit/flutter_spinkit.dart';
 import 'package:http/http.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 import '../animations/bottom_animation.dart';
 import '../utils/constants.dart';
@@ -21,8 +22,19 @@ class _ChangePasswordState extends State<ChangePassword> {
   bool loading = false;
   TextEditingController password1 = TextEditingController();
   TextEditingController password2 = TextEditingController();
+  TextEditingController password3 = TextEditingController();
   bool eye1 = true;
   bool eye2 = true;
+  bool eye3 = true;
+  String id = "";
+  String token = "";
+
+  getCashedData() async {
+    SharedPreferences preferences = await SharedPreferences.getInstance();
+    id = preferences.getString("id")!;
+    token = preferences.getString("token")!;
+    debugPrint(token);
+  }
   forgetPassword() async {
     setState(() {
       loading = true;
@@ -36,11 +48,11 @@ class _ChangePasswordState extends State<ChangePassword> {
           context: context,
           builder: (context) => AlertDialog(
             backgroundColor: primary,
-            title: Text("FashionTime",style: TextStyle(color: ascent,fontFamily: 'Montserrat',fontWeight: FontWeight.bold),),
-            content: Text("Please fill all the fields",style: TextStyle(color: ascent,fontFamily: 'Montserrat'),),
+            title: const Text("FashionTime",style: TextStyle(color: ascent,fontFamily: 'Montserrat',fontWeight: FontWeight.bold),),
+            content: const Text("Please fill all the fields",style: TextStyle(color: ascent,fontFamily: 'Montserrat'),),
             actions: [
               TextButton(
-                child: Text("Okay",style: TextStyle(color: ascent,fontFamily: 'Montserrat')),
+                child: const Text("Okay",style: TextStyle(color: ascent,fontFamily: 'Montserrat')),
                 onPressed:  () {
                   setState(() {
                     Navigator.pop(context);
@@ -59,11 +71,11 @@ class _ChangePasswordState extends State<ChangePassword> {
           context: context,
           builder: (context) => AlertDialog(
             backgroundColor: primary,
-            title: Text("FashionTime",style: TextStyle(color: ascent,fontFamily: 'Montserrat',fontWeight: FontWeight.bold),),
-            content: Text("Password mismatch.",style: TextStyle(color: ascent,fontFamily: 'Montserrat'),),
+            title: const Text("FashionTime",style: TextStyle(color: ascent,fontFamily: 'Montserrat',fontWeight: FontWeight.bold),),
+            content: const Text("Password mismatch.",style: TextStyle(color: ascent,fontFamily: 'Montserrat'),),
             actions: [
               TextButton(
-                child: Text("Okay",style: TextStyle(color: ascent,fontFamily: 'Montserrat')),
+                child: const Text("Okay",style: TextStyle(color: ascent,fontFamily: 'Montserrat')),
                 onPressed:  () {
                   setState(() {
                     Navigator.pop(context);
@@ -79,39 +91,50 @@ class _ChangePasswordState extends State<ChangePassword> {
           loading = true;
         });
         Map<String, String> body = {
-          "password": password1.text,
-          "token": widget.code,
-          "password2": password2.text
+          "old_password": password3.text,
+          "new_password": password1.text,
+          "confirm_password": password2.text
         };
         post(
-          Uri.parse("${serverUrl}/password/reset/confirm/"),
+          Uri.parse("$serverUrl/change-password/"),
+          headers: {
+            "Authorization": "Bearer $token"},
           body: body,
         ).then((value) {
-          print("Response ==> ${value.body}");
+          if(value.statusCode==200){
+            debugPrint("Response ==> ${value.body}");
             setState(() {
               loading = false;
             });
             // Navigator.pop(context);
             // Navigator.push(context,MaterialPageRoute(builder: (context) => Login()));
-          showDialog(
-            context: context,
-            builder: (context) => AlertDialog(
-              backgroundColor: primary,
-              title: Text("FashionTime",style: TextStyle(color: ascent,fontFamily: 'Montserrat',fontWeight: FontWeight.bold),),
-              content: Text("Password changed successfully.",style: TextStyle(color: ascent,fontFamily: 'Montserrat'),),
-              actions: [
-                TextButton(
-                  child: Text("Okay",style: TextStyle(color: ascent,fontFamily: 'Montserrat')),
-                  onPressed:  () {
-                    setState(() {
-                      Navigator.pop(context);
-                      Navigator.push(context,MaterialPageRoute(builder: (context) => Login()));
-                    });
-                  },
-                ),
-              ],
-            ),
-          );
+            showDialog(
+              context: context,
+              builder: (context) => AlertDialog(
+                backgroundColor: primary,
+                title: const Text("FashionTime",style: TextStyle(color: ascent,fontFamily: 'Montserrat',fontWeight: FontWeight.bold),),
+                content: const Text("Password changed successfully.",style: TextStyle(color: ascent,fontFamily: 'Montserrat'),),
+                actions: [
+                  TextButton(
+                    child: const Text("Okay",style: TextStyle(color: ascent,fontFamily: 'Montserrat')),
+                    onPressed:  () {
+                      setState(() {
+                        Navigator.pop(context);
+                        Navigator.push(context,MaterialPageRoute(builder: (context) => const Login()));
+                      });
+                    },
+                  ),
+                ],
+              ),
+            );
+          }
+          else{
+            debugPrint("error in changing password==========>${value.body}");
+            setState(() {
+              loading=false;
+            });
+          }
+
         }).catchError((error){
           setState(() {
             loading = false;
@@ -120,11 +143,11 @@ class _ChangePasswordState extends State<ChangePassword> {
             context: context,
             builder: (context) => AlertDialog(
               backgroundColor: primary,
-              title: Text("FashionTime",style: TextStyle(color: ascent,fontFamily: 'Montserrat',fontWeight: FontWeight.bold),),
-              content: Text(error.toString(),style: TextStyle(color: ascent,fontFamily: 'Montserrat'),),
+              title: const Text("FashionTime",style: TextStyle(color: ascent,fontFamily: 'Montserrat',fontWeight: FontWeight.bold),),
+              content: Text(error.toString(),style: const TextStyle(color: ascent,fontFamily: 'Montserrat'),),
               actions: [
                 TextButton(
-                  child: Text("Okay",style: TextStyle(color: ascent,fontFamily: 'Montserrat')),
+                  child: const Text("Okay",style: TextStyle(color: ascent,fontFamily: 'Montserrat')),
                   onPressed:  () {
                     setState(() {
                       Navigator.pop(context);
@@ -140,8 +163,14 @@ class _ChangePasswordState extends State<ChangePassword> {
       setState(() {
         loading = false;
       });
-      print(e);
+      debugPrint(e.toString());
     }
+  }
+  @override
+  void initState() {
+    // TODO: implement initState
+    getCashedData();
+    super.initState();
   }
 
   @override
@@ -149,7 +178,7 @@ class _ChangePasswordState extends State<ChangePassword> {
     return Container(
       decoration: BoxDecoration(
         color: secondary,
-        image: DecorationImage(
+        image: const DecorationImage(
             image: AssetImage(
                 "assets/background.jpg"
             ),
@@ -165,20 +194,64 @@ class _ChangePasswordState extends State<ChangePassword> {
               crossAxisAlignment: CrossAxisAlignment.center,
               children: [
                 SizedBox(height: MediaQuery.of(context).size.height * 0.1,),
-                SizedBox(height: 30,),
+                const SizedBox(height: 30,),
                 WidgetAnimator(
                   Row(
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [
-                      Container(
-                          child: Image.asset("assets/logo.png",height: 150,)
-                      ),
+                      Image.asset("assets/logo.png",height: 150,),
                     ],
                   ),
                 ),
-                SizedBox(height: 50,),
+                const SizedBox(height: 50,),
                 WidgetAnimator(
-                  Container(
+                  SizedBox(
+                    width: MediaQuery.of(context).size.width * 0.7,
+                    child: TextField(
+                      inputFormatters: [
+                        FilteringTextInputFormatter.deny(
+                            RegExp(r'\s')),
+                      ],
+                      controller: password3,
+                      style: const TextStyle(
+                          color: Colors.pink,
+                          fontFamily: 'Montserrat'
+                      ),
+                      decoration: InputDecoration(
+                        suffixIcon: IconButton(
+                          icon: Icon(eye3 == true ?Icons.visibility:Icons.visibility_off,color: Colors.black54,),
+                          onPressed: (){
+                            setState(() {
+                              eye3 = !eye3;
+                            });
+                          },
+                        ),
+                        hintStyle: const TextStyle(
+                            color: Colors.black54,
+                            fontSize: 17,
+                            fontWeight: FontWeight.w400,
+                            fontFamily: 'Montserrat'
+                        ),
+                        enabledBorder: const UnderlineInputBorder(
+                          borderSide: BorderSide(color: Colors.black54),
+                        ),
+                        focusedBorder: const UnderlineInputBorder(
+                          borderSide: BorderSide(color: Colors.pink),
+                        ),
+                        //enabledBorder: InputBorder.none,
+                        errorBorder: InputBorder.none,
+                        //disabledBorder: InputBorder.none,
+                        alignLabelWithHint: true,
+                        hintText: "Enter old password",
+                      ),
+                      cursorColor: Colors.pink,
+                      obscureText: eye3,
+                    ),
+                  ),
+                ),
+                const SizedBox(height: 10,),
+                WidgetAnimator(
+                  SizedBox(
                     width: MediaQuery.of(context).size.width * 0.7,
                     child: TextField(
                       inputFormatters: [
@@ -186,7 +259,7 @@ class _ChangePasswordState extends State<ChangePassword> {
                             RegExp(r'\s')),
                       ],
                       controller: password1,
-                      style: TextStyle(
+                      style: const TextStyle(
                           color: Colors.pink,
                           fontFamily: 'Montserrat'
                       ),
@@ -199,16 +272,16 @@ class _ChangePasswordState extends State<ChangePassword> {
                             });
                           },
                         ),
-                          hintStyle: TextStyle(
+                          hintStyle: const TextStyle(
                               color: Colors.black54,
                               fontSize: 17,
                               fontWeight: FontWeight.w400,
                               fontFamily: 'Montserrat'
                           ),
-                          enabledBorder: UnderlineInputBorder(
+                          enabledBorder: const UnderlineInputBorder(
                             borderSide: BorderSide(color: Colors.black54),
                           ),
-                          focusedBorder: UnderlineInputBorder(
+                          focusedBorder: const UnderlineInputBorder(
                             borderSide: BorderSide(color: Colors.pink),
                           ),
                           //enabledBorder: InputBorder.none,
@@ -222,9 +295,9 @@ class _ChangePasswordState extends State<ChangePassword> {
                     ),
                   ),
                 ),
-                SizedBox(height: 10,),
+                const SizedBox(height: 10,),
                 WidgetAnimator(
-                  Container(
+                  SizedBox(
                     width: MediaQuery.of(context).size.width * 0.7,
                     child: TextField(
                       inputFormatters: [
@@ -232,7 +305,7 @@ class _ChangePasswordState extends State<ChangePassword> {
                             RegExp(r'\s')),
                       ],
                       controller: password2,
-                      style: TextStyle(
+                      style: const TextStyle(
                           color: Colors.pink,
                           fontFamily: 'Montserrat'
                       ),
@@ -245,16 +318,16 @@ class _ChangePasswordState extends State<ChangePassword> {
                               });
                             },
                           ),
-                          hintStyle: TextStyle(
+                          hintStyle: const TextStyle(
                               color: Colors.black54,
                               fontSize: 17,
                               fontWeight: FontWeight.w400,
                               fontFamily: 'Montserrat'
                           ),
-                          enabledBorder: UnderlineInputBorder(
+                          enabledBorder: const UnderlineInputBorder(
                             borderSide: BorderSide(color: Colors.black54),
                           ),
-                          focusedBorder: UnderlineInputBorder(
+                          focusedBorder: const UnderlineInputBorder(
                             borderSide: BorderSide(color: Colors.pink),
                           ),
                           //enabledBorder: InputBorder.none,
@@ -268,12 +341,12 @@ class _ChangePasswordState extends State<ChangePassword> {
                     ),
                   ),
                 ),
-                SizedBox(height: 50,),
+                const SizedBox(height: 50,),
                 WidgetAnimator(
                     Row(
                       mainAxisAlignment: MainAxisAlignment.center,
                       children: [
-                        loading == true ? SpinKitCircle(color: ascent,size: 70,) : Container(
+                        loading == true ? const SpinKitCircle(color: ascent,size: 70,) : Container(
                           height: 35,
                           decoration: BoxDecoration(
                               borderRadius: BorderRadius.circular(15.0),

@@ -1,3 +1,5 @@
+import 'package:FashionTime/screens/pages/maintainence.dart';
+import 'package:FashionTime/screens/pages/shared_post.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:connectycube_flutter_call_kit/connectycube_flutter_call_kit.dart';
 import 'package:FashionTime/screens/pages/CallConfirmation.dart';
@@ -10,17 +12,13 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
-import 'package:get/get.dart';
-import 'package:get/get_core/src/get_main.dart';
+import 'package:go_router/go_router.dart';
 import 'package:google_mobile_ads/google_mobile_ads.dart';
 import 'package:provider/provider.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'authentication/splash_screen.dart';
 import 'dart:io' show Platform;
 import 'package:flutter/foundation.dart' show kIsWeb, defaultTargetPlatform;
-
-
-
 
 
 GlobalKey<NavigatorState> navigatorKey = GlobalKey<NavigatorState>();
@@ -62,10 +60,33 @@ Future<void> _firebaseMessagingBackgroundHandler(RemoteMessage message) async {
 
   print("Message ==> ${message.notification!.body}");
 }
+class RouterManager {
+  static final GoRouter router = GoRouter(
+    initialLocation: '/home',
+    errorPageBuilder: (context, state) => const MaterialPage(child: Scaffold(body: Text('404 Not Found'))),
+    routes: [
+      GoRoute(
+        path: '/home',
+        builder: (context, state) => MyApp(),
+      ),
+      GoRoute(
+        path: '/details/:postId',
+        builder: (context, state) {
+          // Extract the parameter value from the state
+          final postId = state.pathParameters['postId'];
+          // Use the parameter value in your widget
+          return MyAppShare(postId: postId!);
+        },
+      ),
+    ],
+  );
+}
 
 Future<void> main() async {
 
   WidgetsFlutterBinding.ensureInitialized();
+  final themeNotifier = ThemeNotifier();
+  await themeNotifier.loadFromPrefs();
   MobileAds.instance.initialize();
   await Firebase.initializeApp();
   await FirebaseMessaging.instance.setForegroundNotificationPresentationOptions(
@@ -79,10 +100,11 @@ Future<void> main() async {
 
   SystemChrome.setPreferredOrientations([DeviceOrientation.portraitUp])
       .then((_) {
-
-    runApp(MyApp());
-
-
+     runApp(
+       ChangeNotifierProvider(create: (_)=>themeNotifier,child: MyApp() ,)
+           //MaterialApp.router(routerConfig: RouterManager.router)
+        );
+    // runApp( const MyApp());
   });
 }
 
@@ -163,7 +185,7 @@ fireNotification() async {
           notification.hashCode,
           notification.title,
           notification.body,
-          NotificationDetails(
+          const NotificationDetails(
             iOS: IOSNotificationDetails(
               subtitle: "hello",
             ),
@@ -196,33 +218,108 @@ fireNotification() async {
 
 
 
+// class MyApp extends StatelessWidget {
+//   const MyApp({super.key});
+//
+//   // This widget is the root of your application.
+//   @override
+//   Widget build(BuildContext context) {
+//     return MultiProvider(
+//       providers: [
+//         ChangeNotifierProvider<ThemeNotifier>(
+//           create: (_) => ThemeNotifier(),
+//         ),
+//       ],
+//       child: Consumer<ThemeNotifier>(
+//         builder: (context, ThemeNotifier notifier, child) {
+//           return MaterialApp(
+//             navigatorKey: navigatorKey,
+//             debugShowCheckedModeBanner:false,
+//             title: 'Fashion Time',
+//             theme: notifier.darkTheme == true ? dark : light,
+//             home: const TempScreen(),
+//             //home:PickupCall()
+//           );
+//         }
+//       ),
+//     );
+//   }
+// }
 class MyApp extends StatelessWidget {
-  const MyApp({super.key});
-
-  // This widget is the root of your application.
   @override
   Widget build(BuildContext context) {
-    return MultiProvider(
-      providers: [
-        ChangeNotifierProvider<ThemeNotifier>(
-          create: (_) => ThemeNotifier(),
-        ),
-      ],
-      child: Consumer<ThemeNotifier>(
-        builder: (context, ThemeNotifier notifier, child) {
-          return MaterialApp(
-            navigatorKey: navigatorKey,
-            debugShowCheckedModeBanner:false,
-            title: 'Fashion Time',
-            theme: notifier.darkTheme == true ? dark : light,
-            home: TempScreen(),
-            //home:PickupCall()
-          );
-        }
-      ),
+    return Consumer<ThemeNotifier>(
+      builder: (context, notifier, child) {
+        return MaterialApp(
+          navigatorKey: GlobalKey<NavigatorState>(),
+          debugShowCheckedModeBanner: false,
+          title: 'Fashion Time',
+          theme: notifier.darkTheme ? dark : light,
+           home: const TempScreen(),
+          // home: MaintainenceScreen(),
+        );
+      },
     );
   }
 }
+
+class MyAppShare extends StatelessWidget {
+  final String postId;
+
+  MyAppShare({Key? key, required this.postId}) : super(key: key);
+
+  @override
+  Widget build(BuildContext context) {
+    return Consumer<ThemeNotifier>(
+      builder: (context, notifier, child) {
+        return MaterialApp(
+          navigatorKey: GlobalKey<NavigatorState>(),
+          debugShowCheckedModeBanner: false,
+          title: 'Fashion Time',
+          theme: notifier.darkTheme ? dark : light,
+          home: SharePost(postId: postId),
+        );
+      },
+    );
+  }
+}
+// class MyAppShare extends StatelessWidget {
+//   String postId;
+//    MyAppShare({super.key,required this.postId});
+//
+//   // This widget is the root of your application.
+//   @override
+//   Widget build(BuildContext context) {
+//     return MultiProvider(
+//       providers: [
+//         ChangeNotifierProvider<ThemeNotifier>(
+//           create: (_) => ThemeNotifier(),
+//         ),
+//       ],
+//       child: Consumer<ThemeNotifier>(
+//           builder: (context, ThemeNotifier notifier, child) {
+//             return MaterialApp(
+//               navigatorKey: navigatorKey,
+//               debugShowCheckedModeBanner:false,
+//               title: 'Fashion Time',
+//               theme: notifier.darkTheme == true ? dark : light,
+//               home: SharePost(postId: postId),
+//               //home:PickupCall()
+//             );
+//           }
+//       ),
+//     );
+//   }
+// }
+// class MyApp extends StatelessWidget {
+//   @override
+//   Widget build(BuildContext context) {
+//     return MaterialApp.router(
+//       routerDelegate: router.routerDelegate,
+//       routeInformationParser: router.routeInformationParser,
+//     );
+//   }
+// }
 
 class TempScreen extends StatefulWidget {
   const TempScreen({super.key});
@@ -287,7 +384,7 @@ class _TempScreenState extends State<TempScreen> {
       if(event.docs.length <= 0){
         print("outer if body");
 
-        Navigator.push(context,MaterialPageRoute(builder: (context) => SplashScreen()));
+        Navigator.push(context,MaterialPageRoute(builder: (context) => const SplashScreen()));
       }else {
         for (var change in event.docChanges) {
           switch (change.type) {
@@ -304,7 +401,7 @@ class _TempScreenState extends State<TempScreen> {
               else {
                 print("inner else");
 
-                Navigator.push(context,MaterialPageRoute(builder: (context) => SplashScreen()));
+                Navigator.push(context,MaterialPageRoute(builder: (context) => const SplashScreen()));
               }
               print("New City: ${change.doc.data()}");
               break;
@@ -324,7 +421,7 @@ class _TempScreenState extends State<TempScreen> {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(body: Text(""),);
+    return const Scaffold(body: Text(""),);
   }
 }
 

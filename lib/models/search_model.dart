@@ -6,6 +6,7 @@ class SearchModel {
   late String username;
   late String fcmToken;
   late Map<String,dynamic> badge;
+  late Map<String,dynamic> most_recent_story;
 
   SearchModel(
       this.id,
@@ -14,7 +15,8 @@ class SearchModel {
       this.email,
       this.username,
       this.fcmToken,
-      this.badge
+      this.badge,
+      this.most_recent_story
       );
 }
 

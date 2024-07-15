@@ -120,13 +120,13 @@ class _SearchFriendState extends State<SearchFriend> {
                     primary,
                   ])
           ),),
-        title: Text("Select Friends",style: TextStyle(fontFamily: 'Montserrat'),),
+        title: const Text("Select Friends",style: TextStyle(fontFamily: 'Montserrat'),),
       ),
       body:
-      friends.length<=0?Center(child: Text("No Friends"),):
+      friends.length<=0?const Center(child: Text("No Friends"),):
       Column(
         children: [
-          SizedBox(height: 10,),
+          const SizedBox(height: 10,),
           // WidgetAnimator(
           //   Container(
           //     alignment: Alignment.bottomCenter,
@@ -198,8 +198,8 @@ class _SearchFriendState extends State<SearchFriend> {
           //     ),
           //   ),
           // ),
-          SizedBox(height: 10,),
-          loading == true ? SpinKitCircle(color: primary,size: 50,) :(friends.length <= 0 ? Center(
+          const SizedBox(height: 10,),
+          loading == true ? SpinKitCircle(color: primary,size: 50,) :(friends.length <= 0 ? const Center(
               child: Text("No People.")) : Expanded(
             child: ListView.builder(
                 itemCount: friends.length,
@@ -211,23 +211,23 @@ class _SearchFriendState extends State<SearchFriend> {
                         padding: const EdgeInsets.all(10.0),
                         child: Row(
                           children: [
-                            SizedBox(width: 20,),
+                            const SizedBox(width: 20,),
                             Container(
                               height:50,
                               width: 50,
                               decoration: BoxDecoration(
                                   color: Colors.black.withOpacity(0.6),
-                                  borderRadius: BorderRadius.all(Radius.circular(120))
+                                  borderRadius: const BorderRadius.all(Radius.circular(120))
                               ),
                               child: ClipRRect(
-                                borderRadius: BorderRadius.all(Radius.circular(120)),
+                                borderRadius: const BorderRadius.all(Radius.circular(120)),
                                 child: CachedNetworkImage(
                                   imageUrl: friends[index].pic,
                                   imageBuilder: (context, imageProvider) => Container(
                                     height:50,
                                     width: 50,
                                     decoration: BoxDecoration(
-                                      borderRadius: BorderRadius.all(Radius.circular(120)),
+                                      borderRadius: const BorderRadius.all(Radius.circular(120)),
                                       image: DecorationImage(
                                         image: imageProvider,
                                         fit: BoxFit.cover,
@@ -236,14 +236,15 @@ class _SearchFriendState extends State<SearchFriend> {
                                   ),
                                   placeholder: (context, url) => SpinKitCircle(color: primary,size: 20,),
                                   errorWidget: (context, url, error) => ClipRRect(
-                                      borderRadius: BorderRadius.all(Radius.circular(50)),
+                                      borderRadius: const BorderRadius.all(Radius.circular(50)),
                                       child: Image.network("https://firebasestorage.googleapis.com/v0/b/fashiontime-28e3a.appspot.com/o/WhatsApp_Image_2023-11-08_at_4.48.19_PM-removebg-preview.png?alt=media&token=215bdc12-d53a-4772-bca1-efbbdf6ee955&_gl=1*nea8nk*_ga*NDIyMTUzOTQ2LjE2OTkyODU3MDg.*_ga_CW55HF8NVT*MTY5OTQ0NDE2NS4zMy4xLjE2OTk0NDUxNzcuNTYuMC4w",width: 40,height: 40,)
                                   ),
                                 ),
                               ),
                             ),
-                            SizedBox(width: 20,),
+                            //const SizedBox(width: 20,),
                             Column(
+                              mainAxisAlignment: MainAxisAlignment.start,
                               children: [
                                 Row(
                                   mainAxisAlignment: MainAxisAlignment.start,
@@ -254,12 +255,12 @@ class _SearchFriendState extends State<SearchFriend> {
                                 Row(
                                   mainAxisAlignment: MainAxisAlignment.start,
                                   children: [
-                                    Text("@"+friends[index].username,style: TextStyle(fontFamily: 'Montserrat'),),
+                                    Text(friends[index].username,style: const TextStyle(fontFamily: 'Montserrat'),),
                                   ],
                                 )
                               ],
                             ),
-                            Expanded(child: SizedBox(width: 20,)),
+                            const Expanded(child: SizedBox(width: 20,)),
                             friends[index].flag == true ?GestureDetector(
                                 onTap: (){
                                   if(friends[index].flag == true){
@@ -292,7 +293,7 @@ class _SearchFriendState extends State<SearchFriend> {
                                 });
                               }
                             }, child: Icon(Icons.add,color: primary,)),
-                            SizedBox(width: 20,),
+                            const SizedBox(width: 20,),
                           ],
                         ),
                       ),
@@ -322,7 +323,7 @@ class _SearchFriendState extends State<SearchFriend> {
                                   height:50,
                                   width: 50,
                                   decoration: BoxDecoration(
-                                    borderRadius: BorderRadius.all(Radius.circular(120)),
+                                    borderRadius: const BorderRadius.all(Radius.circular(120)),
                                     image: DecorationImage(
                                       image: imageProvider,
                                       fit: BoxFit.cover,
@@ -339,7 +340,7 @@ class _SearchFriendState extends State<SearchFriend> {
                                 child: Container(
                                   height:50,
                                   width: 50,
-                                  decoration: BoxDecoration(
+                                  decoration: const BoxDecoration(
                                       borderRadius: BorderRadius.all(Radius.circular(120)),
                                       image: DecorationImage(
                                           fit: BoxFit.cover,
@@ -351,13 +352,13 @@ class _SearchFriendState extends State<SearchFriend> {
                             ),
                           ],
                         ),
-                        Text(members[index]["name"],style: TextStyle(fontSize: 12),)
+                        Text(members[index]["name"],style: const TextStyle(fontSize: 12),)
                       ],
                     ),
                   ),
               ),
             ),
-            members.length <= 0 ? SizedBox() : GestureDetector(
+            members.length <= 0 ? const SizedBox() : GestureDetector(
               onTap: (){
                 Navigator.push(context, MaterialPageRoute(builder: (context) => AddGroup(
                   members: members,

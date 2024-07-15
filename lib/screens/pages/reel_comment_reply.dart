@@ -97,6 +97,31 @@ class _ReelCommentReplyScreenState extends State<ReelCommentReplyScreen> {
       debugPrint("error in reply api ${error.toString()}");
     }
   }
+  String formatTimeDifference(String dateString) {
+    DateTime createdAt = DateTime.parse(dateString);
+    DateTime now = DateTime.now();
+
+    Duration difference = now.difference(createdAt);
+
+    if (difference.inSeconds < 60) {
+      return '${difference.inSeconds} seconds ago';
+    } else if (difference.inMinutes < 60) {
+      return '${difference.inMinutes} minutes ago';
+    } else if (difference.inHours < 24) {
+      return '${difference.inHours} hours ago';
+    } else if (difference.inDays < 7) {
+      return '${difference.inDays} days ago';
+    } else if (difference.inDays < 30) {
+      int weeks = (difference.inDays / 7).floor();
+      return '$weeks ${weeks == 1 ? 'week' : 'weeks'} ago';
+    } else if (difference.inDays < 365) {
+      int months = (difference.inDays / 30).floor();
+      return '$months ${months == 1 ? 'month' : 'months'} ago';
+    } else {
+      int years = (difference.inDays / 365).floor();
+      return '$years ${years == 1 ? 'year' : 'years'} ago';
+    }
+  }
   createCommentReply(int commentId,int userId) async {
     setState(() {
       loading1=true;
@@ -218,8 +243,8 @@ class _ReelCommentReplyScreenState extends State<ReelCommentReplyScreen> {
                                     ),
                                   ),
                                 )),
-                            title: Text(myReplyComments[index]["user"]["username"],style: const TextStyle(fontFamily: "Montserrat",fontWeight: FontWeight.w400)),
-                            subtitle: Text(handleEmojis(myReplyComments[index]["comment"]),style: const TextStyle(fontFamily: "Montserrat"),),
+                            title: Text(myReplyComments[index]["user"]["username"],style: const TextStyle(fontFamily: "Montserrat",fontWeight: FontWeight.w900)),
+                            subtitle: Flexible(child: Text(handleEmojis(myReplyComments[index]["comment"]),style: const TextStyle(fontFamily: "Montserrat"),)),
                             trailing: Text(DateFormat.jm().format(DateTime.parse(myReplyComments[index]["created"]).toLocal())),
                           ),
                         ) ,
@@ -276,8 +301,8 @@ class _ReelCommentReplyScreenState extends State<ReelCommentReplyScreen> {
                             subtitle: Row(
                               children: [
                                 Text(handleEmojis(widget.commentName),style:  TextStyle(fontFamily: "Montserrat",fontWeight: FontWeight.bold,color: primary),),
-                                const SizedBox(width: 4,),
-                                Text(handleEmojis(replyComments[index]["comment"]),style: const TextStyle(fontFamily: "Montserrat"),),
+                                const SizedBox(width: 2,),
+                                Flexible(child: Text(handleEmojis(replyComments[index]["comment"]),style: const TextStyle(fontFamily: "Montserrat"),)),
                               ],
                             ),
                             trailing: Text(DateFormat.jm().format(DateTime.parse(replyComments[index]["created"]).toLocal())),

@@ -34,13 +34,13 @@ class _ChannelLeftState extends State<ChannelLeft> {
             ),
           ),
           backgroundColor: primary,
-          title: Text("Video Call Ended", style: TextStyle(fontFamily: 'Montserrat')),
+          title: const Text("Video Call Ended", style: TextStyle(fontFamily: 'Montserrat')),
         ),
         body: Center(
           child:Container(
             height: 300,
             width: 300,
-            child:Center(child: Text(
+            child:const Center(child: Text(
               "You left the Video Call",
               style: TextStyle(
                 fontFamily: 'Montserrat', // Set the font family

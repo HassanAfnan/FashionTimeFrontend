@@ -88,7 +88,7 @@ class _AddChatScreenState extends State<AddChatScreen> {
   }
 
   startMessaging(friendPic,friendUserName,friendName, friendToken,friendID){
-    List<String> users = [name,friendName];
+    List<Object> users = [name,friendName];
 
     String chatRoomId = "${name}_${friendName}";
 
@@ -96,7 +96,8 @@ class _AddChatScreenState extends State<AddChatScreen> {
       "name": name,
       "username" : username,
       "pic": pic,
-      "token": fcm
+      "token": fcm,
+      'isMute':false
     };
 
     Map<String, dynamic> friendData = {
@@ -112,7 +113,7 @@ class _AddChatScreenState extends State<AddChatScreen> {
       "chatRoomId" : chatRoomId,
       "userData": userData,
       "friendData": friendData,
-      "isBlock": false
+      "isBlock": false,
     };
 
     DatabaseMethods().addChatRoom(chatRoom, chatRoomId);
@@ -155,9 +156,9 @@ class _AddChatScreenState extends State<AddChatScreen> {
                   ])
           ),),
         backgroundColor: primary,
-        title: Text("Start chat",style: TextStyle(fontFamily: 'Montserrat'),),
+        title: const Text("Start chat",style: TextStyle(fontFamily: 'Montserrat'),),
       ),
-      body:loading == true ? SpinKitCircle(size: 50,color: primary,) : (friends.length<=0 ? Center(child: Text("No Friends")) :ListView.builder(
+      body:loading == true ? SpinKitCircle(size: 50,color: primary,) : (friends.length<=0 ? const Center(child: Text("No Friends")) :ListView.builder(
           itemCount: friends.length,
           itemBuilder: (context,index) => WidgetAnimator(
               GestureDetector(
@@ -171,20 +172,20 @@ class _AddChatScreenState extends State<AddChatScreen> {
                   padding: const EdgeInsets.all(10.0),
                   child: Row(
                     children: [
-                      SizedBox(width: 20,),
+                      const SizedBox(width: 20,),
                       Container(
-                        decoration: BoxDecoration(
+                        decoration: const BoxDecoration(
                             borderRadius: BorderRadius.all(Radius.circular(120))
                         ),
                         child: ClipRRect(
-                          borderRadius: BorderRadius.all(Radius.circular(120)),
+                          borderRadius: const BorderRadius.all(Radius.circular(120)),
                           child: CachedNetworkImage(
                             imageUrl: friends[index].pic,
                             imageBuilder: (context, imageProvider) => Container(
                               height:50,
                               width: 50,
                               decoration: BoxDecoration(
-                                borderRadius: BorderRadius.all(Radius.circular(120)),
+                                borderRadius: const BorderRadius.all(Radius.circular(120)),
                                 image: DecorationImage(
                                   image: imageProvider,
                                   fit: BoxFit.cover,
@@ -193,13 +194,13 @@ class _AddChatScreenState extends State<AddChatScreen> {
                             ),
                             placeholder: (context, url) => SpinKitCircle(color: primary,size: 20,),
                             errorWidget: (context, url, error) => ClipRRect(
-                                borderRadius: BorderRadius.all(Radius.circular(50)),
+                                borderRadius: const BorderRadius.all(Radius.circular(50)),
                                 child: Image.network("https://firebasestorage.googleapis.com/v0/b/fashiontime-28e3a.appspot.com/o/WhatsApp_Image_2023-11-08_at_4.48.19_PM-removebg-preview.png?alt=media&token=215bdc12-d53a-4772-bca1-efbbdf6ee955&_gl=1*nea8nk*_ga*NDIyMTUzOTQ2LjE2OTkyODU3MDg.*_ga_CW55HF8NVT*MTY5OTQ0NDE2NS4zMy4xLjE2OTk0NDUxNzcuNTYuMC4w",width: 40,height: 40,)
                             ),
                           ),
                         ),
                       ),
-                      SizedBox(width: 20,),
+                      const SizedBox(width: 20,),
                       Expanded(
                         child: Column(
                           children: [
@@ -212,7 +213,7 @@ class _AddChatScreenState extends State<AddChatScreen> {
                             Row(
                               mainAxisAlignment: MainAxisAlignment.start,
                               children: [
-                                Text("@"+friends[index].username,style: TextStyle(fontFamily: 'Montserrat'),),
+                                Text(friends[index].username,style: const TextStyle(fontFamily: 'Montserrat'),),
                               ],
                             )
                           ],
@@ -220,7 +221,7 @@ class _AddChatScreenState extends State<AddChatScreen> {
                       ),
                       IconButton(onPressed: (){
                           startMessaging(friends[index].pic,friends[index].username,friends[index].name,friends[index].fcmToken,friends[index].id);
-                      }, icon: Icon(Icons.chat))
+                      }, icon: const Icon(Icons.chat))
                     ],
                   ),
                 ),

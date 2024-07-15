@@ -1,6 +1,10 @@
 
 
-import 'package:FashionTime/authentication/change_password_profile.dart';
+import 'package:FashionTime/authentication/change_email.dart';
+import 'package:FashionTime/authentication/change_password.dart';
+import 'package:FashionTime/authentication/change_username.dart';
+import 'package:FashionTime/authentication/forget_password_profile.dart';
+import 'package:FashionTime/authentication/email.dart';
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
@@ -62,6 +66,7 @@ class _PersonalSettingScreenState extends State<PersonalSettingScreen> {
               padding: const EdgeInsets.only(left:25.0,right: 25.0,top: 8.0,bottom: 8.0),
               child: TextField(
               controller: usernameController,
+                enabled: false,
                 style: TextStyle(
                     color: primary,
                     fontFamily: 'Montserrat'
@@ -88,7 +93,7 @@ class _PersonalSettingScreenState extends State<PersonalSettingScreen> {
             const SizedBox(height: 10,),
             GestureDetector(
               onTap: () {
-
+                Navigator.push(context, MaterialPageRoute(builder: (context) => const ChangeUsernameScreen(),));
               },
               child: WidgetAnimator(Card(
                 shape: const RoundedRectangleBorder(
@@ -122,36 +127,35 @@ class _PersonalSettingScreenState extends State<PersonalSettingScreen> {
         WidgetAnimator(
           Padding(
             padding: const EdgeInsets.only(left:25.0,right: 25.0,top: 8.0,bottom: 8.0),
-            child: Container(
-              child: TextField(
-                controller: emailController,
-                style: TextStyle(
-                    color: primary,
-                    fontFamily: 'Montserrat'
-                ),
-                decoration: InputDecoration(
-                    hintStyle: const TextStyle(
-                      //color: Colors.black54,
-                        fontSize: 17,
-                        fontWeight: FontWeight.w400,
-                        fontFamily: 'Montserrat'
-                    ),
-                    focusedBorder: OutlineInputBorder(
-                      borderSide: BorderSide(width: 1, color: primary),
-                    ),
-                    focusColor: primary,
-                    alignLabelWithHint: true,
-                    hintText: "Email"
-                ),
-                cursorColor: primary,
+            child: TextField(
+              controller: emailController,
+              enabled: false,
+              style: TextStyle(
+                  color: primary,
+                  fontFamily: 'Montserrat'
               ),
+              decoration: InputDecoration(
+                  hintStyle: const TextStyle(
+                    //color: Colors.black54,
+                      fontSize: 17,
+                      fontWeight: FontWeight.w400,
+                      fontFamily: 'Montserrat'
+                  ),
+                  focusedBorder: OutlineInputBorder(
+                    borderSide: BorderSide(width: 1, color: primary),
+                  ),
+                  focusColor: primary,
+                  alignLabelWithHint: true,
+                  hintText: "Email"
+              ),
+              cursorColor: primary,
             ),
           ),
         ),
             const SizedBox(height: 10,),
             GestureDetector(
               onTap: () {
-
+            Navigator.push(context, MaterialPageRoute(builder: (context) => const ChangeEmailScreen(),));
               },
               child: WidgetAnimator(Card(
                 shape: const RoundedRectangleBorder(
@@ -182,40 +186,45 @@ class _PersonalSettingScreenState extends State<PersonalSettingScreen> {
                 ),
               )),
             ),
-        // WidgetAnimator(
-        //   Padding(
-        //     padding: const EdgeInsets.only(left:25.0,right: 25.0,top: 8.0,bottom: 8.0),
-        //     child: Container(
-        //       child: TextField(
-        //
-        //         style: TextStyle(
-        //             color: primary,
-        //             fontFamily: 'Montserrat'
-        //         ),
-        //         decoration: InputDecoration(
-        //             hintStyle: const TextStyle(
-        //               //color: Colors.black54,
-        //                 fontSize: 17,
-        //                 fontWeight: FontWeight.w400,
-        //                 fontFamily: 'Montserrat'
-        //             ),
-        //             focusedBorder: OutlineInputBorder(
-        //               borderSide: BorderSide(width: 1, color: primary),
-        //             ),
-        //             focusColor: primary,
-        //             alignLabelWithHint: true,
-        //             hintText: "password"
-        //         ),
-        //         cursorColor: primary,
-        //       ),
-        //     ),
-        //   ),
-        // ),
             const SizedBox(height: 30,),
 
             GestureDetector(
               onTap: () {
-              Navigator.push(context, MaterialPageRoute(builder: (context) => const ChangePasswordViaProfileScreen(),));
+              Navigator.push(context, MaterialPageRoute(builder: (context) => const EmailScreen(),));
+              },
+              child: WidgetAnimator(Card(
+                shape: const RoundedRectangleBorder(
+                    borderRadius: BorderRadius.all(Radius.circular(12))
+                ),
+                child: Container(
+                  alignment: Alignment.center,
+                  height: 35,
+                  width: MediaQuery.of(context).size.width * 0.8,
+                  decoration: BoxDecoration(
+                      gradient: LinearGradient(
+                          begin: Alignment.topLeft,
+                          end: Alignment.topRight,
+                          stops: const [0.0, 0.99],
+                          tileMode: TileMode.clamp,
+                          colors: <Color>[
+                            secondary,
+                            primary,
+                          ]),
+                      borderRadius: const BorderRadius.all(Radius.circular(12))
+                  ),
+                  child: const Text('Forgot Password?',style: TextStyle(
+                      fontSize: 18,
+                      color: ascent,
+                      fontWeight: FontWeight.w700,
+                      fontFamily: 'Montserrat'
+                  ),),
+                ),
+              )),
+            ),
+            const SizedBox(height: 30,),
+            GestureDetector(
+              onTap: () {
+                Navigator.push(context, MaterialPageRoute(builder: (context) => const ChangePassword(code: "12345", ),));
               },
               child: WidgetAnimator(Card(
                 shape: const RoundedRectangleBorder(

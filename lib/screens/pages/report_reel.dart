@@ -71,7 +71,7 @@ class _ReelReportScreenState extends State<ReelReportScreen> {
     } else if (harassment == true) {
       requestBody['reportReason'] = 'harassment';
     } else if (violence == true) {
-      requestBody['reportReason'] = 'violence';
+      requestBody['reportReason'] = 'voilence';
     }
 
     try {

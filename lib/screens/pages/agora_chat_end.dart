@@ -34,17 +34,17 @@ class _DestroyChatState extends State<DestroyChat> {
           ),
         ),
         backgroundColor: primary,
-        title: Text("Video Call ", style: TextStyle(fontFamily: 'Montserrat')),
+        title: const Text("Video Call ", style: TextStyle(fontFamily: 'Montserrat')),
       ),
       body: Center(
         child:
         AlertDialog(
           backgroundColor: primary,
-          title: Text("FashionTime",style: TextStyle(color: ascent,fontFamily: 'Montserrat',fontWeight: FontWeight.bold),),
-          content: Text("Video Call has been disconnected or the User is not answering the call.",style: TextStyle(color: ascent,fontFamily: 'Montserrat'),),
+          title: const Text("FashionTime",style: TextStyle(color: ascent,fontFamily: 'Montserrat',fontWeight: FontWeight.bold),),
+          content: const Text("Video Call has been disconnected or the User is not answering the call.",style: TextStyle(color: ascent,fontFamily: 'Montserrat'),),
           actions: [
             TextButton(
-              child: Text("Yes",style: TextStyle(color: ascent,fontFamily: 'Montserrat'),),
+              child: const Text("Yes",style: TextStyle(color: ascent,fontFamily: 'Montserrat'),),
               onPressed:  () async {
                 DatabaseMethods().endCallRoom(widget.Channelname.toString());
                 Navigator.pop(context);

@@ -1,11 +1,19 @@
+import 'dart:convert';
+import 'dart:io';
+
+import 'package:cached_network_image/cached_network_image.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:FashionTime/screens/pages/groups/all_groups.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_spinkit/flutter_spinkit.dart';
+import 'package:fluttertoast/fluttertoast.dart';
+import 'package:http_parser/http_parser.dart';
+import 'package:image_picker/image_picker.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:uuid/uuid.dart';
-
+import 'package:http/http.dart'as https;
 import '../../../animations/bottom_animation.dart';
+import '../../../helpers/multipart_request.dart';
 import '../../../utils/constants.dart';
 
 class AddGroup extends StatefulWidget {
@@ -26,6 +34,9 @@ class _AddGroupState extends State<AddGroup> {
   String ownerToken = "";
   String ownerEmail = "";
   String ownerPic = "";
+  File _image = File("");
+  ImagePicker picker = ImagePicker();
+  String imageLink='';
 
   getCashedData() async {
     SharedPreferences preferences = await SharedPreferences.getInstance();
@@ -54,7 +65,7 @@ class _AddGroupState extends State<AddGroup> {
               gradient: LinearGradient(
                   begin: Alignment.topLeft,
                   end: Alignment.topRight,
-                  stops: [0.0, 0.99],
+                  stops: const [0.0, 0.99],
                   tileMode: TileMode.clamp,
                   colors: <Color>[
                     secondary,
@@ -62,11 +73,76 @@ class _AddGroupState extends State<AddGroup> {
                   ])
           ),),
         backgroundColor: primary,
-        title: Text("Add Group",style: TextStyle(fontFamily: 'Montserrat'),),
+        title: const Text("Add Group",style: TextStyle(fontFamily: 'Montserrat'),),
       ),
       body: ListView(
         children: [
+          const SizedBox(height: 10,),
+          _image.path != ""
+              ? CircleAvatar(
+            radius: 50,
+            child: ClipRRect(
+                borderRadius: const BorderRadius.all(
+                    Radius.circular(100)),
+                child: Container(
+                  height:
+                  100,
+                  width: 100,
+                  decoration: BoxDecoration(
+                      image: DecorationImage(
+                          fit: BoxFit.cover,
+                          image: FileImage(_image))),
+                )),
+          )
+              : CircleAvatar(
+            radius: 50,
+            child: Container(
+              decoration: const BoxDecoration(
+                  borderRadius:
+                  BorderRadius.all(Radius.circular(120))),
+              child: ClipRRect(
+                borderRadius: const BorderRadius.all(
+                    Radius.circular(120)),
+                child: CachedNetworkImage(
+                  imageUrl:
+                       "https://firebasestorage.googleapis.com/v0/b/fashiontime-28e3a.appspot.com/o/WhatsApp_Image_2023-11-08_at_4.48.19_PM-removebg-preview.png?alt=media&token=215bdc12-d53a-4772-bca1-efbbdf6ee955&_gl=1*nea8nk*_ga*NDIyMTUzOTQ2LjE2OTkyODU3MDg.*_ga_CW55HF8NVT*MTY5OTQ0NDE2NS4zMy4xLjE2OTk0NDUxNzcuNTYuMC4w",
+
+                  imageBuilder: (context, imageProvider) =>
+                      Container(
+                        height:
+                       100,
+                        width: 100,
+                        decoration: BoxDecoration(
+                          image: DecorationImage(
+                            image: imageProvider,
+                            fit: BoxFit.cover,
+                          ),
+                        ),
+                      ),
+                  placeholder: (context, url) =>
+                      SpinKitCircle(
+                        color: primary,
+                        size: 60,
+                      ),
+                  errorWidget: (context, url, error) =>
+                  const Icon(Icons.error),
+                ),
+              ),
+            ),
+          ),
           SizedBox(height: 10,),
+          GestureDetector(
+            onTap: () {
+              uploadImage();
+            },
+            child: Center(
+              child: Text(
+                "Select your group image",
+                style:
+                TextStyle(color: primary, fontFamily: 'Montserrat'),
+              ),
+            ),
+          ),
           WidgetAnimator(
             Padding(
               padding: const EdgeInsets.only(left:30.0,right: 30.0,top: 8.0,bottom: 8.0),
@@ -78,7 +154,7 @@ class _AddGroupState extends State<AddGroup> {
                       fontFamily: 'Montserrat'
                   ),
                   decoration: InputDecoration(
-                      hintStyle: TextStyle(
+                      hintStyle: const TextStyle(
                         //color: Colors.black54,
                           fontSize: 17,
                           fontWeight: FontWeight.w400,
@@ -96,7 +172,7 @@ class _AddGroupState extends State<AddGroup> {
               ),
             ),
           ),
-          SizedBox(height: 10,),
+          const SizedBox(height: 10,),
           WidgetAnimator(
             Padding(
               padding: const EdgeInsets.only(left:30.0,right: 30.0,top: 8.0,bottom: 8.0),
@@ -109,7 +185,7 @@ class _AddGroupState extends State<AddGroup> {
                       fontFamily: 'Montserrat'
                   ),
                   decoration: InputDecoration(
-                      hintStyle: TextStyle(
+                      hintStyle: const TextStyle(
                         //color: Colors.black54,
                           fontSize: 17,
                           fontWeight: FontWeight.w400,
@@ -129,88 +205,169 @@ class _AddGroupState extends State<AddGroup> {
           ),
         ],
       ),
-      bottomNavigationBar:Container(
-        height: 75,
+      bottomNavigationBar:SizedBox(
+        height: 85,
         child: Column(
           children: [
             WidgetAnimator(
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  crossAxisAlignment: CrossAxisAlignment.center,
-                  children: [
-                    progress1 == true ? SpinKitCircle(color: primary,size: 50,) : Padding(
-                      padding: EdgeInsets.all(8.0),
-                      child: ElevatedButton(
-                          style: ButtonStyle(
-                              shape: MaterialStateProperty.all<RoundedRectangleBorder>(
-                                  RoundedRectangleBorder(
-                                    borderRadius: BorderRadius.circular(15.0),
-                                  )
-                              ),
-
-                              backgroundColor: MaterialStateProperty.all(primary),
-                              padding: MaterialStateProperty.all(EdgeInsets.only(
-                                  top: 8,bottom: 8,
-                                  left:MediaQuery.of(context).size.width * 0.26,right: MediaQuery.of(context).size.width * 0.26)),
-                              textStyle: MaterialStateProperty.all(
-                                  const TextStyle(fontSize: 14, color: Colors.white,fontFamily: 'Montserrat'))),
-                          onPressed: () {
-                            if(name.text.isNotEmpty){
-                              String uuid = Uuid().v4();
-                              print("uuid "+uuid.toString());
-                              createGroup(
-                                  {
-                                    "roomID":uuid,
-                                    "group_name": name.text,
-                                    "description": description.text,
-                                    "members": widget.members,
-                                    "users": widget.users,
-                                    "owner": {
-                                      "ownerId": ownerId,
-                                      "ownerToken": ownerToken,
-                                      "ownerName": ownerName,
-                                      "ownerEmail": ownerEmail,
-                                      "ownerPic": ownerPic
-                                    }
-                                  },
-                                  uuid
-                              );
-                            }
-                            else{
-                              showDialog(
-                                context: context,
-                                builder: (context) => AlertDialog(
-                                  backgroundColor: primary,
-                                  title: Text("FashionTime",style: TextStyle(color: ascent,fontFamily: 'Montserrat',fontWeight: FontWeight.bold),),
-                                  content: Text("Group name can not be empty",style: TextStyle(color: ascent,fontFamily: 'Montserrat'),),
-                                  actions: [
-                                    TextButton(
-                                      child: Text("Okay",style: TextStyle(color: ascent,fontFamily: 'Montserrat')),
-                                      onPressed:  () {
-                                        setState(() {
-                                          Navigator.pop(context);
-                                        });
+                Padding(
+                  padding: const EdgeInsets.only(left: 20,right: 20),
+                  child: Container(
+                    height: 44,
+                    decoration: BoxDecoration(
+                        borderRadius: BorderRadius.circular(15.0),
+                        gradient: LinearGradient(
+                            begin: Alignment.topLeft,
+                            end: Alignment.topRight,
+                            stops: const [0.0, 0.99],
+                            tileMode: TileMode.clamp,
+                            colors:
+                                 <Color>[
+                              secondary,
+                              primary,
+                            ])),
+                    child: Row(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      crossAxisAlignment: CrossAxisAlignment.center,
+                      children: [
+                        progress1 == true ? SpinKitCircle(color: primary,size: 50,) : Padding(
+                          padding: const EdgeInsets.all(8.0),
+                          child: ElevatedButton(
+                              style: ButtonStyle(
+                                  shape: MaterialStateProperty.all<
+                                      RoundedRectangleBorder>(
+                                      RoundedRectangleBorder(
+                                        borderRadius:
+                                        BorderRadius.circular(12.0),
+                                      )),
+                                  backgroundColor: MaterialStateProperty.all(
+                                      Colors.transparent),
+                                  shadowColor: MaterialStateProperty.all(
+                                      Colors.transparent),
+                                  // padding: MaterialStateProperty.all(EdgeInsets.only(
+                                  //
+                                  //
+                                  //     left: MediaQuery.of(context).size.width *
+                                  //         0.26,
+                                  //     right:
+                                  //     MediaQuery.of(context).size.width *
+                                  //         0.26)),
+                                  textStyle: MaterialStateProperty.all(
+                                      const TextStyle(
+                                          fontSize: 14,
+                                          color: Colors.white,
+                                          fontFamily: 'Montserrat'))),
+                              onPressed: () {
+                                if(name.text.isNotEmpty){
+                                  String uuid = const Uuid().v4();
+                                  print("uuid "+uuid.toString());
+                                  createGroup(
+                                      {
+                                        "roomID":uuid,
+                                        "pic":imageLink,
+                                        "group_name": name.text,
+                                        "description": description.text,
+                                        "members": widget.members,
+                                        "users": widget.users,
+                                        "owner": {
+                                          "ownerId": ownerId,
+                                          "ownerToken": ownerToken,
+                                          "ownerName": ownerName,
+                                          "ownerEmail": ownerEmail,
+                                          "ownerPic": ownerPic
+                                        }
                                       },
+                                      uuid
+                                  );
+                                }
+                                else{
+                                  showDialog(
+                                    context: context,
+                                    builder: (context) => AlertDialog(
+                                      backgroundColor: primary,
+                                      title: const Text("FashionTime",style: TextStyle(color: ascent,fontFamily: 'Montserrat',fontWeight: FontWeight.bold),),
+                                      content: const Text("Group name can not be empty",style: TextStyle(color: ascent,fontFamily: 'Montserrat'),),
+                                      actions: [
+                                        TextButton(
+                                          child: const Text("Okay",style: TextStyle(color: ascent,fontFamily: 'Montserrat')),
+                                          onPressed:  () {
+                                            setState(() {
+                                              Navigator.pop(context);
+                                            });
+                                          },
+                                        ),
+                                      ],
                                     ),
-                                  ],
-                                ),
-                              );
-                            }
+                                  );
+                                }
 
-                          },
-                          child: const Text('Create Group',style: TextStyle(
-                              fontSize: 20,
-                              fontWeight: FontWeight.w700,
-                              fontFamily: 'Montserrat'
-                          ),)),
+                              },
+                              child: const Text('Create Group',style: TextStyle(
+                                  fontSize: 20,
+                                  fontWeight: FontWeight.w700,
+                                  fontFamily: 'Montserrat'
+                              ),)),
+                        ),
+                      ],
                     ),
-                  ],
+                  ),
                 )
             ),
           ],
         ),
       ),
     );
+  }
+  uploadImage() {
+    showModalBottomSheet(
+        context: context,
+        builder: (BuildContext bc) {
+          return Container(
+            child: new Wrap(
+              children: <Widget>[
+                new ListTile(
+                    leading: new Icon(Icons.image),
+                    title: new Text(
+                      'Image from Gallery',
+                      style: const TextStyle(fontFamily: 'Montserrat'),
+                    ),
+                    onTap: () {
+                      _pickImageFromGallery();
+                    }),
+                new ListTile(
+                  leading: new Icon(Icons.camera_alt),
+                  title: new Text(
+                    'Capture image',
+                    style: const TextStyle(fontFamily: 'Montserrat'),
+                  ),
+                  onTap: () {
+                    _pickImageFromCamera();
+                  },
+                ),
+              ],
+            ),
+          );
+        });
+  }
+  _pickImageFromGallery() async {
+    Navigator.pop(context);
+    PickedFile? pickedFile = await picker.getImage(source: ImageSource.gallery);
+
+    File image = File(pickedFile!.path);
+    uploadMedia(File(pickedFile!.path).path);
+    setState(() {
+      _image = image;
+    });
+  }
+  _pickImageFromCamera() async {
+    Navigator.pop(context);
+    PickedFile? pickedFile = await picker.getImage(source: ImageSource.camera);
+
+    File image = File(pickedFile!.path);
+    uploadMedia(File(pickedFile!.path).path);
+    setState(() {
+      _image = image;
+    });
   }
   createGroup(chatMessageData,docID){
     setState(() {
@@ -227,7 +384,7 @@ class _AddGroupState extends State<AddGroup> {
         Navigator.pop(context);
         Navigator.pop(context);
         Navigator.pop(context);
-        Navigator.push(context,MaterialPageRoute(builder: (context) => AllGroups()));
+        Navigator.push(context,MaterialPageRoute(builder: (context) => const AllGroups()));
     })
         .catchError((e){
       setState(() {
@@ -236,4 +393,58 @@ class _AddGroupState extends State<AddGroup> {
          print(e.toString());
     });
   }
+  uploadMedia(imagePath) async {
+   // Navigator.pop(context);
+    var decoded;
+    final request = MultipartRequest(
+      'POST',
+      Uri.parse("$serverUrl/fileUploader/"),
+      onProgress: (int bytes, int total) {
+        setState(() {
+          // progress = bytes / total;
+          // result = 'progress: $progress ($bytes/$total)';
+        });
+       // print('progress: $progress ($bytes/$total)');
+      },
+    );
+
+    request.files.add(await https.MultipartFile.fromPath(
+      'document',
+      imagePath,
+      contentType: MediaType('image', 'jpeg'),
+    ));
+
+    request.send().then((value) {
+      setState(() {
+        //result = "";
+      });
+      print(value.stream.toString());
+      value.stream.forEach((element) {
+        decoded = utf8.decode(element);
+        print(jsonDecode(decoded)["document"]);
+        imageLink=jsonDecode(decoded)["document"];
+        setState(() {
+          // media
+          //     .add({"image": jsonDecode(decoded)["document"], "type": "image"});
+          // media1.add({"image": imagePath, "type": "image"});
+          // showDialog(
+          //   context: context,
+          //   builder: (BuildContext context) {
+          //     return AlertDialog(
+          //       backgroundColor: primary,
+          //       title: const Text('Image Selected'),
+          //       content:Image(image: NetworkImage("${jsonDecode(decoded)["document"]}"),),
+          //       actions: <Widget>[
+          //         IconButton(icon: const Icon(Icons.send), onPressed: () { addMessage();
+          //         Navigator.of(context).pop();},),
+          //       ],
+          //     );
+          //   },
+          // );
+          Fluttertoast.showToast(msg: "Done! Proceed to continue",backgroundColor: primary);
+        });
+      });
+    });
+  }
 }
+

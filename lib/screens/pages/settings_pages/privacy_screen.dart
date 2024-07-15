@@ -1,5 +1,6 @@
 import 'package:FashionTime/animations/bottom_animation.dart';
 import 'package:FashionTime/screens/pages/settings_pages/block_list.dart';
+import 'package:FashionTime/screens/pages/settings_pages/close_friends.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_spinkit/flutter_spinkit.dart';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -21,6 +22,7 @@ class _PrivacyScreenState extends State<PrivacyScreen> {
   String token = "";
   String index = "0";
   bool isSwitchedOn=true;
+  TextEditingController password=TextEditingController();
 
   getCashedData() async {
     SharedPreferences preferences = await SharedPreferences.getInstance();
@@ -34,16 +36,50 @@ class _PrivacyScreenState extends State<PrivacyScreen> {
   }
 
   deleteAccount() async {
-    SharedPreferences preferences = await SharedPreferences.getInstance();
-    setState(() {
-      loading1 = true;
-    });
 
+    setState(() {
+
+    });
+    // ignore: use_build_context_synchronously
+    showDialog(
+      context: context,
+      builder: (context) {
+        return Padding(
+          padding: const EdgeInsets.all(8.0),
+          child: AlertDialog(
+            title: const Text("FashionTime",style: TextStyle(fontFamily: 'Montserrat')),
+            backgroundColor: primary,
+            content: const Text('Enter your password',style: TextStyle(fontFamily: 'Montserrat')),
+
+            actions:  [ Padding(
+              padding: const EdgeInsets.all(20),
+              child: TextField(
+                controller:password ,
+              ),
+            ),
+            TextButton(child: const Text("Ok",style: TextStyle(fontFamily: 'Montserrat')),onPressed: () {
+            deleteAccountAfterVerification();
+            },)],
+            actionsPadding: const EdgeInsets.only(bottom: 40),
+
+
+          ),
+        );
+      },
+
+    );
+
+
+  }
+  deleteAccountAfterVerification()async{
+    SharedPreferences preferences = await SharedPreferences.getInstance();
     https.delete(
-        Uri.parse("${serverUrl}/api/delete-account/"),
+        Uri.parse("$serverUrl/api/delete-account/"),body: {
+          'password':password.text.toString()
+    },
         headers: {
-          "Content-Type": "application/json",
-          "Authorization": "Bearer ${token}"
+          
+          "Authorization": "Bearer $token"
         }
     ).then((value){
       print(value.body.toString());
@@ -52,13 +88,16 @@ class _PrivacyScreenState extends State<PrivacyScreen> {
       });
       preferences.clear().then((value){
         Navigator.pop(context);
-        Navigator.push(context, MaterialPageRoute(builder: (context) => Login()));
+        Navigator.push(context, MaterialPageRoute(builder: (context) => const Login()));
       });
-    }).catchError((){
+    // ignore: argument_type_not_assignable_to_error_handler
+    }).catchError((error) {
       setState(() {
         loading1 = false;
       });
       Navigator.pop(context);
+      // Handle the error or log it
+      print("Error occurred during account deletion: $error");
     });
   }
 
@@ -97,21 +136,21 @@ class _PrivacyScreenState extends State<PrivacyScreen> {
                     primary,
                   ])
           ),),
-        title: Text("Privacy",style: TextStyle(fontFamily: 'Montserrat'),),
+        title: const Text("Privacy",style: TextStyle(fontFamily: 'Montserrat'),),
       ),
       body: ListView(
         children: [
           WidgetAnimator(
             GestureDetector(
               onTap: (){
-                Navigator.push(context, MaterialPageRoute(builder: (context) =>  BlockList()));
+                Navigator.push(context, MaterialPageRoute(builder: (context) =>  const BlockList()));
               },
               child: Padding(
                 padding: const EdgeInsets.only(left:10.0,right: 10.0,top: 8,bottom: 8),
                 child: Card(
                   elevation: 5,
                   child: ListTile(
-                    leading: Icon(Icons.block,color: Colors.red,),
+                    leading: const Icon(Icons.block,color: Colors.red,),
                     title: Text("Blocked Accounts",style: TextStyle(
                         color: primary,
                         fontFamily: 'Montserrat'
@@ -127,7 +166,7 @@ class _PrivacyScreenState extends State<PrivacyScreen> {
               child: Card(
                 elevation: 5,
                 child: ListTile(
-                  leading: Icon(Icons.notifications, color: Colors.green),
+                  leading: const Icon(Icons.notifications, color: Colors.green),
                   title: Text(
                     "Notifications",
                     style: TextStyle(color: primary, fontFamily: 'Montserrat'),
@@ -151,12 +190,12 @@ class _PrivacyScreenState extends State<PrivacyScreen> {
           WidgetAnimator(
             loading1 == true ? SpinKitCircle(color: primary,size: 50,) : Padding(
               padding: const EdgeInsets.only(left:8.0,right: 8.0,top: 8,bottom: 8),
-              child: Row(
+              child: Column(
                 mainAxisAlignment: MainAxisAlignment.center,
                 crossAxisAlignment: CrossAxisAlignment.center,
                 children: [
                   Padding(
-                    padding: EdgeInsets.all(8.0),
+                    padding: const EdgeInsets.all(8.0),
                     child: ElevatedButton(
                         style: ButtonStyle(
                             elevation: MaterialStateProperty.all(10.0),
@@ -176,7 +215,34 @@ class _PrivacyScreenState extends State<PrivacyScreen> {
                           //Navigator.pop(context);
                           //Navigator.pushReplacement(context,MaterialPageRoute(builder: (context) => Register()));
                         },
-                        child: const Text('Delete My Account',style: TextStyle(
+                        child: const Text('Delete Account',style: TextStyle(
+                            fontSize: 16,
+                            fontWeight: FontWeight.w700,
+                            fontFamily: 'Montserrat'
+                        ),)),
+                  ),
+                  Padding(
+                    padding: const EdgeInsets.all(8.0),
+                    child: ElevatedButton(
+                        style: ButtonStyle(
+                            elevation: MaterialStateProperty.all(10.0),
+                            shape: MaterialStateProperty.all<RoundedRectangleBorder>(
+                                RoundedRectangleBorder(
+                                  borderRadius: BorderRadius.circular(8.0),
+                                )
+                            ),
+                            backgroundColor: MaterialStateProperty.all(Colors.lightGreenAccent),
+                            padding: MaterialStateProperty.all(EdgeInsets.only(
+                                top: 13,bottom: 13,
+                                left:MediaQuery.of(context).size.width * 0.1,right: MediaQuery.of(context).size.width * 0.1)),
+                            textStyle: MaterialStateProperty.all(
+                                const TextStyle(fontSize: 14, color: Colors.white,fontFamily: 'Montserrat'))),
+                        onPressed: () {
+                          //Navigator.pop(context);
+                          Navigator.push(context,MaterialPageRoute(builder: (context) => const CloseFriends()));
+
+                        },
+                        child: const Text('Close friends',style: TextStyle(
                             fontSize: 16,
                             fontWeight: FontWeight.w700,
                             fontFamily: 'Montserrat'

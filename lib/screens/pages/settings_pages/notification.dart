@@ -23,9 +23,13 @@ class _NotificationScreenState extends State<NotificationScreen> {
   String id = "";
   String token = "";
   String userName = '';
+  Map<String,dynamic> data = {};
   bool loading = false;
   List<Map<String, dynamic>> notifications = [];
-
+  String requestID = "";
+  bool requestLoader = false;
+  bool isGetRequest = false;
+  bool isRejected=false;
   getCashedData() async {
     SharedPreferences preferences = await SharedPreferences.getInstance();
     id = preferences.getString("id")!;
@@ -42,17 +46,115 @@ class _NotificationScreenState extends State<NotificationScreen> {
     super.initState();
     getCashedData();
   }
+  matchFriendReques(id1,notificationId){
+    print("Match Friend id");
+    try{
+      https.get(
+          Uri.parse("$serverUrl/followRequests/"),
+          headers: {
+            "Content-Type": "application/json",
+            "Authorization": "Bearer $token"
+          }
+      ).then((value){
+        print(id);
+        jsonDecode(value.body).forEach((request){
+          // print("${request["from_user"].toString()} == ${id1} && ${request["to_user"]} == ${id}");
+          if(request["from_user"].toString() == id1.toString() && request["to_user"].toString() == id.toString()){
+            setState(() {
+              loading = false;
+              isGetRequest = true;
+              requestID = request["id"].toString();
+              isRejected?rejectRequest(requestID):acceptRequest(requestID);
+              deleteNotification(notificationId);
+            });
+            print(isGetRequest.toString());
+            print(requestID.toString());
+          }
+          else if(request["from_user"].toString() == id.toString() && request["to_user"].toString() == id1.toString()){
+            setState(() {
+              loading = false;
+            });
+            requestID = request["id"].toString();
+            isRejected?rejectRequest(requestID):acceptRequest(requestID);
+            deleteNotification(notificationId);
+          }
+          else{
+            setState(() {
+              loading = false;
+              deleteNotification(notificationId);
+            });
+            print(isGetRequest.toString());
+          }
+        });
+        setState(() {
+          loading = false;
+        });
+        print(jsonDecode(value.body).toString());
 
+      });
+    }catch(e){
+      setState(() {
+        loading = false;
+      });
+      debugPrint("Error --> $e");
+    }
+  }
+  acceptRequest(userid){
+    setState(() {
+      requestLoader = true;
+    });
+    https.post(
+        Uri.parse("$serverUrl/follow_accept_request/$userid/"),
+        headers: {
+          "Content-Type": "application/json",
+          "Authorization": "Bearer $token"
+        }
+    ).then((value){
+      setState(() {
+        requestLoader = false;
+      });
+      debugPrint("request status======>${value.body}");
+      // getMyFriends(widget.id);
+    }).catchError((value){
+      setState(() {
+        requestLoader = false;
+      });
+      debugPrint(value);
+    });
+  }
+  rejectRequest(userid){
+    setState(() {
+      requestLoader = true;
+    });
+    https.post(
+        Uri.parse("$serverUrl/follow_reject_request/$userid/"),
+        headers: {
+          "Content-Type": "application/json",
+          "Authorization": "Bearer $token"
+        }
+    ).then((value){
+      setState(() {
+        requestLoader = false;
+      });
+      print(value.body.toString());
+    }).catchError((value){
+      setState(() {
+        requestLoader = false;
+      });
+      print(value);
+    });
+  }
   getNotifications() {
     setState(() {
       loading = true;
     });
     try {
-      https.get(Uri.parse("${serverUrl}/notificationsApi/"), headers: {
+      https.get(Uri.parse("$serverUrl/notificationsApi/"), headers: {
         "Content-Type": "application/json",
-        "Authorization": "Bearer ${token}"
+        "Authorization": "Bearer $token"
       }).then((value) {
-        print("Notification --> " + jsonDecode(value.body).toString());
+        debugPrint("Notification --> ${jsonDecode(value.body)}");
+        notifications.clear();
         jsonDecode(value.body).forEach((data) {
           setState(() {
             notifications.add({
@@ -66,32 +168,72 @@ class _NotificationScreenState extends State<NotificationScreen> {
           });
         });
         readNotification();
+
       });
     } catch (e) {
       setState(() {
         loading = false;
       });
-      print("Error --> ${e}");
+      debugPrint("Error --> $e");
     }
+  }
+  deleteNotification(id){
+    String url="$serverUrl/notificationsApi/$id/";
+    https.delete(Uri.parse(url),headers: {
+      "Content-Type": "application/json",
+      "Authorization": "Bearer $token"
+    }).then((value) {
+      debugPrint("deleted notification======>${value.statusCode}");
+      setState(() {
+        getNotifications();
+      });
+    }).onError((error, stackTrace) {
+      debugPrint("error received while removing this notifications");
+    });
   }
 
   readNotification() {
     https.post(
-        Uri.parse("${serverUrl}/notificationsmark-all-notifications-as-read/"),
+        Uri.parse("$serverUrl/notificationsmark-all-notifications-as-read/"),
         headers: {
           "Content-Type": "application/json",
-          "Authorization": "Bearer ${token}"
+          "Authorization": "Bearer $token"
         }).then((value) {
-      print(value.body.toString());
+      debugPrint(value.body.toString());
       setState(() {
         loading = false;
       });
     }).catchError(() {
-      print("Error");
+      debugPrint("Error");
       setState(() {
         loading = false;
       });
     });
+  }
+  String formatTimeDifference(String dateString) {
+    DateTime createdAt = DateTime.parse(dateString);
+    DateTime now = DateTime.now();
+
+    Duration difference = now.difference(createdAt);
+
+    if (difference.inSeconds < 60) {
+      return '${difference.inSeconds} seconds ago';
+    } else if (difference.inMinutes < 60) {
+      return '${difference.inMinutes} minutes ago';
+    } else if (difference.inHours < 24) {
+      return '${difference.inHours} hours ago';
+    } else if (difference.inDays < 7) {
+      return '${difference.inDays} days ago';
+    } else if (difference.inDays < 30) {
+      int weeks = (difference.inDays / 7).floor();
+      return '$weeks ${weeks == 1 ? 'week' : 'weeks'} ago';
+    } else if (difference.inDays < 365) {
+      int months = (difference.inDays / 30).floor();
+      return '$months ${months == 1 ? 'month' : 'months'} ago';
+    } else {
+      int years = (difference.inDays / 365).floor();
+      return '$years ${years == 1 ? 'year' : 'years'} ago';
+    }
   }
 
   @override
@@ -128,7 +270,7 @@ class _NotificationScreenState extends State<NotificationScreen> {
               color: primary,
               size: 50,
             )
-          : (notifications.length <= 0
+          : (notifications.isEmpty
               ? const Center(
                   child: Text("No Notifications"),
                 )
@@ -256,14 +398,8 @@ class _NotificationScreenState extends State<NotificationScreen> {
                                                       const BorderRadius.all(
                                                           Radius.circular(120)),
                                                   child: CachedNetworkImage(
-                                                    imageUrl: notifications[
-                                                                        index]
-                                                                    ["sender"]
-                                                                ["pic"] ==
-                                                            null
-                                                        ? "https://firebasestorage.googleapis.com/v0/b/fashiontime-28e3a.appspot.com/o/WhatsApp_Image_2023-11-08_at_4.48.19_PM-removebg-preview.png?alt=media&token=215bdc12-d53a-4772-bca1-efbbdf6ee955&_gl=1*rglk9r*_ga*NDIyMTUzOTQ2LjE2OTkyODU3MDg.*_ga_CW55HF8NVT*MTY5OTQ0NDE2NS4zMy4xLjE2OTk0NDUxNzMuNjAuMC4w"
-                                                        : notifications[index]
-                                                            ["sender"]["pic"],
+                                                    imageUrl: notifications[index]
+                                                            ["sender"]["pic"] ?? "https://firebasestorage.googleapis.com/v0/b/fashiontime-28e3a.appspot.com/o/WhatsApp_Image_2023-11-08_at_4.48.19_PM-removebg-preview.png?alt=media&token=215bdc12-d53a-4772-bca1-efbbdf6ee955&_gl=1*rglk9r*_ga*NDIyMTUzOTQ2LjE2OTkyODU3MDg.*_ga_CW55HF8NVT*MTY5OTQ0NDE2NS4zMy4xLjE2OTk0NDUxNzMuNjAuMC4w",
                                                     imageBuilder: (context,
                                                             imageProvider) =>
                                                         Container(
@@ -326,17 +462,55 @@ class _NotificationScreenState extends State<NotificationScreen> {
                                               notifications[index]['title'] ==
                                                   'Follow Request Accepted'
                                           ? const SizedBox()
-                                          : notifications[index]['title'] ==
-                                                  'New Follow Request'
-                                              ? Text(
-                                                  notifications[index]["title"],style: const TextStyle(
-                                          color: Colors.green,
-                                          fontSize: 16,
-                                          fontWeight:
-                                          FontWeight.bold,
-                                          fontFamily: 'Montserrat'))
+
+                                      // notifications[index]['title'] ==
+                                      //             'New Follow Request'
+                                      //         ? Row(
+                                      //           children: [
+                                      //             Text(
+                                      //                 notifications[index]["title"],style: const TextStyle(
+                                      //     color: Colors.green,
+                                      //     fontSize: 14,
+                                      //     fontWeight:
+                                      //     FontWeight.bold,
+                                      //     fontFamily: 'Montserrat')),
+                                      //             Padding(
+                                      //               padding: const EdgeInsets.only(left: 6),
+                                      //               child: Container(
+                                      //                 decoration: const BoxDecoration(
+                                      //                   color: Colors.green,
+                                      //                   borderRadius: BorderRadius.all(Radius.circular(10))
+                                      //                 ),
+                                      //                 child: GestureDetector(
+                                      //                 onTap: () {
+                                      //                   matchFriendReques(notifications[index]['sender']['id'],notifications[index]['id']);
+                                      //
+                                      //                 }
+                                      //                 ,child: const Icon(Icons.check,size: 40,)),
+                                      //               ),
+                                      //             ),
+                                      //             Padding(
+                                      //               padding: const EdgeInsets.only(left: 10),
+                                      //               child: Container(
+                                      //                 decoration: const BoxDecoration(
+                                      //                     color: Colors.red,
+                                      //                     borderRadius: BorderRadius.all(Radius.circular(10))
+                                      //                 ),
+                                      //                 child: GestureDetector(
+                                      //                     onTap: () {
+                                      //                       setState(() {
+                                      //                         isRejected=true;
+                                      //                         matchFriendReques(notifications[index]['sender']['id'],notifications[index]['id']);
+                                      //                       });
+                                      //                     }
+                                      //                     ,child: const Icon(Icons.close,size: 40,)),
+                                      //               ),
+                                      //             )
+                                      //
+                                      //           ],
+                                      //         )
                                               : Text(
-                                                  notifications[index]["title"],
+                                                  notifications[index]['title'],
                                                   style: TextStyle(
                                                       color: primary,
                                                       fontSize: 16,
@@ -344,7 +518,8 @@ class _NotificationScreenState extends State<NotificationScreen> {
                                                           FontWeight.bold,
                                                       fontFamily: 'Montserrat'),
                                                 ),
-                                      subtitle: Text(
+                                      subtitle:
+                                      Text(
                                         (notifications[index]["type"] ==
                                                         "fashion_created" ||
                                                     notifications[index]
@@ -370,14 +545,15 @@ class _NotificationScreenState extends State<NotificationScreen> {
                                       trailing:
                                           //Text(DateFormat('hh:mm a').format(DateTime.parse(notifications[index]["time"]).toLocal()),style: TextStyle(fontFamily: 'Montserrat'),),
                                           notifications[index]['title'] ==
-                                                  "Dislike on fashion"
+                                                  "Dislike on fashion" ||  notifications[index]['title'] ==
+                                              'New Follow Request'
                                               ? null
 
 
                                               : Text(
-                                                  formatNotificationTime(
-                                                      notifications[index]
-                                                          ["time"]),
+                                              formatTimeDifference( notifications[index]
+                                              ["time"])
+                                                  ,
                                                   style: const TextStyle(
                                                       fontFamily:
                                                           'Montserrat'))),
@@ -402,15 +578,6 @@ class _NotificationScreenState extends State<NotificationScreen> {
     } else if (differenceInDays == 1) {
       return 'Yesterday.';
     }
-    // else if (differenceInDays>0&&differenceInDays<7 ) {
-    //   return "This week.";
-    // } else if(differenceInDays>7&&differenceInDays<14 ){
-    //   // Format the time using your desired format for older dates
-    //   return "A week ago.";
-    // }
-    // else if(differenceInDays>14&&differenceInDays<21){
-    //   return '2 weeks ago';
-    // }
     else {
       return DateFormat('MM/dd/yyyy ').format(notificationTime);
     }

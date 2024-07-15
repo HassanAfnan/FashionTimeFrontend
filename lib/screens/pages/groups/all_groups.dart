@@ -102,20 +102,20 @@ class _AllGroupsState extends State<AllGroups> {
                   ])
           ),),
         backgroundColor: primary,
-        title: Text("Groups",style: TextStyle(fontFamily: 'Montserrat'),),
+        title: const Text("Groups",style: TextStyle(fontFamily: 'Montserrat'),),
         actions: [
-          IconButton(icon: Icon(Icons.add),onPressed: (){
-            Navigator.push(context, MaterialPageRoute(builder: (context) => SearchFriend()));
+          IconButton(icon: const Icon(Icons.add),onPressed: (){
+            Navigator.push(context, MaterialPageRoute(builder: (context) => const SearchFriend()));
           },)
         ],
       ),
-      body: loading == true ? SpinKitCircle(size: 50,color: primary,) : (members.length<=0 ? Center(child: Text("No Groups")) :ListView.builder(
+      body: loading == true ? SpinKitCircle(size: 50,color: primary,) : (members.isEmpty ? const Center(child: Text("No Groups")) :ListView.builder(
           itemCount: members.length,
           itemBuilder: (context,index) => WidgetAnimator(
               GestureDetector(
                 onTap: (){
                   Navigator.push(context, MaterialPageRoute(builder: (context) => GroupMessageScreen(
-                      name: members[index]["group_name"] == null ?"":members[index]["group_name"],
+                      name: members[index]["group_name"] ?? "",
                       pic: "https://cdn.raceroster.com/assets/images/team-placeholder.png",
                       memberCount: members[index]["members"].length.toString(),
                       chatRoomId: members[index]["roomID"],
@@ -125,30 +125,30 @@ class _AllGroupsState extends State<AllGroups> {
                   padding: const EdgeInsets.all(10.0),
                   child: Row(
                     children: [
-                      SizedBox(width: 20,),
+                      const SizedBox(width: 20,),
                       GestureDetector(
                         onTap: (){
                           Navigator.push(context, MaterialPageRoute(builder: (context) => GroupDetails(
-                              name: members[index]["group_name"] == null ?"":members[index]["group_name"],
-                              pic: "https://cdn.raceroster.com/assets/images/team-placeholder.png",
+                              name: members[index]["group_name"] ?? "",
+                              pic: members[index]['pic']!=""? members[index]['pic']:"https://cdn.raceroster.com/assets/images/team-placeholder.png",
                               memberCount: members[index]["members"].length.toString(),
                               chatRoomId: members[index]["roomID"],
                               members: members[index]["members"],
                           )));
                         },
                         child: Container(
-                          decoration: BoxDecoration(
+                          decoration: const BoxDecoration(
                               borderRadius: BorderRadius.all(Radius.circular(120))
                           ),
                           child: ClipRRect(
-                            borderRadius: BorderRadius.all(Radius.circular(120)),
+                            borderRadius: const BorderRadius.all(Radius.circular(120)),
                             child: CachedNetworkImage(
-                              imageUrl: "https://cdn.raceroster.com/assets/images/team-placeholder.png",
+                              imageUrl:members[index]['pic']!=""? members[index]['pic']:"https://cdn.raceroster.com/assets/images/team-placeholder.png",
                               imageBuilder: (context, imageProvider) => Container(
                                 height:50,
                                 width: 50,
                                 decoration: BoxDecoration(
-                                  borderRadius: BorderRadius.all(Radius.circular(120)),
+                                  borderRadius: const BorderRadius.all(Radius.circular(120)),
                                   image: DecorationImage(
                                     image: imageProvider,
                                     fit: BoxFit.cover,
@@ -157,14 +157,14 @@ class _AllGroupsState extends State<AllGroups> {
                               ),
                               placeholder: (context, url) => SpinKitCircle(color: primary,size: 20,),
                               errorWidget: (context, url, error) => ClipRRect(
-                                  borderRadius: BorderRadius.all(Radius.circular(50)),
+                                  borderRadius: const BorderRadius.all(Radius.circular(50)),
                                   child: Image.network("https://firebasestorage.googleapis.com/v0/b/fashiontime-28e3a.appspot.com/o/WhatsApp_Image_2023-11-08_at_4.48.19_PM-removebg-preview.png?alt=media&token=215bdc12-d53a-4772-bca1-efbbdf6ee955&_gl=1*nea8nk*_ga*NDIyMTUzOTQ2LjE2OTkyODU3MDg.*_ga_CW55HF8NVT*MTY5OTQ0NDE2NS4zMy4xLjE2OTk0NDUxNzcuNTYuMC4w",width: 40,height: 40,)
                               ),
                             ),
                           ),
                         ),
                       ),
-                      SizedBox(width: 20,),
+                      const SizedBox(width: 20,),
                       Center(
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
@@ -172,13 +172,13 @@ class _AllGroupsState extends State<AllGroups> {
                             Row(
                               mainAxisAlignment: MainAxisAlignment.start,
                               children: [
-                                Text(members[index]["group_name"] == null ?"No Name":members[index]["group_name"],style: TextStyle(color: primary,fontSize: 20,fontWeight: FontWeight.bold,fontFamily: 'Montserrat'),textAlign: TextAlign.start),
+                                Text(members[index]["group_name"] ?? "No Name",style: TextStyle(color: primary,fontSize: 20,fontWeight: FontWeight.bold,fontFamily: 'Montserrat'),textAlign: TextAlign.start),
                               ],
                             ),
                             Row(
                               mainAxisAlignment: MainAxisAlignment.start,
                               children: [
-                                Text("${members[index]["members"].length} members",style: TextStyle(fontFamily: 'Montserrat'),),
+                                Text("${members[index]["members"].length} members",style: const TextStyle(fontFamily: 'Montserrat'),),
                               ],
                             )
                           ],

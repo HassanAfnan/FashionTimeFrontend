@@ -1,19 +1,64 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_spinkit/flutter_spinkit.dart';
-
+import 'package:fluttertoast/fluttertoast.dart';
+import 'package:get/get.dart';
+import 'package:http/http.dart'as https;
 import '../animations/bottom_animation.dart';
 import '../utils/constants.dart';
 
-class ChangePasswordViaProfileScreen extends StatefulWidget {
-  const ChangePasswordViaProfileScreen({super.key});
+class ForgetPasswordViaProfileScreen extends StatefulWidget {
+  const ForgetPasswordViaProfileScreen({required this.code, Key? key}) : super(key: key);
+
+  final String code;
 
   @override
-  State<ChangePasswordViaProfileScreen> createState() => _ChangePasswordViaProfileScreenState();
+  State<ForgetPasswordViaProfileScreen> createState() => _ForgetPasswordViaProfileScreenState();
 }
 bool loading=false;
+bool loading1=false;
 bool eye1=false;
 bool eye2=false;
-class _ChangePasswordViaProfileScreenState extends State<ChangePasswordViaProfileScreen> {
+TextEditingController newPassword=TextEditingController();
+TextEditingController confirmPassword=TextEditingController();
+class _ForgetPasswordViaProfileScreenState extends State<ForgetPasswordViaProfileScreen> {
+  resetPassword(){
+    print("password token and password2 is ======>${newPassword.text} ${confirmPassword.text} ${widget.code}");
+    debugPrint("otp code is ===========>${widget.code.toString()}");
+    const String url='$serverUrl/password/reset/confirm/';
+    try{
+      setState(() {
+        loading1=true;
+      });
+      https.post(Uri.parse(url),body: {
+        "password":newPassword.text.toString(),
+        "token":widget.code.toString(),
+        "password2":confirmPassword.text.toString(),
+
+      }).then((value) {
+        if(value.statusCode==200|| value.statusCode==201){
+          Fluttertoast.showToast(msg: "Password Changed Successfully!",backgroundColor: primary);
+          setState(() {
+            loading1=false;
+          });
+          Navigator.pop(context);
+          Navigator.pop(context);
+
+        }
+        else{
+          debugPrint("error received with status code============>${value.statusCode}");
+          setState(() {
+            loading1=false;
+          });
+        }
+      });
+    }catch(e){
+      setState(() {
+        loading1=false;
+        debugPrint("error received============>${e.toString()}");
+      });
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     return Container(
@@ -48,9 +93,10 @@ class _ChangePasswordViaProfileScreenState extends State<ChangePasswordViaProfil
                 ),
                 const SizedBox(height: 50,),
                 WidgetAnimator(
-                  Container(
+                  SizedBox(
                     width: MediaQuery.of(context).size.width * 0.7,
                     child: TextField(
+                      controller: newPassword,
                       // inputFormatters: [
                       //   FilteringTextInputFormatter.deny(
                       //       RegExp(r'\s')),
@@ -94,9 +140,10 @@ class _ChangePasswordViaProfileScreenState extends State<ChangePasswordViaProfil
                 ),
                 const SizedBox(height: 10,),
                 WidgetAnimator(
-                  Container(
+                  SizedBox(
                     width: MediaQuery.of(context).size.width * 0.7,
                     child: TextField(
+                      controller: confirmPassword,
                       // inputFormatters: [
                       //   FilteringTextInputFormatter.deny(
                       //       RegExp(r'\s')),
@@ -143,21 +190,25 @@ class _ChangePasswordViaProfileScreenState extends State<ChangePasswordViaProfil
                     Row(
                       mainAxisAlignment: MainAxisAlignment.center,
                       children: [
-                        loading == true ? SpinKitCircle(color: ascent,size: 70,) : Container(
+                        loading == true ? const SpinKitCircle(color: ascent,size: 70,) :
+                        loading1?SpinKitCircle(color: primary,):
+                        Container(
                           height: 35,
                           decoration: BoxDecoration(
                               borderRadius: BorderRadius.circular(15.0),
                               gradient: LinearGradient(
                                   begin: Alignment.topLeft,
                                   end: Alignment.topRight,
-                                  stops: [0.0, 0.99],
+                                  stops: const [0.0, 0.99],
                                   tileMode: TileMode.clamp,
                                   colors: <Color>[
                                     primary,
                                     secondary
                                   ])
                           ),
-                          child: ElevatedButton(
+                          child:
+
+                          ElevatedButton(
                               style: ButtonStyle(
                                   shape: MaterialStateProperty.all<RoundedRectangleBorder>(
                                       RoundedRectangleBorder(
@@ -172,6 +223,7 @@ class _ChangePasswordViaProfileScreenState extends State<ChangePasswordViaProfil
                                   textStyle: MaterialStateProperty.all(
                                       const TextStyle(fontSize: 12, color: Colors.white,fontFamily: 'Montserrat'))),
                               onPressed: () {
+                                  resetPassword();
                               },
                               child: const Text('Save Password',style: TextStyle(
                                   fontSize: 18,

@@ -94,71 +94,87 @@ class _FollowerScreenState extends State<FollowerScreen> {
                   ])
           ),),
         backgroundColor: primary,
-        title: Text("Friends",style: TextStyle(fontFamily: 'Montserrat'),),
+        title: const Text("Friends",style: TextStyle(fontFamily: 'Montserrat'),),
       ),
-      body:loading == true ? SpinKitCircle(size: 50,color: primary,) : (friends.length<=0 ? Center(child: Text("No Friends")) :ListView.builder(
+      body:loading == true ? SpinKitCircle(size: 50,color: primary,) : (friends.isEmpty ? const Center(child: Text("No Friends")) :ListView.builder(
           itemCount: friends.length,
-          itemBuilder: (context,index) => WidgetAnimator(
-            GestureDetector(
-              onTap: (){
-                Navigator.push(context, MaterialPageRoute(builder: (context) => FriendProfileScreen(
-                  id: friends[index].id,
-                  username: friends[index].username,
-                )));
-              },
-              child: Padding(
-                padding: const EdgeInsets.all(10.0),
-                child: Row(
-                  children: [
-                    SizedBox(width: 20,),
-                    Container(
-                      decoration: BoxDecoration(
-                          borderRadius: BorderRadius.all(Radius.circular(120))
-                      ),
-                      child: ClipRRect(
-                        borderRadius: BorderRadius.all(Radius.circular(120)),
-                        child: CachedNetworkImage(
-                          imageUrl: friends[index].pic,
-                          imageBuilder: (context, imageProvider) => Container(
-                            height:50,
-                            width: 50,
-                            decoration: BoxDecoration(
-                              borderRadius: BorderRadius.all(Radius.circular(120)),
-                              image: DecorationImage(
-                                image: imageProvider,
-                                fit: BoxFit.cover,
+          itemBuilder: (context,index) => GestureDetector(
+            onTap: () {
+              Navigator.push(context, MaterialPageRoute(builder: (context) => FriendProfileScreen(
+                id: friends[index].id,
+                username: friends[index].username,
+              )));
+            },
+            child: WidgetAnimator(
+              InkWell(
+                onTap: () {
+                  Navigator.push(context, MaterialPageRoute(builder: (context) => FriendProfileScreen(
+                    id: friends[index].id,
+                    username: friends[index].username,
+                  )));
+                },
+                child: GestureDetector(
+                  onTap: (){
+                    Navigator.push(context, MaterialPageRoute(builder: (context) => FriendProfileScreen(
+                      id: friends[index].id,
+                      username: friends[index].username,
+                    )));
+                  },
+                  child: Padding(
+                    padding: const EdgeInsets.all(10.0),
+                    child: Row(
+                      children: [
+                        const SizedBox(width: 20,),
+                        Container(
+                          decoration: const BoxDecoration(
+                              borderRadius: BorderRadius.all(Radius.circular(120))
+                          ),
+                          child: ClipRRect(
+                            borderRadius: const BorderRadius.all(Radius.circular(120)),
+                            child: CachedNetworkImage(
+                              imageUrl: friends[index].pic,
+                              imageBuilder: (context, imageProvider) => Container(
+                                height:50,
+                                width: 50,
+                                decoration: BoxDecoration(
+                                  borderRadius: const BorderRadius.all(Radius.circular(120)),
+                                  image: DecorationImage(
+                                    image: imageProvider,
+                                    fit: BoxFit.cover,
+                                  ),
+                                ),
+                              ),
+                              placeholder: (context, url) => SpinKitCircle(color: primary,size: 20,),
+                              errorWidget: (context, url, error) => ClipRRect(
+                                  borderRadius: const BorderRadius.all(Radius.circular(50)),
+                                  child: Image.network("https://firebasestorage.googleapis.com/v0/b/fashiontime-28e3a.appspot.com/o/WhatsApp_Image_2023-11-08_at_4.48.19_PM-removebg-preview.png?alt=media&token=215bdc12-d53a-4772-bca1-efbbdf6ee955&_gl=1*nea8nk*_ga*NDIyMTUzOTQ2LjE2OTkyODU3MDg.*_ga_CW55HF8NVT*MTY5OTQ0NDE2NS4zMy4xLjE2OTk0NDUxNzcuNTYuMC4w",width: 50,height: 50,)
                               ),
                             ),
                           ),
-                          placeholder: (context, url) => SpinKitCircle(color: primary,size: 20,),
-                          errorWidget: (context, url, error) => ClipRRect(
-                              borderRadius: BorderRadius.all(Radius.circular(50)),
-                              child: Image.network("https://firebasestorage.googleapis.com/v0/b/fashiontime-28e3a.appspot.com/o/WhatsApp_Image_2023-11-08_at_4.48.19_PM-removebg-preview.png?alt=media&token=215bdc12-d53a-4772-bca1-efbbdf6ee955&_gl=1*nea8nk*_ga*NDIyMTUzOTQ2LjE2OTkyODU3MDg.*_ga_CW55HF8NVT*MTY5OTQ0NDE2NS4zMy4xLjE2OTk0NDUxNzcuNTYuMC4w",width: 50,height: 50,)
-                          ),
                         ),
-                      ),
-                    ),
-                    SizedBox(width: 20,),
-                    Column(
-                      children: [
-                        Row(
-                          mainAxisAlignment: MainAxisAlignment.start,
+                        const SizedBox(width: 20,),
+                        Column(
                           children: [
-                            Text(friends[index].name == null ?"":friends[index].name,style: TextStyle(color: primary,fontSize: 20,fontWeight: FontWeight.bold,fontFamily: 'Montserrat'),),
-                          ],
-                        ),
-                        Row(
-                          mainAxisAlignment: MainAxisAlignment.start,
-                          children: [
-                            Text("@"+friends[index].username,style: TextStyle(fontFamily: 'Montserrat'),),
+                            Row(
+                              mainAxisAlignment: MainAxisAlignment.start,
+                              children: [
+                                Text(friends[index].name == null ?"":friends[index].name,style: TextStyle(color: primary,fontSize: 20,fontWeight: FontWeight.bold,fontFamily: 'Montserrat'),),
+                              ],
+                            ),
+                            Row(
+                              mainAxisAlignment: MainAxisAlignment.start,
+                              children: [
+                                Text(friends[index].username,style: const TextStyle(fontFamily: 'Montserrat'),),
+                              ],
+                            )
                           ],
                         )
                       ],
-                    )
-                  ],
+                    ),
+                  ),
                 ),
-              ),
-            )
+              )
+            ),
           )
       )),
     );

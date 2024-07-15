@@ -45,11 +45,11 @@ class _OtpScreenState extends State<OtpScreen> {
           context: context,
           builder: (context) => AlertDialog(
             backgroundColor: primary,
-            title: Text("FashionTime",style: TextStyle(color: ascent,fontFamily: 'Montserrat',fontWeight: FontWeight.bold),),
-            content: Text("Please fill all fields",style: TextStyle(color: ascent,fontFamily: 'Montserrat'),),
+            title: const Text("FashionTime",style: TextStyle(color: ascent,fontFamily: 'Montserrat',fontWeight: FontWeight.bold),),
+            content: const Text("Please fill all fields",style: TextStyle(color: ascent,fontFamily: 'Montserrat'),),
             actions: [
               TextButton(
-                child: Text("Okay",style: TextStyle(color: ascent,fontFamily: 'Montserrat')),
+                child: const Text("Okay",style: TextStyle(color: ascent,fontFamily: 'Montserrat')),
                 onPressed:  () {
                   setState(() {
                     Navigator.pop(context);
@@ -68,19 +68,22 @@ class _OtpScreenState extends State<OtpScreen> {
           "code": code.text,
         };
         post(
-          Uri.parse("${serverUrl}/api/verify-otp/"),
+          Uri.parse("$serverUrl/api/verify-otp/"),
           body: body,
         ).then((value) {
           print("Response ==> ${value.body}");
-          preferences.setString("id", widget.id);
-          preferences.setString("name", widget.name);
-          preferences.setString("username", widget.username);
-          preferences.setString("email", widget.email);
-          preferences.setString("phone", widget.phone_number);
-          preferences.setString("pic", widget.pic == null ? "https://www.w3schools.com/w3images/avatar2.png" : widget.pic);
-          preferences.setString("gender", widget.gender);
-          preferences.setString("token", widget.access_token);
-          preferences.setString("fcm_token", widget.fcmToken);
+         setState(() {
+           preferences.setString("id", widget.id);
+           preferences.setString("name", widget.name);
+           preferences.setString("username", widget.username);
+           preferences.setString("email", widget.email);
+           preferences.setString("phone", widget.phone_number);
+           preferences.setString("pic", widget.pic == null ? "https://www.w3schools.com/w3images/avatar2.png" : widget.pic);
+           preferences.setString("gender", widget.gender);
+           preferences.setString("token", json.decode(value.body)['access']);
+           preferences.setString("fcm_token", widget.fcmToken);
+           print("token of new user is======>${json.decode(value.body)['access']}");
+         });
           if(json.decode(value.body)["detail"] == "Invalid or expired code.") {
             setState(() {
               loading = false;
@@ -90,11 +93,11 @@ class _OtpScreenState extends State<OtpScreen> {
               context: context,
               builder: (context) => AlertDialog(
                 backgroundColor: primary,
-                title: Text("FashionTime",style: TextStyle(color: ascent,fontFamily: 'Montserrat',fontWeight: FontWeight.bold),),
-                content: Text("Invalid Code.Please Resend new code.",style: TextStyle(color: ascent,fontFamily: 'Montserrat'),),
+                title: const Text("FashionTime",style: TextStyle(color: ascent,fontFamily: 'Montserrat',fontWeight: FontWeight.bold),),
+                content: const Text("Invalid Code.Please Resend new code.",style: TextStyle(color: ascent,fontFamily: 'Montserrat'),),
                 actions: [
                   TextButton(
-                    child: Text("Okay",style: TextStyle(color: ascent,fontFamily: 'Montserrat')),
+                    child: const Text("Okay",style: TextStyle(color: ascent,fontFamily: 'Montserrat')),
                     onPressed:  () {
                       setState(() {
                         Navigator.pop(context);
@@ -112,7 +115,7 @@ class _OtpScreenState extends State<OtpScreen> {
               Navigator.pop(context);
               Navigator.pop(context);
               Navigator.push(
-                  context, MaterialPageRoute(builder: (context) => HomeScreen()));
+                  context, MaterialPageRoute(builder: (context) => const HomeScreen()));
            // });
           }
         }).catchError((error){
@@ -124,11 +127,11 @@ class _OtpScreenState extends State<OtpScreen> {
             context: context,
             builder: (context) => AlertDialog(
               backgroundColor: primary,
-              title: Text("FashionTime",style: TextStyle(color: ascent,fontFamily: 'Montserrat',fontWeight: FontWeight.bold),),
-              content: Text(error.toString(),style: TextStyle(color: ascent,fontFamily: 'Montserrat'),),
+              title: const Text("FashionTime",style: TextStyle(color: ascent,fontFamily: 'Montserrat',fontWeight: FontWeight.bold),),
+              content: Text(error.toString(),style: const TextStyle(color: ascent,fontFamily: 'Montserrat'),),
               actions: [
                 TextButton(
-                  child: Text("Okay",style: TextStyle(color: ascent,fontFamily: 'Montserrat')),
+                  child: const Text("Okay",style: TextStyle(color: ascent,fontFamily: 'Montserrat')),
                   onPressed:  () {
                     setState(() {
                       Navigator.pop(context);
@@ -156,7 +159,7 @@ class _OtpScreenState extends State<OtpScreen> {
         "email": widget.email,
       };
       post(
-        Uri.parse("${serverUrl}/api/regenerate-otp-code/"),
+        Uri.parse("$serverUrl/api/regenerate-otp-code/"),
         body: body,
       ).then((value) {
         print("Response ==> ${value.body}");
@@ -170,11 +173,11 @@ class _OtpScreenState extends State<OtpScreen> {
           context: context,
           builder: (context) => AlertDialog(
             backgroundColor: primary,
-            title: Text("FashionTime",style: TextStyle(color: ascent,fontFamily: 'Montserrat',fontWeight: FontWeight.bold),),
-            content: Text(error.toString(),style: TextStyle(color: ascent,fontFamily: 'Montserrat'),),
+            title: const Text("FashionTime",style: TextStyle(color: ascent,fontFamily: 'Montserrat',fontWeight: FontWeight.bold),),
+            content: Text(error.toString(),style: const TextStyle(color: ascent,fontFamily: 'Montserrat'),),
             actions: [
               TextButton(
-                child: Text("Okay",style: TextStyle(color: ascent,fontFamily: 'Montserrat')),
+                child: const Text("Okay",style: TextStyle(color: ascent,fontFamily: 'Montserrat')),
                 onPressed:  () {
                   setState(() {
                     Navigator.pop(context);
@@ -211,7 +214,7 @@ class _OtpScreenState extends State<OtpScreen> {
     return Container(
       decoration: BoxDecoration(
         color: secondary,
-        image: DecorationImage(
+        image: const DecorationImage(
             image: AssetImage(
                 "assets/background.jpg"
             ),
@@ -237,7 +240,7 @@ class _OtpScreenState extends State<OtpScreen> {
                     ],
                   ),
                 ),
-                SizedBox(height: 25,),
+                const SizedBox(height: 25,),
                 WidgetAnimator(
                   Container(
                     width: MediaQuery.of(context).size.width * 0.7,
@@ -264,12 +267,12 @@ class _OtpScreenState extends State<OtpScreen> {
                     ),
                   ),
                 ),
-                SizedBox(height: 20,),
+                const SizedBox(height: 20,),
                 WidgetAnimator(
                     Row(
                       mainAxisAlignment: MainAxisAlignment.center,
                       children: [
-                        Text("We have send you a code for verification.",
+                        const Text("We have send you a code for verification.",
                           style: TextStyle(
                               fontSize: 15,
                               fontWeight: FontWeight.w500,
@@ -285,8 +288,8 @@ class _OtpScreenState extends State<OtpScreen> {
                     Row(
                       mainAxisAlignment: MainAxisAlignment.center,
                       children: [
-                        loading == true ? SpinKitCircle(color: ascent,size: 70,) : Container(
-                          height: 35,
+                        loading == true ? const SpinKitCircle(color: ascent,size: 70,) : Container(
+                          height: 40,
                           decoration: BoxDecoration(
                               borderRadius: BorderRadius.circular(15.0),
                               gradient: LinearGradient(
@@ -342,7 +345,7 @@ class _OtpScreenState extends State<OtpScreen> {
       ..from = Address(username, 'Fashion Time')
       ..recipients.add(widget.email)
       ..subject = 'Verification Code :: 😀 :: ${DateTime.now()}'
-      ..text = "Your verification code is ${code}.";
+      ..text = "Your verification code is $code.";
     try {
       final sendReport = await send(message, smtpServer);
       print('Message sent: ' + sendReport.toString());
@@ -353,11 +356,11 @@ class _OtpScreenState extends State<OtpScreen> {
         context: context,
         builder: (context) => AlertDialog(
           backgroundColor: primary,
-          title: Text("Fashion Time",style: TextStyle(color: ascent,fontFamily: 'Montserrat',fontWeight: FontWeight.bold),),
-          content: Text("Code send successfully.",style: TextStyle(color: ascent,fontFamily: 'Montserrat'),),
+          title: const Text("Fashion Time",style: TextStyle(color: ascent,fontFamily: 'Montserrat',fontWeight: FontWeight.bold),),
+          content: const Text("Code send successfully.",style: TextStyle(color: ascent,fontFamily: 'Montserrat'),),
           actions: [
             TextButton(
-              child: Text("Okay",style: TextStyle(color: ascent,fontFamily: 'Montserrat')),
+              child: const Text("Okay",style: TextStyle(color: ascent,fontFamily: 'Montserrat')),
               onPressed:  () {
                 setState(() {
                   Navigator.pop(context);

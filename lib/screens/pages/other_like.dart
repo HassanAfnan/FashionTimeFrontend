@@ -78,7 +78,9 @@ class _OtherLikesScreenState extends State<OtherLikesScreen> {
                     value["commentsCount"].toString(),
                     value["created"],value1!,
                     value["user"]["id"].toString(),
-                    value["myLike"] == null ? "like" : value["myLike"]
+                    value["myLike"] == null ? "like" : value["myLike"],
+                  {},
+                  {}
                 ));
               });
             });
@@ -97,7 +99,9 @@ class _OtherLikesScreenState extends State<OtherLikesScreen> {
                   value["commentsCount"].toString(),
                   value["created"],"",
                   value["user"]["id"].toString(),
-                  value["myLike"] == null ? "like" : value["myLike"]
+                  value["myLike"] == null ? "like" : value["myLike"],
+                {},
+                {}
               ));
             });
           }

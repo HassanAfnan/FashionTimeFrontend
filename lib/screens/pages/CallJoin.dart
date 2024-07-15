@@ -198,7 +198,7 @@ class _CallJoinState extends State<CallJoin> {
                 context: context,
                 builder: (BuildContext context) {
                   return AlertDialog(
-                    title: Text("Engaged"),
+                    title: const Text("Engaged"),
                     content: Text(friendName + "is already in the call"),
                     actions: <Widget>[
                       TextButton(
@@ -207,7 +207,7 @@ class _CallJoinState extends State<CallJoin> {
                             Navigator.of(context).pop();
                             Navigator.pop(context);
                           },
-                          child: Text("ok"))
+                          child: const Text("ok"))
                     ],
                   );
                 });
@@ -304,25 +304,25 @@ class _CallJoinState extends State<CallJoin> {
                 backgroundColor: primary,
                 title: Text(
                   "Calling ${widget.Name.toString()}",
-                  style: TextStyle(fontFamily: 'Montserrat'),
+                  style: const TextStyle(fontFamily: 'Montserrat'),
                 ),
               ),
               body: Center(
                 child: Container(
                   width: 200,
                   height: 200,
-                  decoration: BoxDecoration(
+                  decoration: const BoxDecoration(
                       borderRadius: BorderRadius.all(Radius.circular(120))
                   ),
                   child: ClipRRect(
-                    borderRadius: BorderRadius.all(Radius.circular(120)),
+                    borderRadius: const BorderRadius.all(Radius.circular(120)),
                     child: CachedNetworkImage(
                       imageUrl: widget.Pic.toString(),
                       imageBuilder: (context, imageProvider) => Container(
                         height:200,
                         width: 200,
                         decoration: BoxDecoration(
-                          borderRadius: BorderRadius.all(Radius.circular(120)),
+                          borderRadius: const BorderRadius.all(Radius.circular(120)),
                           image: DecorationImage(
                             image: imageProvider,
                             fit: BoxFit.cover,
@@ -331,65 +331,68 @@ class _CallJoinState extends State<CallJoin> {
                       ),
                       placeholder: (context, url) => SpinKitCircle(color: primary,size: 20,),
                       errorWidget: (context, url, error) => ClipRRect(
-                          borderRadius: BorderRadius.all(Radius.circular(50)),
+                          borderRadius: const BorderRadius.all(Radius.circular(50)),
                           child: Image.network("https://firebasestorage.googleapis.com/v0/b/fashiontime-28e3a.appspot.com/o/WhatsApp_Image_2023-11-08_at_4.48.19_PM-removebg-preview.png?alt=media&token=215bdc12-d53a-4772-bca1-efbbdf6ee955&_gl=1*nea8nk*_ga*NDIyMTUzOTQ2LjE2OTkyODU3MDg.*_ga_CW55HF8NVT*MTY5OTQ0NDE2NS4zMy4xLjE2OTk0NDUxNzcuNTYuMC4w",width: 200,height: 200,)
                       ),
                     ),
                   )
                 ),
               ),
-              bottomNavigationBar: BottomAppBar(
+              bottomNavigationBar: Padding(
+                padding: const EdgeInsets.all(12.0),
+                child: BottomAppBar(
 
-                 // color: primary,
-                  child: Container(
-                    decoration: BoxDecoration(
-                      gradient: LinearGradient(
-                        begin: Alignment.topLeft,
-                        end: Alignment.topRight,
-                        stops: [0.0, 0.99],
-                        tileMode: TileMode.clamp,
-                        colors: <Color>[
-                          secondary,
-                          primary,
-                        ],
+                   // color: primary,
+                    child: Container(
+                      decoration: BoxDecoration(
+                        gradient: LinearGradient(
+                          begin: Alignment.topLeft,
+                          end: Alignment.topRight,
+                          stops: [0.0, 0.99],
+                          tileMode: TileMode.clamp,
+                          colors: <Color>[
+                            secondary,
+                            primary,
+                          ],
+                        ),
                       ),
-                    ),
-                    child: Row(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: <Widget>[
-                        // IconButton(
-                        //   icon: Icon(Icons.call_end,
-                        //       color: Colors
-                        //           .red), // You can replace this with your desired icon
-                        //   onPressed: () {
-                        //     DatabaseMethods()
-                        //         .endCallRoom(widget.ChatId.toString());
-                        //     Navigator.pop(context);
-                        //   },
-                        // ),
-                        InkWell(
-                          onTap: () {
-                            DatabaseMethods()
-                                .endCallRoom(widget.ChatId.toString());
-                            Navigator.pop(context);
-                          },
-                          child: Container(
-                            width: 60, // Adjust the width to make it round
-                            height: 60, // Adjust the height to make it round
-                            decoration: BoxDecoration(
-                              shape: BoxShape.circle,
-                              color: Colors.red, // Change the color to green
-                            ),
-                            child: Center(
-                              child: Icon(Icons.call_end, color: Colors.white),
+                      child: Row(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: <Widget>[
+                          // IconButton(
+                          //   icon: Icon(Icons.call_end,
+                          //       color: Colors
+                          //           .red), // You can replace this with your desired icon
+                          //   onPressed: () {
+                          //     DatabaseMethods()
+                          //         .endCallRoom(widget.ChatId.toString());
+                          //     Navigator.pop(context);
+                          //   },
+                          // ),
+                          InkWell(
+                            onTap: () {
+                              DatabaseMethods()
+                                  .endCallRoom(widget.ChatId.toString());
+                              Navigator.pop(context);
+                            },
+                            child: Container(
+                              width: 60, // Adjust the width to make it round
+                              height: 60, // Adjust the height to make it round
+                              decoration: const BoxDecoration(
+                                shape: BoxShape.circle,
+                                color: Colors.red, // Change the color to green
+                              ),
+                              child: const Center(
+                                child: Icon(Icons.call_end, color: Colors.white),
+                              ),
                             ),
                           ),
-                        ),
-                      ],
-                    ),
-                  )),
+                        ],
+                      ),
+                    )),
+              ),
             ),
-          if (!loading) Scaffold(),
+          if (!loading) const Scaffold(),
         ],
       ),
     );

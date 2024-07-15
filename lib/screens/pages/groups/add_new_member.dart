@@ -129,11 +129,11 @@ class _AddNewMemberState extends State<AddNewMember> {
                     primary,
                   ])
           ),),
-        title: Text("Select People",style: TextStyle(fontFamily: 'Montserrat'),),
+        title: const Text("Select People",style: TextStyle(fontFamily: 'Montserrat'),),
       ),
       body: Column(
         children: [
-          SizedBox(height: 10,),
+          const SizedBox(height: 10,),
           // WidgetAnimator(
           //   Container(
           //     alignment: Alignment.bottomCenter,
@@ -205,8 +205,8 @@ class _AddNewMemberState extends State<AddNewMember> {
           //     ),
           //   ),
           // ),
-          SizedBox(height: 10,),
-          loading == true ? SpinKitCircle(color: primary,size: 50,) :(matchList.length <= 0 ? Expanded(child: Center(child: Text("No People"))) : Expanded(
+          const SizedBox(height: 10,),
+          loading == true ? SpinKitCircle(color: primary,size: 50,) :(matchList.length <= 0 ? const Expanded(child: Center(child: Text("No People"))) : Expanded(
             child: ListView.builder(
                 itemCount: matchList.length,
                 itemBuilder: (context,index) => WidgetAnimator(
@@ -217,23 +217,23 @@ class _AddNewMemberState extends State<AddNewMember> {
                         padding: const EdgeInsets.all(10.0),
                         child: Row(
                           children: [
-                            SizedBox(width: 20,),
+                            const SizedBox(width: 20,),
                             Container(
                               height:50,
                               width: 50,
                               decoration: BoxDecoration(
                                   color: Colors.black.withOpacity(0.6),
-                                  borderRadius: BorderRadius.all(Radius.circular(120))
+                                  borderRadius: const BorderRadius.all(Radius.circular(120))
                               ),
                               child: ClipRRect(
-                                borderRadius: BorderRadius.all(Radius.circular(120)),
+                                borderRadius: const BorderRadius.all(Radius.circular(120)),
                                 child: CachedNetworkImage(
                                   imageUrl: matchList[index].pic,
                                   imageBuilder: (context, imageProvider) => Container(
                                     height:50,
                                     width: 50,
                                     decoration: BoxDecoration(
-                                      borderRadius: BorderRadius.all(Radius.circular(120)),
+                                      borderRadius: const BorderRadius.all(Radius.circular(120)),
                                       image: DecorationImage(
                                         image: imageProvider,
                                         fit: BoxFit.cover,
@@ -242,13 +242,13 @@ class _AddNewMemberState extends State<AddNewMember> {
                                   ),
                                   placeholder: (context, url) => SpinKitCircle(color: primary,size: 20,),
                                   errorWidget: (context, url, error) => ClipRRect(
-                                      borderRadius: BorderRadius.all(Radius.circular(50)),
+                                      borderRadius: const BorderRadius.all(Radius.circular(50)),
                                       child: Image.network("https://firebasestorage.googleapis.com/v0/b/fashiontime-28e3a.appspot.com/o/WhatsApp_Image_2023-11-08_at_4.48.19_PM-removebg-preview.png?alt=media&token=215bdc12-d53a-4772-bca1-efbbdf6ee955&_gl=1*nea8nk*_ga*NDIyMTUzOTQ2LjE2OTkyODU3MDg.*_ga_CW55HF8NVT*MTY5OTQ0NDE2NS4zMy4xLjE2OTk0NDUxNzcuNTYuMC4w",width: 40,height: 40,)
                                   ),
                                 ),
                               ),
                             ),
-                            SizedBox(width: 20,),
+                            const SizedBox(width: 20,),
                             Column(
                               children: [
                                 Row(
@@ -260,12 +260,12 @@ class _AddNewMemberState extends State<AddNewMember> {
                                 Row(
                                   mainAxisAlignment: MainAxisAlignment.start,
                                   children: [
-                                    Text("@"+matchList[index].username,style: TextStyle(fontFamily: 'Montserrat'),),
+                                    Text(matchList[index].username,style: const TextStyle(fontFamily: 'Montserrat'),),
                                   ],
                                 )
                               ],
                             ),
-                            Expanded(child: SizedBox(width: 20,)),
+                            const Expanded(child: SizedBox(width: 20,)),
                             matchList[index].flag == true ?GestureDetector(
                                 onTap: (){
                                   if(matchList[index].flag == true){
@@ -298,7 +298,7 @@ class _AddNewMemberState extends State<AddNewMember> {
                                 });
                               }
                             }, child: Icon(Icons.add,color: primary,)),
-                            SizedBox(width: 20,),
+                            const SizedBox(width: 20,),
                           ],
                         ),
                       ),
@@ -328,7 +328,7 @@ class _AddNewMemberState extends State<AddNewMember> {
                                 height:50,
                                 width: 50,
                                 decoration: BoxDecoration(
-                                  borderRadius: BorderRadius.all(Radius.circular(120)),
+                                  borderRadius: const BorderRadius.all(Radius.circular(120)),
                                   image: DecorationImage(
                                     image: imageProvider,
                                     fit: BoxFit.cover,
@@ -345,7 +345,7 @@ class _AddNewMemberState extends State<AddNewMember> {
                               child: Container(
                                 height:50,
                                 width: 50,
-                                decoration: BoxDecoration(
+                                decoration: const BoxDecoration(
                                     borderRadius: BorderRadius.all(Radius.circular(120)),
                                     image: DecorationImage(
                                         fit: BoxFit.cover,
@@ -357,13 +357,13 @@ class _AddNewMemberState extends State<AddNewMember> {
                           ),
                         ],
                       ),
-                      Text(members[index]["name"],style: TextStyle(fontSize: 12),)
+                      Text(members[index]["name"],style: const TextStyle(fontSize: 12),)
                     ],
                   ),
                 ),
               ),
             ),
-            members.length <= 0 ? SizedBox() : GestureDetector(
+            members.length <= 0 ? const SizedBox() : GestureDetector(
               onTap: () {
                 setState(() {
                   startAdd = true;
@@ -377,7 +377,7 @@ class _AddNewMemberState extends State<AddNewMember> {
                 });
               },
               child: Container(
-                child: startAdd == true ? SpinKitCircle(color: ascent,): Icon(Icons.arrow_circle_right,color: primary,size: 50,),
+                child: startAdd == true ? const SpinKitCircle(color: ascent,): Icon(Icons.arrow_circle_right,color: primary,size: 50,),
               ),
             )
           ],

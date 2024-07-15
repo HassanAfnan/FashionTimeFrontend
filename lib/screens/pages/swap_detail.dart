@@ -122,60 +122,70 @@ class _SwapDetailState extends State<SwapDetail> {
           WidgetAnimator(
             Row(
               children: [
-                Container(
-                  color: dark1,
-                  height: 320,
-                  width: MediaQuery.of(context).size.width,
-                  child: CarouselSlider(
-                    carouselController: _carouselController,
-                    options: CarouselOptions(
-                      height: 320.0,
-                      autoPlay: false,
-                      enlargeCenterPage: true,
-                      viewportFraction: 0.99,
-                      aspectRatio: 2.0,
-                      initialPage: 0,
-                      enableInfiniteScroll:  widget.image.length>1,
-                        onPageChanged: (ind,reason){
-                          setState(() {
-                            _current = ind;
-                          });
-                        }
+                InteractiveViewer(
+                  panEnabled: true,
+                  minScale: 1,
+                  maxScale: 3,
+                  child: Container(
+                    color: dark1,
+                    height: 320,
+                    width: MediaQuery.of(context).size.width,
+                    child: CarouselSlider(
+                      carouselController: _carouselController,
+                      options: CarouselOptions(
+                        height: 320.0,
+                        autoPlay: false,
+                        enlargeCenterPage: true,
+                        viewportFraction: 0.99,
+                        aspectRatio: 2.0,
+                        initialPage: 0,
+                        enableInfiniteScroll:  widget.image.length>1,
+                          onPageChanged: (ind,reason){
+                            setState(() {
+                              _current = ind;
+                            });
+                          }
 
-                     ),
-                    items: widget.image.map((i) {
-                      print(i);
-                      return i["type"] == "video" ? UsingVideoControllerExample(
-                        path: i["video"],
-                      ) : Builder(
-                        builder: (BuildContext context) {
-                          return CachedNetworkImage(
-                            imageUrl: i["image"],
-                            imageBuilder: (context, imageProvider) => Container(
-                              height:MediaQuery.of(context).size.height ,
-                              width: MediaQuery.of(context).size.width,
-                              decoration: BoxDecoration(
-                                image: DecorationImage(
-                                  image: imageProvider,
-                                  fit: BoxFit.cover,
+                       ),
+                      items: widget.image.map((i) {
+                        print(i);
+                        return i["type"] == "video" ? UsingVideoControllerExample(
+                          path: i["video"],
+                        ) : Builder(
+                          builder: (BuildContext context) {
+                            return InteractiveViewer(
+                              panEnabled: true,
+                              minScale: 1,
+                              maxScale: 3,
+                              child: CachedNetworkImage(
+                                imageUrl: i["image"],
+                                imageBuilder: (context, imageProvider) => Container(
+                                  height:MediaQuery.of(context).size.height ,
+                                  width: MediaQuery.of(context).size.width,
+                                  decoration: BoxDecoration(
+                                    image: DecorationImage(
+                                      image: imageProvider,
+                                      fit: BoxFit.cover,
+                                    ),
+                                  ),
+                                ),
+                                placeholder: (context, url) => SpinKitCircle(color: primary,size: 60,),
+                                errorWidget: (context, url, error) => Container(
+                                  height:MediaQuery.of(context).size.height * 0.84,
+                                  width: MediaQuery.of(context).size.width,
+                                  decoration: BoxDecoration(
+                                    image: DecorationImage(
+                                        image: Image.network("https://upload.wikimedia.org/wikipedia/commons/thumb/6/65/No-Image-Placeholder.svg/1665px-No-Image-Placeholder.svg.png").image,
+                                        fit: BoxFit.fill
+                                    ),
+                                  ),
                                 ),
                               ),
-                            ),
-                            placeholder: (context, url) => SpinKitCircle(color: primary,size: 60,),
-                            errorWidget: (context, url, error) => Container(
-                              height:MediaQuery.of(context).size.height * 0.84,
-                              width: MediaQuery.of(context).size.width,
-                              decoration: BoxDecoration(
-                                image: DecorationImage(
-                                    image: Image.network("https://upload.wikimedia.org/wikipedia/commons/thumb/6/65/No-Image-Placeholder.svg/1665px-No-Image-Placeholder.svg.png").image,
-                                    fit: BoxFit.fill
-                                ),
-                              ),
-                            ),
-                          );
-                        },
-                      );
-                    }).toList(),
+                            );
+                          },
+                        );
+                      }).toList(),
+                    ),
                   ),
                 ),
 

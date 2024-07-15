@@ -75,7 +75,7 @@ class _VideoScreenState extends State<VideoScreen> {
           ),
         ),
         backgroundColor: primary,
-        title: Text("Video Call", style: TextStyle(fontFamily: 'Montserrat')),
+        title: const Text("Video Call", style: TextStyle(fontFamily: 'Montserrat')),
       ),
       body: isVideoEnable
           ? SafeArea(
@@ -106,7 +106,7 @@ class _VideoScreenState extends State<VideoScreen> {
                               }
                             });
                           },
-                          child: Icon(Icons.videocam_off)),
+                          child: const Icon(Icons.videocam_off)),
                       // child: Center(
                       //   child: Center(
                       //     child: ElevatedButton(onPressed: () {
@@ -140,7 +140,7 @@ class _VideoScreenState extends State<VideoScreen> {
                         Navigator.push(
                             context,
                             MaterialPageRoute(
-                              builder: (context) => ChannelLeft(),
+                              builder: (context) => const ChannelLeft(),
                             ));
                       }
                     },
@@ -156,10 +156,10 @@ class _VideoScreenState extends State<VideoScreen> {
                   Container(
                       width: 200,
                       height: 200,
-                      decoration: BoxDecoration(
+                      decoration: const BoxDecoration(
                           borderRadius: BorderRadius.all(Radius.circular(120))),
                       child: ClipRRect(
-                        borderRadius: BorderRadius.all(Radius.circular(120)),
+                        borderRadius: const BorderRadius.all(Radius.circular(120)),
                         child: CachedNetworkImage(
                           imageUrl: widget.friendPic.toString(),
                           imageBuilder: (context, imageProvider) => Container(
@@ -167,7 +167,7 @@ class _VideoScreenState extends State<VideoScreen> {
                             width: 200,
                             decoration: BoxDecoration(
                               borderRadius:
-                                  BorderRadius.all(Radius.circular(120)),
+                                  const BorderRadius.all(Radius.circular(120)),
                               image: DecorationImage(
                                 image: imageProvider,
                                 fit: BoxFit.cover,
@@ -180,7 +180,7 @@ class _VideoScreenState extends State<VideoScreen> {
                           ),
                           errorWidget: (context, url, error) => ClipRRect(
                               borderRadius:
-                                  BorderRadius.all(Radius.circular(50)),
+                                  const BorderRadius.all(Radius.circular(50)),
                               child: Image.network(
                                 "https://firebasestorage.googleapis.com/v0/b/fashiontime-28e3a.appspot.com/o/WhatsApp_Image_2023-11-08_at_4.48.19_PM-removebg-preview.png?alt=media&token=215bdc12-d53a-4772-bca1-efbbdf6ee955&_gl=1*nea8nk*_ga*NDIyMTUzOTQ2LjE2OTkyODU3MDg.*_ga_CW55HF8NVT*MTY5OTQ0NDE2NS4zMy4xLjE2OTk0NDUxNzcuNTYuMC4w",
                                 width: 40,
@@ -188,12 +188,12 @@ class _VideoScreenState extends State<VideoScreen> {
                               )),
                         ),
                       )),
-                  SizedBox(
+                  const SizedBox(
                     height: 20,
                   ),
                   Text(widget.friendName.toString(),
-                      style: TextStyle(fontFamily: 'Montserrat')),
-                  SizedBox(
+                      style: const TextStyle(fontFamily: 'Montserrat')),
+                  const SizedBox(
                     height: 250,
                   ),
                   Row(
@@ -206,7 +206,7 @@ class _VideoScreenState extends State<VideoScreen> {
                             client.engine.enableVideo();
                           });
                         },
-                        child: Icon(Icons.videocam),
+                        child: const Icon(Icons.videocam),
                       ),
                       ElevatedButton(
                         onPressed: () {
@@ -226,12 +226,12 @@ class _VideoScreenState extends State<VideoScreen> {
                               Navigator.push(
                                   context,
                                   MaterialPageRoute(
-                                    builder: (context) => ChannelLeft(),
+                                    builder: (context) => const ChannelLeft(),
                                   ));
                             }
                           });
                         },
-                        child: Icon(
+                        child: const Icon(
                           Icons.call_end,
                           color: Colors.red,
                         ),

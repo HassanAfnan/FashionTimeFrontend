@@ -1,0 +1,12 @@
+[
+  {
+    "relation": [
+      "delegate_permission/common.handle_all_urls"
+    ],
+    "target": {
+      "namespace": "android_app",
+      "package_name": "com.fashiontime.fashion",
+      "sha256_cert_fingerprints": ["B2:E5:D1:97:00:B7:F7:8D:1C:DE:B5:92:C7:38:DE:0A:B8:8F:1C:92:8B:9B:15:27:56:AF:C8:E0:E9:CD:31:E2"]
+    }
+  }
+]

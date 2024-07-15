@@ -2,6 +2,7 @@
 
 import 'dart:convert';
 
+import 'package:FashionTime/authentication/email.dart';
 import 'package:FashionTime/authentication/forget_password.dart';
 import 'package:FashionTime/authentication/login_verify.dart';
 import 'package:FashionTime/authentication/register_screen.dart';
@@ -68,11 +69,11 @@ class _LoginState extends State<Login> {
         });
         FirebaseMessaging.instance.getToken().then((value1) {
           Map<String, String> body = {
-            "username_or_email": email.text,
+            "username_or_email": email.text.toLowerCase(),
             "password": password.text,
           };
           https.post(
-            Uri.parse("${serverUrl}/api/login/"),
+            Uri.parse("$serverUrl/api/login/"),
             body: body,
           ).then((value) {
             print("Response ==> ${value.body}");
@@ -81,11 +82,16 @@ class _LoginState extends State<Login> {
               setState(() {
                 loading = false;
               });
-              Navigator.push(
-                  context, MaterialPageRoute(builder: (context) =>
-                  LoginOtpScreen(
-                    email: email.text,
-                  )));
+              isEmailIncorrect=true;
+              setState(() {
+                loading=false;
+                debugPrint("==========>wrong credentials");
+              });
+              // Navigator.push(
+              //     context, MaterialPageRoute(builder: (context) =>
+              //     LoginOtpScreen(
+              //       email: email.text,
+              //     )));
             }
             else if(json.decode(value.body)["detail"] == "Invalid credentials"){
               isEmailIncorrect=true;
@@ -308,7 +314,14 @@ class _LoginState extends State<Login> {
                         inputFormatters: [
                           FilteringTextInputFormatter.deny(
                               RegExp(r'\s')),
+                         // FilteringTextInputFormatter(RegExp(r'[A-Z]'), allow: false)
+
                         ],
+                        onTap: () {
+                          setState(() {
+                            isEmailIncorrect=false;
+                          });
+                        },
                         controller: email,
                         style: const TextStyle(
                             color: Colors.pink,
@@ -482,7 +495,7 @@ class _LoginState extends State<Login> {
                   WidgetAnimator(
                       GestureDetector(
                         onTap: (){
-                          Navigator.push(context, MaterialPageRoute(builder: (context) => const ForgetPassword()));
+                          Navigator.push(context, MaterialPageRoute(builder: (context) => const EmailScreen()));
                         },
                         child: Row(
                           mainAxisAlignment: MainAxisAlignment.center,

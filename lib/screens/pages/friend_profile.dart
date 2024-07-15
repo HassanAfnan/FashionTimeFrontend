@@ -1,6 +1,8 @@
 import 'dart:convert';
 import 'dart:io';
 
+import 'package:FashionTime/screens/pages/friend_fan.dart';
+import 'package:FashionTime/screens/pages/friend_idol.dart';
 import 'package:auto_size_text/auto_size_text.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:FashionTime/animations/bottom_animation.dart';
@@ -11,6 +13,7 @@ import 'package:FashionTime/screens/pages/swap_detail.dart';
 import 'package:FashionTime/utils/constants.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_spinkit/flutter_spinkit.dart';
+import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:http/http.dart' as https;
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:video_thumbnail/video_thumbnail.dart';
@@ -42,6 +45,7 @@ class _FriendProfileScreenState extends State<FriendProfileScreen> with SingleTi
   bool loading1 = false;
   bool loading2 = false;
   bool loading3 = false;
+  bool blockStatus=false;
   List<PostModel> myPosts = [];
   List<PostModel> commentedPost = [];
   List<PostModel> likedPost = [];
@@ -99,10 +103,10 @@ class _FriendProfileScreenState extends State<FriendProfileScreen> with SingleTi
     });
     try{
       https.get(
-          Uri.parse("${serverUrl}/user/api/allUsers/${id}"),
+          Uri.parse("$serverUrl/user/api/allUsers/$id"),
           headers: {
             "Content-Type": "application/json",
-            "Authorization": "Bearer ${token}"
+            "Authorization": "Bearer $token"
           }
       ).then((value){
         print("Data ==> ${data.toString()}");
@@ -118,7 +122,7 @@ class _FriendProfileScreenState extends State<FriendProfileScreen> with SingleTi
       setState(() {
         loading = false;
       });
-      print("Error --> ${e}");
+      print("Error --> $e");
     }
   }
   ClickedUserData(id){
@@ -127,10 +131,10 @@ class _FriendProfileScreenState extends State<FriendProfileScreen> with SingleTi
     });
     try{
       https.get(
-          Uri.parse("${serverUrl}/user/api/allUsers/${id}"),
+          Uri.parse("$serverUrl/user/api/allUsers/$id"),
           headers: {
             "Content-Type": "application/json",
-            "Authorization": "Bearer ${token}"
+            "Authorization": "Bearer $token"
           }
       ).then((value){
         print("Data ==> ${data.toString()}");
@@ -146,17 +150,17 @@ class _FriendProfileScreenState extends State<FriendProfileScreen> with SingleTi
       setState(() {
         loading = false;
       });
-      print("Error --> ${e}");
+      print("Error --> $e");
     }
   }
   matchFriendReques(id1){
     print("Match Friend id");
     try{
       https.get(
-          Uri.parse("${serverUrl}/followRequests/"),
+          Uri.parse("$serverUrl/followRequests/"),
           headers: {
             "Content-Type": "application/json",
-            "Authorization": "Bearer ${token}"
+            "Authorization": "Bearer $token"
           }
       ).then((value){
         print(id);
@@ -208,10 +212,10 @@ class _FriendProfileScreenState extends State<FriendProfileScreen> with SingleTi
     });
     try{
       https.get(
-          Uri.parse("${serverUrl}/fashionuser/savedFashion/${widget.id}/saved-posts/"),
+          Uri.parse("$serverUrl/fashionuser/savedFashion/${widget.id}/saved-posts/"),
           headers: {
             "Content-Type": "application/json",
-            "Authorization": "Bearer ${token}"
+            "Authorization": "Bearer $token"
           }
       ).then((value){
         print(jsonDecode(value.body).toString());
@@ -240,7 +244,7 @@ class _FriendProfileScreenState extends State<FriendProfileScreen> with SingleTi
                       value["description"],
                       value["upload"]["media"],
                       value["user"]["name"],
-                      value["user"]["pic"] == null ?"https://firebasestorage.googleapis.com/v0/b/fashiontime-28e3a.appspot.com/o/WhatsApp_Image_2023-11-08_at_4.48.19_PM-removebg-preview.png?alt=media&token=215bdc12-d53a-4772-bca1-efbbdf6ee955&_gl=1*nea8nk*_ga*NDIyMTUzOTQ2LjE2OTkyODU3MDg.*_ga_CW55HF8NVT*MTY5OTQ0NDE2NS4zMy4xLjE2OTk0NDUxNzcuNTYuMC4w":value["user"]["pic"],
+                      value["user"]["pic"] ?? "https://firebasestorage.googleapis.com/v0/b/fashiontime-28e3a.appspot.com/o/WhatsApp_Image_2023-11-08_at_4.48.19_PM-removebg-preview.png?alt=media&token=215bdc12-d53a-4772-bca1-efbbdf6ee955&_gl=1*nea8nk*_ga*NDIyMTUzOTQ2LjE2OTkyODU3MDg.*_ga_CW55HF8NVT*MTY5OTQ0NDE2NS4zMy4xLjE2OTk0NDUxNzcuNTYuMC4w",
                       false,
                       value["likesCount"].toString(),
                       value["disLikesCount"].toString(),
@@ -248,7 +252,9 @@ class _FriendProfileScreenState extends State<FriendProfileScreen> with SingleTi
                       value["created"],
                       value1!,
                       value["user"]["id"].toString(),
-                      value["myLike"] == null ? "like" : value["myLike"].toString()
+                      value["myLike"] == null ? "like" : value["myLike"].toString(),
+                      value["eventData"],
+                     {}
                   ));
                 });
               });
@@ -260,7 +266,7 @@ class _FriendProfileScreenState extends State<FriendProfileScreen> with SingleTi
                     value["description"],
                     value["upload"]["media"],
                     value["user"]["name"],
-                    value["user"]["pic"] == null ?"https://firebasestorage.googleapis.com/v0/b/fashiontime-28e3a.appspot.com/o/WhatsApp_Image_2023-11-08_at_4.48.19_PM-removebg-preview.png?alt=media&token=215bdc12-d53a-4772-bca1-efbbdf6ee955&_gl=1*nea8nk*_ga*NDIyMTUzOTQ2LjE2OTkyODU3MDg.*_ga_CW55HF8NVT*MTY5OTQ0NDE2NS4zMy4xLjE2OTk0NDUxNzcuNTYuMC4w":value["user"]["pic"],
+                    value["user"]["pic"] ?? "https://firebasestorage.googleapis.com/v0/b/fashiontime-28e3a.appspot.com/o/WhatsApp_Image_2023-11-08_at_4.48.19_PM-removebg-preview.png?alt=media&token=215bdc12-d53a-4772-bca1-efbbdf6ee955&_gl=1*nea8nk*_ga*NDIyMTUzOTQ2LjE2OTkyODU3MDg.*_ga_CW55HF8NVT*MTY5OTQ0NDE2NS4zMy4xLjE2OTk0NDUxNzcuNTYuMC4w",
                     false,
                     value["likesCount"].toString(),
                     value["disLikesCount"].toString(),
@@ -268,7 +274,9 @@ class _FriendProfileScreenState extends State<FriendProfileScreen> with SingleTi
                     value["created"],
                     "",
                     value["user"]["id"].toString(),
-                    value["myLike"] == null ? "like" : value["myLike"].toString()
+                    value["myLike"] == null ? "like" : value["myLike"].toString(),
+                  value["eventData"],
+                  {}
                 ));
               });
             }
@@ -278,12 +286,12 @@ class _FriendProfileScreenState extends State<FriendProfileScreen> with SingleTi
       getCommentedPosts();
       getBadges();
       getBadgesHistory();
-      getPostsWithMedal();
+     // getPostsWithMedal();
     }catch(e){
       setState(() {
         loading1 = false;
       });
-      print("Error --> ${e}");
+      print("Error --> $e");
     }
   }
   getCommentedPosts(){
@@ -292,10 +300,10 @@ class _FriendProfileScreenState extends State<FriendProfileScreen> with SingleTi
     });
     try{
       https.get(
-          Uri.parse("${serverUrl}/fashionuser/commentedFashion/${widget.id}/commented-posts/"),
+          Uri.parse("$serverUrl/fashionuser/commentedFashion/${widget.id}/commented-posts/"),
           headers: {
             "Content-Type": "application/json",
-            "Authorization": "Bearer ${token}"
+            "Authorization": "Bearer $token"
           }
       ).then((value){
         print(jsonDecode(value.body));
@@ -316,14 +324,16 @@ class _FriendProfileScreenState extends State<FriendProfileScreen> with SingleTi
                     value["description"],
                     value["upload"]["media"],
                     value["user"]["name"],
-                    value["user"]["pic"] == null ?"https://firebasestorage.googleapis.com/v0/b/fashiontime-28e3a.appspot.com/o/WhatsApp_Image_2023-11-08_at_4.48.19_PM-removebg-preview.png?alt=media&token=215bdc12-d53a-4772-bca1-efbbdf6ee955&_gl=1*nea8nk*_ga*NDIyMTUzOTQ2LjE2OTkyODU3MDg.*_ga_CW55HF8NVT*MTY5OTQ0NDE2NS4zMy4xLjE2OTk0NDUxNzcuNTYuMC4w":value["user"]["pic"],
+                    value["user"]["pic"] ?? "https://firebasestorage.googleapis.com/v0/b/fashiontime-28e3a.appspot.com/o/WhatsApp_Image_2023-11-08_at_4.48.19_PM-removebg-preview.png?alt=media&token=215bdc12-d53a-4772-bca1-efbbdf6ee955&_gl=1*nea8nk*_ga*NDIyMTUzOTQ2LjE2OTkyODU3MDg.*_ga_CW55HF8NVT*MTY5OTQ0NDE2NS4zMy4xLjE2OTk0NDUxNzcuNTYuMC4w",
                     false,
                     value["likesCount"].toString(),
                     value["disLikesCount"].toString(),
                     value["commentsCount"].toString(),
                     value["created"],value1!,
                     value["user"]["id"].toString(),
-                    value["myLike"] == null ? "like" : value["myLike"].toString()
+                    value["myLike"] == null ? "like" : value["myLike"].toString(),
+                  value["eventData"],
+                  {}
                 ));
               });
             });
@@ -335,14 +345,16 @@ class _FriendProfileScreenState extends State<FriendProfileScreen> with SingleTi
                   value["description"],
                   value["upload"]["media"],
                   value["user"]["name"],
-                  value["user"]["pic"] == null ?"https://firebasestorage.googleapis.com/v0/b/fashiontime-28e3a.appspot.com/o/WhatsApp_Image_2023-11-08_at_4.48.19_PM-removebg-preview.png?alt=media&token=215bdc12-d53a-4772-bca1-efbbdf6ee955&_gl=1*nea8nk*_ga*NDIyMTUzOTQ2LjE2OTkyODU3MDg.*_ga_CW55HF8NVT*MTY5OTQ0NDE2NS4zMy4xLjE2OTk0NDUxNzcuNTYuMC4w":value["user"]["pic"],
+                  value["user"]["pic"] ?? "https://firebasestorage.googleapis.com/v0/b/fashiontime-28e3a.appspot.com/o/WhatsApp_Image_2023-11-08_at_4.48.19_PM-removebg-preview.png?alt=media&token=215bdc12-d53a-4772-bca1-efbbdf6ee955&_gl=1*nea8nk*_ga*NDIyMTUzOTQ2LjE2OTkyODU3MDg.*_ga_CW55HF8NVT*MTY5OTQ0NDE2NS4zMy4xLjE2OTk0NDUxNzcuNTYuMC4w",
                   false,
                   value["likesCount"].toString(),
                   value["disLikesCount"].toString(),
                   value["commentsCount"].toString(),
                   value["created"],"",
                   value["user"]["id"].toString(),
-                  value["myLike"] == null ? "like" : value["myLike"].toString()
+                  value["myLike"] == null ? "like" : value["myLike"].toString(),
+                value["eventData"],
+                {}
               ));
             });
           }
@@ -353,7 +365,7 @@ class _FriendProfileScreenState extends State<FriendProfileScreen> with SingleTi
       setState(() {
         loading2 = false;
       });
-      print("Error --> ${e}");
+      print("Error --> $e");
     }
   }
   getLikedPosts(){
@@ -362,10 +374,10 @@ class _FriendProfileScreenState extends State<FriendProfileScreen> with SingleTi
     });
     try{
       https.get(
-          Uri.parse("${serverUrl}/fashionuser/likedFashion/${widget.id}/liked-posts/"),
+          Uri.parse("$serverUrl/fashionuser/likedFashion/${widget.id}/liked-posts/"),
           headers: {
             "Content-Type": "application/json",
-            "Authorization": "Bearer ${token}"
+            "Authorization": "Bearer $token"
           }
       ).then((value){
         print(jsonDecode(value.body));
@@ -386,14 +398,16 @@ class _FriendProfileScreenState extends State<FriendProfileScreen> with SingleTi
                     value["description"],
                     value["upload"]["media"],
                     value["user"]["name"],
-                    value["user"]["pic"] == null ?"https://firebasestorage.googleapis.com/v0/b/fashiontime-28e3a.appspot.com/o/WhatsApp_Image_2023-11-08_at_4.48.19_PM-removebg-preview.png?alt=media&token=215bdc12-d53a-4772-bca1-efbbdf6ee955&_gl=1*nea8nk*_ga*NDIyMTUzOTQ2LjE2OTkyODU3MDg.*_ga_CW55HF8NVT*MTY5OTQ0NDE2NS4zMy4xLjE2OTk0NDUxNzcuNTYuMC4w":value["user"]["pic"],
+                    value["user"]["pic"] ?? "https://firebasestorage.googleapis.com/v0/b/fashiontime-28e3a.appspot.com/o/WhatsApp_Image_2023-11-08_at_4.48.19_PM-removebg-preview.png?alt=media&token=215bdc12-d53a-4772-bca1-efbbdf6ee955&_gl=1*nea8nk*_ga*NDIyMTUzOTQ2LjE2OTkyODU3MDg.*_ga_CW55HF8NVT*MTY5OTQ0NDE2NS4zMy4xLjE2OTk0NDUxNzcuNTYuMC4w",
                     false,
                     value["likesCount"].toString(),
                     value["disLikesCount"].toString(),
                     value["commentsCount"].toString(),
                     value["created"],value1!,
                     value["user"]["id"].toString(),
-                    value["myLike"] == null ? "like" : value["myLike"].toString()
+                    value["myLike"] == null ? "like" : value["myLike"].toString(),
+                    value["eventData"],
+                  {}
                 ));
               });
             });
@@ -405,14 +419,16 @@ class _FriendProfileScreenState extends State<FriendProfileScreen> with SingleTi
                   value["description"],
                   value["upload"]["media"],
                   value["user"]["name"],
-                  value["user"]["pic"] == null ?"https://firebasestorage.googleapis.com/v0/b/fashiontime-28e3a.appspot.com/o/WhatsApp_Image_2023-11-08_at_4.48.19_PM-removebg-preview.png?alt=media&token=215bdc12-d53a-4772-bca1-efbbdf6ee955&_gl=1*nea8nk*_ga*NDIyMTUzOTQ2LjE2OTkyODU3MDg.*_ga_CW55HF8NVT*MTY5OTQ0NDE2NS4zMy4xLjE2OTk0NDUxNzcuNTYuMC4w":value["user"]["pic"],
+                  value["user"]["pic"] ?? "https://firebasestorage.googleapis.com/v0/b/fashiontime-28e3a.appspot.com/o/WhatsApp_Image_2023-11-08_at_4.48.19_PM-removebg-preview.png?alt=media&token=215bdc12-d53a-4772-bca1-efbbdf6ee955&_gl=1*nea8nk*_ga*NDIyMTUzOTQ2LjE2OTkyODU3MDg.*_ga_CW55HF8NVT*MTY5OTQ0NDE2NS4zMy4xLjE2OTk0NDUxNzcuNTYuMC4w",
                   false,
                   value["likesCount"].toString(),
                   value["disLikesCount"].toString(),
                   value["commentsCount"].toString(),
                   value["created"],"",
                   value["user"]["id"].toString(),
-                  value["myLike"] == null ? "like" : value["myLike"].toString()
+                  value["myLike"] == null ? "like" : value["myLike"].toString(),
+                value["eventData"],
+                {}
               ));
             });
           }
@@ -422,7 +438,7 @@ class _FriendProfileScreenState extends State<FriendProfileScreen> with SingleTi
       setState(() {
         loading3 = false;
       });
-      print("Error --> ${e}");
+      print("Error --> $e");
     }
   }
 
@@ -431,10 +447,10 @@ class _FriendProfileScreenState extends State<FriendProfileScreen> with SingleTi
       requestLoader = true;
     });
     https.post(
-        Uri.parse("${serverUrl}/follow_send_request/${userid}/"),
+        Uri.parse("$serverUrl/follow_send_request/$userid/"),
         headers: {
           "Content-Type": "application/json",
-          "Authorization": "Bearer ${token}"
+          "Authorization": "Bearer $token"
         }
     ).then((value){
       setState(() {
@@ -455,10 +471,10 @@ class _FriendProfileScreenState extends State<FriendProfileScreen> with SingleTi
       requestLoader = true;
     });
     https.post(
-        Uri.parse("${serverUrl}/follow_accept_request/${userid}/"),
+        Uri.parse("$serverUrl/follow_accept_request/$userid/"),
         headers: {
           "Content-Type": "application/json",
-          "Authorization": "Bearer ${token}"
+          "Authorization": "Bearer $token"
         }
     ).then((value){
       setState(() {
@@ -478,10 +494,10 @@ class _FriendProfileScreenState extends State<FriendProfileScreen> with SingleTi
       requestLoader = true;
     });
     https.post(
-        Uri.parse("${serverUrl}/follow_reject_request/${userid}/"),
+        Uri.parse("$serverUrl/follow_reject_request/$userid/"),
         headers: {
           "Content-Type": "application/json",
-          "Authorization": "Bearer ${token}"
+          "Authorization": "Bearer $token"
         }
     ).then((value){
       setState(() {
@@ -501,10 +517,10 @@ class _FriendProfileScreenState extends State<FriendProfileScreen> with SingleTi
       requestLoader = true;
     });
     https.post(
-        Uri.parse("${serverUrl}/follow_remove/${userid}/"),
+        Uri.parse("$serverUrl/follow_remove/$userid/"),
         headers: {
           "Content-Type": "application/json",
-          "Authorization": "Bearer ${token}"
+          "Authorization": "Bearer $token"
         }
     ).then((value){
       setState(() {
@@ -524,10 +540,10 @@ class _FriendProfileScreenState extends State<FriendProfileScreen> with SingleTi
       requestLoader = true;
     });
     https.post(
-        Uri.parse("${serverUrl}/follow_request_remove/${userid}/"),
+        Uri.parse("$serverUrl/follow_request_remove/$userid/"),
         headers: {
           "Content-Type": "application/json",
-          "Authorization": "Bearer ${token}"
+          "Authorization": "Bearer $token"
         }
     ).then((value){
       setState(() {
@@ -548,10 +564,10 @@ class _FriendProfileScreenState extends State<FriendProfileScreen> with SingleTi
       requestLoader1 = true;
     });
     https.post(
-      Uri.parse("${serverUrl}/fansRequests/"),
+      Uri.parse("$serverUrl/fansRequests/"),
       headers: {
         "Content-Type": "application/json",
-        "Authorization": "Bearer ${token}"
+        "Authorization": "Bearer $token"
       },
       body: json.encode({
         "from_user": from,
@@ -575,10 +591,10 @@ class _FriendProfileScreenState extends State<FriendProfileScreen> with SingleTi
       requestLoader1 = true;
     });
     https.delete(
-      Uri.parse("${serverUrl}/fansfansRequests/${fanId}/"),
+      Uri.parse("$serverUrl/fansfansRequests/$fanId/"),
       headers: {
         "Content-Type": "application/json",
-        "Authorization": "Bearer ${token}"
+        "Authorization": "Bearer $token"
       },
     ).then((value){
       setState(() {
@@ -596,10 +612,10 @@ class _FriendProfileScreenState extends State<FriendProfileScreen> with SingleTi
 
   blockUser(user,user1,user2){
     https.post(
-      Uri.parse("${serverUrl}/user/api/BlockUser/"),
+      Uri.parse("$serverUrl/user/api/BlockUser/"),
       headers: {
         "Content-Type": "application/json",
-        "Authorization": "Bearer ${token}"
+        "Authorization": "Bearer $token"
       },
       body: json.encode({
         "user": id,
@@ -609,6 +625,9 @@ class _FriendProfileScreenState extends State<FriendProfileScreen> with SingleTi
       print(value.body.toString());
       DatabaseMethods().blockChat(user1, user2);
       Navigator.pop(context);
+      setState(() {
+        blockStatus=true;
+      });
      // Navigator.push(context, MaterialPageRoute(builder: (context) => FollowerScreen(),));
     }).catchError((e){
       print(e);
@@ -636,9 +655,9 @@ class _FriendProfileScreenState extends State<FriendProfileScreen> with SingleTi
     final response=await https.get(
         headers: {
           "Content-Type": "application/json",
-          "Authorization": "Bearer ${token}"
+          "Authorization": "Bearer $token"
         },
-        Uri.parse("${serverUrl}/user/api/badgehistory/"));
+        Uri.parse("$serverUrl/user/api/badgehistory/"));
     if(response.statusCode==200){
       List<Map<String,dynamic>> jsonResponse=(json.decode(response.body)as List).cast<Map<String,dynamic>>();
       rankingOrders = jsonResponse.map<int>((item) => item['badge']['ranking_order'] as int).toList();
@@ -667,91 +686,91 @@ class _FriendProfileScreenState extends State<FriendProfileScreen> with SingleTi
       print('Error in badge history: ${response.statusCode}');
     }
   }
-  getPostsWithMedal() {
-    setState(() {
-      loading = true;
-    });
-    try {
-      https.get(Uri.parse("${serverUrl}/fashionUpload/top-trending/"),
-          headers: {
-            "Content-Type": "application/json",
-            "Authorization": "Bearer ${token}"
-          }).then((value) {
-        mediaLink.clear();
-        print("Timer ==> " + jsonDecode(value.body).toString());
-        setState(() {
-          //myDuration = Duration(seconds: int.parse(jsonDecode(value.body)["result"]["time_remaining"].));
-          loading = false;
-        });
-        jsonDecode(value.body)["result"].forEach((value) {
-          if(value['user']['id'].toString()==id.toString()){
-            if (value["upload"]["media"][0]["type"] == "video") {
-              VideoThumbnail.thumbnailFile(
-                video: value["upload"]["media"][0]["video"],
-                imageFormat: ImageFormat.JPEG,
-                maxWidth:
-                128, // specify the width of the thumbnail, let the height auto-scaled to keep the source aspect ratio
-                quality: 25,
-              ).then((value1) {
-                setState(() {
-                  medalPostsModel.add(PostModel(
-                      value["id"].toString(),
-                      value["description"],
-                      value["upload"]["media"],
-                      value["user"]["username"],
-                      value["user"]["pic"] == null
-                          ? "https://firebasestorage.googleapis.com/v0/b/fashiontime-28e3a.appspot.com/o/WhatsApp_Image_2023-11-08_at_4.48.19_PM-removebg-preview.png?alt=media&token=215bdc12-d53a-4772-bca1-efbbdf6ee955&_gl=1*nea8nk*_ga*NDIyMTUzOTQ2LjE2OTkyODU3MDg.*_ga_CW55HF8NVT*MTY5OTQ0NDE2NS4zMy4xLjE2OTk0NDUxNzcuNTYuMC4w"
-                          : value["user"]["pic"],
-                      false,
-                      value["likesCount"].toString(),
-                      value["disLikesCount"].toString(),
-                      value["commentsCount"].toString(),
-                      value["created"],
-                      value1!,
-                      value["user"]["id"].toString(),
-                      value["myLike"] == null
-                          ? "like"
-                          : value["myLike"].toString()));
-
-                });
-                mediaLink.add(value['upload']['media'][0]['video'].toString());
-                print("imageslinks is ${mediaLink.toString()}");
-                print("current user data is ${medalPostsModel.toString()}");
-              });
-            } else {
-              setState(() {
-                medalPostsModel.add(PostModel(
-                    value["id"].toString(),
-                    value["description"],
-                    value["upload"]["media"],
-                    value["user"]["username"],
-                    value["user"]["pic"] == null
-                        ? "https://firebasestorage.googleapis.com/v0/b/fashiontime-28e3a.appspot.com/o/WhatsApp_Image_2023-11-08_at_4.48.19_PM-removebg-preview.png?alt=media&token=215bdc12-d53a-4772-bca1-efbbdf6ee955&_gl=1*nea8nk*_ga*NDIyMTUzOTQ2LjE2OTkyODU3MDg.*_ga_CW55HF8NVT*MTY5OTQ0NDE2NS4zMy4xLjE2OTk0NDUxNzcuNTYuMC4w"
-                        : value["user"]["pic"],
-                    false,
-                    value["likesCount"].toString(),
-                    value["disLikesCount"].toString(),
-                    value["commentsCount"].toString(),
-                    value["created"],
-                    "",
-                    value["user"]["id"].toString(),
-                    value["myLike"] == null
-                        ? "like"
-                        : value["myLike"].toString()));
-              });
-              mediaLink.add(value['upload']['media'][0]['image'].toString());
-              print("imageslinks is ${mediaLink.toString()}");
-              print("current user data is ${medalPostsModel.toString()}");
-            }
-          }});
-      });
-    } catch (e) {
-      setState(() {
-        loading = false;
-      });
-      print("Error --> ${e}");
-    }
-  }
+  // getPostsWithMedal() {
+  //   setState(() {
+  //     loading = true;
+  //   });
+  //   try {
+  //     https.get(Uri.parse("$serverUrl/fashionUpload/top-trending/"),
+  //         headers: {
+  //           "Content-Type": "application/json",
+  //           "Authorization": "Bearer $token"
+  //         }).then((value) {
+  //       mediaLink.clear();
+  //       print("Timer ==> " + jsonDecode(value.body).toString());
+  //       setState(() {
+  //         //myDuration = Duration(seconds: int.parse(jsonDecode(value.body)["result"]["time_remaining"].));
+  //         loading = false;
+  //       });
+  //       jsonDecode(value.body)["result"].forEach((value) {
+  //         if(value['user']['id'].toString()==id.toString()){
+  //           if (value["upload"]["media"][0]["type"] == "video") {
+  //             VideoThumbnail.thumbnailFile(
+  //               video: value["upload"]["media"][0]["video"],
+  //               imageFormat: ImageFormat.JPEG,
+  //               maxWidth:
+  //               128, // specify the width of the thumbnail, let the height auto-scaled to keep the source aspect ratio
+  //               quality: 25,
+  //             ).then((value1) {
+  //               setState(() {
+  //                 medalPostsModel.add(PostModel(
+  //                     value["id"].toString(),
+  //                     value["description"],
+  //                     value["upload"]["media"],
+  //                     value["user"]["username"],
+  //                     value["user"]["pic"] == null
+  //                         ? "https://firebasestorage.googleapis.com/v0/b/fashiontime-28e3a.appspot.com/o/WhatsApp_Image_2023-11-08_at_4.48.19_PM-removebg-preview.png?alt=media&token=215bdc12-d53a-4772-bca1-efbbdf6ee955&_gl=1*nea8nk*_ga*NDIyMTUzOTQ2LjE2OTkyODU3MDg.*_ga_CW55HF8NVT*MTY5OTQ0NDE2NS4zMy4xLjE2OTk0NDUxNzcuNTYuMC4w"
+  //                         : value["user"]["pic"],
+  //                     false,
+  //                     value["likesCount"].toString(),
+  //                     value["disLikesCount"].toString(),
+  //                     value["commentsCount"].toString(),
+  //                     value["created"],
+  //                     value1!,
+  //                     value["user"]["id"].toString(),
+  //                     value["myLike"] == null
+  //                         ? "like"
+  //                         : value["myLike"].toString()));
+  //
+  //               });
+  //               mediaLink.add(value['upload']['media'][0]['video'].toString());
+  //               print("imageslinks is ${mediaLink.toString()}");
+  //               print("current user data is ${medalPostsModel.toString()}");
+  //             });
+  //           } else {
+  //             setState(() {
+  //               medalPostsModel.add(PostModel(
+  //                   value["id"].toString(),
+  //                   value["description"],
+  //                   value["upload"]["media"],
+  //                   value["user"]["username"],
+  //                   value["user"]["pic"] == null
+  //                       ? "https://firebasestorage.googleapis.com/v0/b/fashiontime-28e3a.appspot.com/o/WhatsApp_Image_2023-11-08_at_4.48.19_PM-removebg-preview.png?alt=media&token=215bdc12-d53a-4772-bca1-efbbdf6ee955&_gl=1*nea8nk*_ga*NDIyMTUzOTQ2LjE2OTkyODU3MDg.*_ga_CW55HF8NVT*MTY5OTQ0NDE2NS4zMy4xLjE2OTk0NDUxNzcuNTYuMC4w"
+  //                       : value["user"]["pic"],
+  //                   false,
+  //                   value["likesCount"].toString(),
+  //                   value["disLikesCount"].toString(),
+  //                   value["commentsCount"].toString(),
+  //                   value["created"],
+  //                   "",
+  //                   value["user"]["id"].toString(),
+  //                   value["myLike"] == null
+  //                       ? "like"
+  //                       : value["myLike"].toString()));
+  //             });
+  //             mediaLink.add(value['upload']['media'][0]['image'].toString());
+  //             print("imageslinks is ${mediaLink.toString()}");
+  //             print("current user data is ${medalPostsModel.toString()}");
+  //           }
+  //         }});
+  //     });
+  //   } catch (e) {
+  //     setState(() {
+  //       loading = false;
+  //     });
+  //     print("Error --> $e");
+  //   }
+  // }
   sendNotification(String name,String message,String token) async {
     print("Entered");
     print("1- "+name);
@@ -781,6 +800,51 @@ class _FriendProfileScreenState extends State<FriendProfileScreen> with SingleTi
       print("notification data${value1.body.toString()}");
     });
   }
+  unBlockUser(user,user1,user2){
+    setState(() {
+      loading1 = true;
+    });
+
+    https.delete(
+        Uri.parse("${serverUrl}/user/api/BlockUser/${user}/"),
+        headers: {
+          "Content-Type": "application/json",
+          "Authorization": "Bearer ${token}"
+        }
+    ).then((value){
+      print(value.body.toString());
+      setState(() {
+        loading1 = false;
+        blockStatus=false;
+      });
+      DatabaseMethods().unBlockChat(user1, user2);
+      showDialog(
+        context: context,
+        builder: (context) => AlertDialog(
+          backgroundColor: primary,
+          title: const Text("FashionTime",style: TextStyle(color: ascent,fontFamily: 'Montserrat',fontWeight: FontWeight.bold),),
+          content: const Text("User unblocked successfully.",style: TextStyle(color: ascent,fontFamily: 'Montserrat'),),
+          actions: [
+            TextButton(
+              child: const Text("Okay",style: TextStyle(color: ascent,fontFamily: 'Montserrat')),
+              onPressed:  () {
+
+                setState(() {
+                  Navigator.pop(context);
+                   Navigator.pop(context);
+                });
+              },
+            ),
+          ],
+        ),
+      );
+    }).catchError((){
+      setState(() {
+        loading1 = false;
+      });
+      Navigator.pop(context);
+    });
+  }
 
 
   @override
@@ -795,19 +859,19 @@ class _FriendProfileScreenState extends State<FriendProfileScreen> with SingleTi
               gradient: LinearGradient(
                   begin: Alignment.topLeft,
                   end: Alignment.topRight,
-                  stops: [0.0, 0.99],
+                  stops: const [0.0, 0.99],
                   tileMode: TileMode.clamp,
                   colors: <Color>[
                     secondary,
                     primary,
                   ])
           ),),
-        title: Text("${widget.username}",style: const TextStyle(fontFamily: 'Montserrat'),),
+        title: Text(widget.username,style: const TextStyle(fontFamily: 'Montserrat'),),
         actions: [
           PopupMenuButton(
               icon:const Icon(Icons.more_horiz),
               onSelected: (value) {
-                if (value == 0) {
+                if (value == 0 && blockStatus==false) {
                   showDialog(
                     context: context,
                     builder: (context) => AlertDialog(
@@ -834,6 +898,34 @@ class _FriendProfileScreenState extends State<FriendProfileScreen> with SingleTi
                     ),
                   );
                 }
+                if (value == 0 && blockStatus==true) {
+                  showDialog(
+                    context: context,
+                    builder: (context) => AlertDialog(
+                      backgroundColor: primary,
+                      title: const Text("FashionTime",style: TextStyle(color: ascent,fontFamily: 'Montserrat',fontWeight: FontWeight.bold),),
+                      content: const Text("Do you want to unblock this user?",style: TextStyle(color: ascent,fontFamily: 'Montserrat'),),
+                      actions: [
+                        TextButton(
+                          child: const Text("Yes",style: TextStyle(color: ascent,fontFamily: 'Montserrat')),
+                          onPressed:  () {
+                            //print(data["id"].toString());
+                           // blockUser(data["id"].toString(),name,data["name"]);
+                            unBlockUser(data["id"].toString(),name,data["name"]);
+                          },
+                        ),
+                        TextButton(
+                          child: const Text("No",style: TextStyle(color: ascent,fontFamily: 'Montserrat')),
+                          onPressed:  () {
+                            setState(() {
+                              Navigator.pop(context);
+                            });
+                          },
+                        ),
+                      ],
+                    ),
+                  );
+                }
                 if (value == 1){
                   Navigator.push(context, MaterialPageRoute(builder: (context) => ReportScreen(reportedID: id)));
                 }
@@ -846,9 +938,10 @@ class _FriendProfileScreenState extends State<FriendProfileScreen> with SingleTi
               PopupMenuItem(
                 value: 0,
                 child: Row(
-                  children: [
+                  children:  [
                     const Icon(Icons.block),
                     const SizedBox(width: 10,),
+                    blockStatus?const Text("Unblock",style: TextStyle(fontFamily: 'Montserrat'),):
                     const Text("Block",style: TextStyle(fontFamily: 'Montserrat'),),
                   ],
                 ),
@@ -856,10 +949,10 @@ class _FriendProfileScreenState extends State<FriendProfileScreen> with SingleTi
               PopupMenuItem(
                 value: 1,
                 child: Row(
-                  children: [
-                    const Icon(Icons.report),
-                    const SizedBox(width: 10,),
-                    const Text("Report",style: TextStyle(fontFamily: 'Montserrat'),),
+                  children: const [
+                    Icon(Icons.report),
+                    SizedBox(width: 10,),
+                    Text("Report",style: TextStyle(fontFamily: 'Montserrat'),),
                   ],
                 ),
               ),
@@ -868,7 +961,7 @@ class _FriendProfileScreenState extends State<FriendProfileScreen> with SingleTi
         ],
       ),
       body: loading == true ? SpinKitCircle(color: primary,size: 50,) : SingleChildScrollView(
-        child: Container(
+        child: SizedBox(
           height: MediaQuery.of(context).size.height * 1.5,
           child: Column(
             children: [
@@ -879,6 +972,20 @@ class _FriendProfileScreenState extends State<FriendProfileScreen> with SingleTi
                     Row(
                       mainAxisAlignment: MainAxisAlignment.center,
                       children: [
+                        Column(
+                          children: [
+                            const Padding(
+                              padding: EdgeInsets.only(right: 20),
+                              child: Icon(Icons.favorite_outlined,
+                                  color: Colors.red, size: 30),
+                            ),
+                            SizedBox(height: MediaQuery.of(context).size.height*0.008,),
+                            Padding(
+                                padding:const EdgeInsets.only(right: 20),
+                                child: Text((data['likesCount']['likes_week_fashion'].toString()),
+                                ))
+                          ],
+                        ),
                         CircleAvatar(
                           radius: 100,
                           child: Container(
@@ -907,7 +1014,7 @@ class _FriendProfileScreenState extends State<FriendProfileScreen> with SingleTi
                             child: ClipRRect(
                               borderRadius: const BorderRadius.all(Radius.circular(120)),
                               child: CachedNetworkImage(
-                                imageUrl: data["pic"] == null ? "https://firebasestorage.googleapis.com/v0/b/fashiontime-28e3a.appspot.com/o/WhatsApp_Image_2023-11-08_at_4.48.19_PM-removebg-preview.png?alt=media&token=215bdc12-d53a-4772-bca1-efbbdf6ee955&_gl=1*nea8nk*_ga*NDIyMTUzOTQ2LjE2OTkyODU3MDg.*_ga_CW55HF8NVT*MTY5OTQ0NDE2NS4zMy4xLjE2OTk0NDUxNzcuNTYuMC4w": data["pic"],
+                                imageUrl: data["pic"] ?? "https://firebasestorage.googleapis.com/v0/b/fashiontime-28e3a.appspot.com/o/WhatsApp_Image_2023-11-08_at_4.48.19_PM-removebg-preview.png?alt=media&token=215bdc12-d53a-4772-bca1-efbbdf6ee955&_gl=1*nea8nk*_ga*NDIyMTUzOTQ2LjE2OTkyODU3MDg.*_ga_CW55HF8NVT*MTY5OTQ0NDE2NS4zMy4xLjE2OTk0NDUxNzcuNTYuMC4w",
                                 imageBuilder: (context, imageProvider) => Container(
                                   height:MediaQuery.of(context).size.height * 0.7,
                                   width: MediaQuery.of(context).size.width,
@@ -926,9 +1033,27 @@ class _FriendProfileScreenState extends State<FriendProfileScreen> with SingleTi
                               ),
                             ),
                           ),
-                        )
+                        ),
+                        Column(
+                          children: [
+                            const Padding(
+                              padding: EdgeInsets.only(left: 20),
+                              child: Icon(
+                                Icons.star,
+                                color: Colors.orange,
+                                size: 30,
+                              ),
+                            ),
+                            SizedBox(height: MediaQuery.of(context).size.height*0.008,),
+                            Padding(
+                              padding:const EdgeInsets.only(left: 21),
+                              child: Text(data['likesCount']['likes_non_week_fashion'].toString()),
+                            )
+                          ],
+                        ),
                       ],
                     ),
+
                     data["badge"] == null ? const SizedBox() : Positioned(
                         bottom: 1,
                         right: 80,
@@ -964,36 +1089,38 @@ class _FriendProfileScreenState extends State<FriendProfileScreen> with SingleTi
                               ),
                             )
                         )),
+
                   ],
                 ),
               ),
+
               const SizedBox(height: 20,),
               WidgetAnimator(
                 Row(
                   mainAxisAlignment: MainAxisAlignment.spaceEvenly,
                   children: [
-                    GestureDetector(
-                      onTap: (){
-                        //Navigator.push(context, MaterialPageRoute(builder: (context) => LikesScreen()));
-                      },
-                      child: Column(
-                        children: [
-                          Row(
-                            children: [
-                              Text(data["likesCount"].toString(),style: const TextStyle(fontFamily: 'Montserrat'),),
-                            ],
-                          ),
-                          Row(
-                            children: [
-                              Text("Likes",style: TextStyle(
-                                  color: primary,
-                                  fontFamily: 'Montserrat'
-                              ),)
-                            ],
-                          )
-                        ],
-                      ),
-                    ),
+                    // GestureDetector(
+                    //   onTap: (){
+                    //     //Navigator.push(context, MaterialPageRoute(builder: (context) => LikesScreen()));
+                    //   },
+                    //   child: Column(
+                    //     children: [
+                    //       Row(
+                    //         children: [
+                    //           Text(data["likesCount"].toString(),style: const TextStyle(fontFamily: 'Montserrat'),),
+                    //         ],
+                    //       ),
+                    //       Row(
+                    //         children: [
+                    //           Text("Likes",style: TextStyle(
+                    //               color: primary,
+                    //               fontFamily: 'Montserrat'
+                    //           ),)
+                    //         ],
+                    //       )
+                    //     ],
+                    //   ),
+                    // ),
                     GestureDetector(
                       onTap: (){
                         //Navigator.push(context, MaterialPageRoute(builder: (context) => StylesScreen()));
@@ -1018,7 +1145,7 @@ class _FriendProfileScreenState extends State<FriendProfileScreen> with SingleTi
                     ),
                     GestureDetector(
                       onTap: (){
-                        // Navigator.push(context, MaterialPageRoute(builder: (context) => FanScreen()));
+                         Navigator.push(context, MaterialPageRoute(builder: (context) => FriendsFans(friendId: widget.id)));
                       },
                       child: Column(
                         children: [
@@ -1030,6 +1157,29 @@ class _FriendProfileScreenState extends State<FriendProfileScreen> with SingleTi
                           Row(
                             children: [
                               Text("Fans",style: TextStyle(
+                                  color: primary,
+                                  fontFamily: 'Montserrat'
+                              ),)
+                            ],
+                          )
+                        ],
+                      ),
+                    ),
+                    GestureDetector(
+                      onTap: (){
+                        //Navigator.push(context, MaterialPageRoute(builder: (context) => StylesScreen()));
+                         Navigator.push(context, MaterialPageRoute(builder: (context) =>  FriendsIdols(friendId: widget.id.toString())));
+                      },
+                      child: Column(
+                        children: [
+                          Row(
+                            children:  [
+                              Text(data["idolsCount"].toString(),style: const TextStyle(fontFamily: 'Montserrat'),),
+                            ],
+                          ),
+                          Row(
+                            children: [
+                              Text("Idols",style: TextStyle(
                                   color: primary,
                                   fontFamily: 'Montserrat'
                               ),)
@@ -1067,7 +1217,7 @@ class _FriendProfileScreenState extends State<FriendProfileScreen> with SingleTi
               Row(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
-                  WidgetAnimator(Container(
+                  WidgetAnimator(SizedBox(
                     height: 80,
                     child: WidgetAnimator(
                         Row(
@@ -1077,7 +1227,7 @@ class _FriendProfileScreenState extends State<FriendProfileScreen> with SingleTi
                             GestureDetector(
                               onTap: data["isFollow"] == true ? (){
                                 print("unfried request");
-                                print("isGranted ==> ${isGetRequest}");
+                                print("isGranted ==> $isGetRequest");
                                 print("Follow Status ==> ${data["follow_status"]}");
                                 unfriendRequest(widget.id);
                               }:(){
@@ -1132,7 +1282,7 @@ class _FriendProfileScreenState extends State<FriendProfileScreen> with SingleTi
                                                 leading: new Icon(Icons.close,color: Colors.red,),
                                                 title: new Text('Cancel Request',style: const TextStyle(fontFamily: 'Montserrat',color: Colors.red),),
                                                 onTap: (){
-                                                  print("Request Id ==> ${requestID}");
+                                                  print("Request Id ==> $requestID");
                                                   Navigator.pop(context);
                                                   cancelRequest(widget.id);
                                                   //rejectRequest(requestID);
@@ -1161,7 +1311,7 @@ class _FriendProfileScreenState extends State<FriendProfileScreen> with SingleTi
                                       gradient: LinearGradient(
                                           begin: Alignment.topLeft,
                                           end: Alignment.topRight,
-                                          stops: [0.0, 0.99],
+                                          stops: const [0.0, 0.99],
                                           tileMode: TileMode.clamp,
                                           colors: data["isFollow"] == true ||data["follow_status"] != null ? [
                                             Colors.grey,
@@ -1176,7 +1326,7 @@ class _FriendProfileScreenState extends State<FriendProfileScreen> with SingleTi
                                       fontSize: 15,
                                       fontWeight: FontWeight.w700,
                                       fontFamily: 'Montserrat'
-                                  ),) : Text(data["follow_status"] == null ? 'Add Friend':isGetRequest == false?"Acc./Rej.":'Pending',style: const TextStyle(
+                                  ),) : Text(data["follow_status"] == null ? 'Add Friend':isGetRequest == false?"Pending":'Acc./Rej.',style: const TextStyle(
                                       fontSize: 15,
                                       fontWeight: FontWeight.w700,
                                       fontFamily: 'Montserrat'
@@ -1209,7 +1359,7 @@ class _FriendProfileScreenState extends State<FriendProfileScreen> with SingleTi
                                       gradient: LinearGradient(
                                           begin: Alignment.topLeft,
                                           end: Alignment.topRight,
-                                          stops: [0.0, 0.99],
+                                          stops: const [0.0, 0.99],
                                           tileMode: TileMode.clamp,
                                           colors: data["isFan"] == true ? [
                                             Colors.grey,
@@ -1306,8 +1456,8 @@ class _FriendProfileScreenState extends State<FriendProfileScreen> with SingleTi
                             maxHeight: 50.0,
                           ),
                           child: AutoSizeText(
-                            data["description"] == null ? "" :data["description"],
-                            style: const TextStyle(fontSize: 20.0,fontFamily: 'Montserrat'),
+                            data["description"] ?? "",
+                            style: const TextStyle(fontSize: 16.0,fontFamily: 'Montserrat'),
                           ),
                         ),
                       ),
@@ -1315,7 +1465,7 @@ class _FriendProfileScreenState extends State<FriendProfileScreen> with SingleTi
                   )
               ),
               const SizedBox(height: 5,),
-              Container(
+              SizedBox(
                 height: 50,
                 child: TabBar(
                   controller: tabController,
@@ -1451,9 +1601,9 @@ class GridTab extends StatelessWidget {
         // )
         // ),
         loading2 == true ? SpinKitCircle(color: primary,size: 50,) : (commentedPost.length <= 0 ? Column(
-          children: [
-            const SizedBox(height: 40,),
-            const Text("No Posts",textAlign: TextAlign.center,),
+          children: const [
+            SizedBox(height: 40,),
+            Text("No Posts",textAlign: TextAlign.center,),
           ],
         ) : GridView.builder(
           physics: const NeverScrollableScrollPhysics(),
@@ -1529,7 +1679,12 @@ class GridTab extends StatelessWidget {
             );
           },
         )),
-        loading3 == true ? SpinKitCircle(color: primary,size: 50,) : (badges.length <= 0 ? const Center(child: Text("No Posts")) :
+        loading3 == true ? SpinKitCircle(color: primary,size: 50,) : (badges.length <= 0 ? Column(
+          children: const [
+            SizedBox(height: 40,),
+            Text("No Posts"),
+          ],
+        ) :
         SingleChildScrollView(
           child: GridView.builder(
             physics: const NeverScrollableScrollPhysics(),

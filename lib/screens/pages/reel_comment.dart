@@ -10,6 +10,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_spinkit/flutter_spinkit.dart';
 import 'package:flutter_staggered_animations/flutter_staggered_animations.dart';
 import 'package:fluttertoast/fluttertoast.dart';
+import 'package:giphy_picker/giphy_picker.dart';
 import 'package:intl/intl.dart';
 import 'package:http/http.dart' as https;
 import 'package:shared_preferences/shared_preferences.dart';
@@ -41,7 +42,7 @@ String createdAt="";
 String userName="";
 String userPic="";
 List<dynamic> results =[];
-
+GiphyGif? _gif;
 class _ReelCommentScreenState extends State<ReelCommentScreen> {
   @override
   void initState() {
@@ -62,7 +63,31 @@ class _ReelCommentScreenState extends State<ReelCommentScreen> {
     // getMyComments(widget.id);
     getReelComments(widget.reelId.toString());
   }
+  String formatTimeDifference(String dateString) {
+    DateTime createdAt = DateTime.parse(dateString);
+    DateTime now = DateTime.now();
 
+    Duration difference = now.difference(createdAt);
+
+    if (difference.inSeconds < 60) {
+      return '${difference.inSeconds} seconds ago';
+    } else if (difference.inMinutes < 60) {
+      return '${difference.inMinutes} minutes ago';
+    } else if (difference.inHours < 24) {
+      return '${difference.inHours} hours ago';
+    } else if (difference.inDays < 7) {
+      return '${difference.inDays} days ago';
+    } else if (difference.inDays < 30) {
+      int weeks = (difference.inDays / 7).floor();
+      return '$weeks ${weeks == 1 ? 'week' : 'weeks'} ago';
+    } else if (difference.inDays < 365) {
+      int months = (difference.inDays / 30).floor();
+      return '$months ${months == 1 ? 'month' : 'months'} ago';
+    } else {
+      int years = (difference.inDays / 365).floor();
+      return '$years ${years == 1 ? 'year' : 'years'} ago';
+    }
+  }
   String utf8convert(String text) {
     List<int> bytes = text.toString().codeUnits;
     return utf8.decode(bytes);
@@ -72,7 +97,7 @@ class _ReelCommentScreenState extends State<ReelCommentScreen> {
       loading1 = true;
     });
     try {
-      if (comment.text == "") {
+      if (comment.text == ""&&_gif==null) {
         setState(() {
           loading1 = false;
         });
@@ -104,7 +129,63 @@ class _ReelCommentScreenState extends State<ReelCommentScreen> {
             ],
           ),
         );
-      } else {
+      }
+      else if(_gif!=null) {
+        setState(() {
+          loading1 = true;
+        });
+        Map<String, dynamic> body = {
+          "comment": _gif?.images.original?.url.toString(),
+          "reel": widget.reelId,
+          "user": id
+        };
+        https.post(Uri.parse("$serverUrl/fashionReelComments/"),
+            body: json.encode(body),
+            headers: {
+              "Content-Type": "application/json",
+              "Authorization": "Bearer $token"
+            }).then((value) {
+          print("Response ==> ${value.body}");
+          setState(() {
+            loading1 = false;
+            comment.clear();
+          });
+        }).catchError((error) {
+          setState(() {
+            loading1 = false;
+          });
+          showDialog(
+            context: context,
+            builder: (context) => AlertDialog(
+              backgroundColor: primary,
+              title: const Text(
+                "FashionTime",
+                style: TextStyle(
+                    color: ascent,
+                    fontFamily: 'Montserrat',
+                    fontWeight: FontWeight.bold),
+              ),
+              content: Text(
+                error.toString(),
+                style: const TextStyle(color: ascent, fontFamily: 'Montserrat'),
+              ),
+              actions: [
+                TextButton(
+                  child: const Text("Okay",
+                      style:
+                      TextStyle(color: ascent, fontFamily: 'Montserrat')),
+                  onPressed: () {
+                    setState(() {
+                      Navigator.pop(context);
+                    });
+                  },
+                ),
+              ],
+            ),
+          );
+        });
+      }
+      else {
         setState(() {
           loading1 = true;
         });
@@ -422,13 +503,18 @@ class _ReelCommentScreenState extends State<ReelCommentScreen> {
                                   crossAxisAlignment:
                                   CrossAxisAlignment.start,
                                   children: [
-                                    Text(
-                                      utf8convert(myComments[index]['comment'])
-                                      //myComments[index]["comment"],
-                                      ,
-                                      style: const TextStyle(
-                                          fontFamily: "Montserrat"),
-                                    ),
+                                myComments[index]['comment'].toString().startsWith("https://media")?
+
+                                buildGifWidget(context, myComments[index]['comment'].toString())
+                                    :
+                                Flexible(
+                                  child: Text(
+                                    // comments[index]["comment"],
+                                    utf8convert(myComments[index]['comment']),
+                                    style: const TextStyle(
+                                        fontFamily: "Montserrat"),
+                                  ),
+                                ),
                                     const SizedBox(
                                       height: 4,
                                     ),
@@ -592,10 +678,15 @@ class _ReelCommentScreenState extends State<ReelCommentScreen> {
 
                                   ],
                                 ),
-                                trailing: Text(DateFormat.jm().format(
-                                    DateTime.parse(myComments[index]
-                                    ["created"])
-                                        .toLocal())),
+                                trailing:
+                                // Text(DateFormat.jm().format(
+                                //     DateTime.parse(myComments[index]
+                                //     ["created"])
+                                //         .toLocal())),
+                                Text(formatTimeDifference(myComments[index]['created']),style: const TextStyle(
+                                    fontFamily:  "Montserrat",
+                                    fontSize: 12
+                                ),)
                               ),
                             ),
                           ),
@@ -706,11 +797,17 @@ class _ReelCommentScreenState extends State<ReelCommentScreen> {
                                       onLongPress: () {
                                         Navigator.push(context, MaterialPageRoute(builder: (context) =>ReportReelCommentScreen(commentId: results[index]['id']) ,));
                                       },
-                                      child: Text(
-                                        // comments[index]["comment"],
-                                        utf8convert(results[index]['comment']),
-                                        style: const TextStyle(
-                                            fontFamily: "Montserrat"),
+                                      child: results[index]['comment'].toString().startsWith("https://media")?
+
+                                      buildGifWidget(context, results[index]['comment'].toString())
+                                          :
+                                      Flexible(
+                                        child: Text(
+                                          // comments[index]["comment"],
+                                          utf8convert(results[index]['comment']),
+                                          style: const TextStyle(
+                                              fontFamily: "Montserrat"),
+                                        ),
                                       ),
                                     ),
                                     const SizedBox(
@@ -880,10 +977,15 @@ class _ReelCommentScreenState extends State<ReelCommentScreen> {
                                   onDoubleTap: () {
                                     likeComment(results[index]['id']);
                                   },
-                                  child: Text(DateFormat.jm().format(
-                                      DateTime.parse(results[index]
-                                      ["created"])
-                                          .toLocal())),
+                                  child:
+                                  // Text(DateFormat.jm().format(
+                                  //     DateTime.parse(results[index]
+                                  //     ["created"])
+                                  //         .toLocal())),
+                                  Text(formatTimeDifference(results[index]['created']),style: const TextStyle(
+                                      fontFamily:  "Montserrat",
+                                      fontSize: 12
+                                  ),)
                                 ),
                               ),
                             ),
@@ -998,7 +1100,7 @@ class _ReelCommentScreenState extends State<ReelCommentScreen> {
                                     size: 10,
                                   )),
                               errorWidget: (context, url, error) =>
-                                  const Icon(Icons.error),
+                                  const Icon(Icons.person),
                             ),
                           )),
                       const SizedBox(width: 14,),
@@ -1028,6 +1130,41 @@ class _ReelCommentScreenState extends State<ReelCommentScreen> {
                             ),
                           )),
                       const SizedBox(width: 16,),
+                      Padding(
+                        padding: const EdgeInsets.only(bottom: 12,right: 16),
+                        child: IconButton(
+                          icon: const Icon(Icons.gif,size: 40),
+                          onPressed: ()async {
+                            final gif = await GiphyPicker.pickGif(
+                              context: context,
+                              apiKey: giphyKey,
+                            );
+                            if (gif != null) {
+                              setState(() {
+                                _gif = gif;
+                                debugPrint("gif link==========>${_gif?.images.original?.url}");
+
+                              });
+                              showDialog(
+                                context: context,
+                                builder: (BuildContext context) {
+                                  return AlertDialog(
+                                    backgroundColor: primary,
+                                    title: Text('GIF Selected'),
+                                    content: _gif?.images.original?.url != null
+                                        ? Image(image: NetworkImage(_gif!.images.original!.url!))
+                                        : Text('No GIF URL available'),
+                                    actions: <Widget>[
+                                      IconButton(icon: Icon(Icons.send), onPressed: () {  createReelComment();;
+                                      Navigator.of(context).pop();},),
+                                    ],
+                                  );
+                                },
+                              );
+                            }
+                          },
+                        ),
+                      ),
                       GestureDetector(
                         onTap: () {
                            createReelComment();
@@ -1060,4 +1197,23 @@ class _ReelCommentScreenState extends State<ReelCommentScreen> {
       ),
     );
   }
+}
+Widget buildGifWidget(BuildContext context,String gifUrl) {
+  debugPrint("gif link after sending msg========>$gifUrl");
+  return Stack(
+    alignment: Alignment.center,
+    children: [
+      Image.network(gifUrl),
+      FutureBuilder(
+        future: precacheImage(NetworkImage(gifUrl), context),
+        builder: (context, snapshot) {
+          if (snapshot.connectionState == ConnectionState.waiting) {
+            return Center(child: CircularProgressIndicator(color: primary));
+          } else {
+            return const SizedBox.shrink(); // Empty container when image is loaded
+          }
+        },
+      ),
+    ],
+  );
 }

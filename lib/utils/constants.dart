@@ -2,14 +2,13 @@ import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 const serverUrl = "https://fashion-time-backend-1dc9be6bb298.herokuapp.com";
-
-var primary = Colors.pink.shade300;
-var secondary = Color(0xff9ad9e9);
+var primary = Color(0xffFEAEC9);
+var secondary = const Color(0xff9ad9e9);
 const tertiary = Color(0xffBBAED4);
 const ascent = Colors.white;
 const dark1 = Colors.black;
 const gold=Color.fromARGB(255, 198,161 , 83);
-
+const String giphyKey='YLLC6qKeQRMFOPUHUqkptZPLiGy8uvXX';
 const silver=Color.fromARGB(160, 155, 160, 160);
 const String userID = "hassan4100348@cloud.neduet.edu.pk";
 const String passID = "karachi94@@";
@@ -18,7 +17,7 @@ ThemeData light = ThemeData(
     brightness: Brightness.light,
     primaryColor: primary,
     accentColor: Colors.white,
-    scaffoldBackgroundColor: Color(0xfff1f1f1)
+    scaffoldBackgroundColor: const Color(0xfff1f1f1)
 );
 
 ThemeData dark = ThemeData(
@@ -36,8 +35,8 @@ class ThemeNotifier extends ChangeNotifier {
   bool get darkTheme => _darkTheme!;
 
   ThemeNotifier() {
-    _darkTheme = false;
-    _loadFromPrefs();
+    _darkTheme = true;
+    loadFromPrefs();
   }
 
   toggleTheme() {
@@ -51,7 +50,7 @@ class ThemeNotifier extends ChangeNotifier {
       _prefs = await SharedPreferences.getInstance();
   }
 
-  _loadFromPrefs() async {
+  loadFromPrefs() async {
     await _initPrefs();
     _darkTheme = _prefs!.getBool(key) ?? true;
     notifyListeners();

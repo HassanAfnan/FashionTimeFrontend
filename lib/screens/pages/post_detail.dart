@@ -3,7 +3,7 @@ import 'package:auto_size_text/auto_size_text.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:carousel_slider/carousel_slider.dart';
 import 'package:FashionTime/models/post_model.dart';
-import 'package:FashionTime/screens/pages/comment_screen.dart';
+import 'package:FashionTime/screens/pages/fashionComments/comment_screen.dart';
 import 'package:FashionTime/screens/pages/friend_profile.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_spinkit/flutter_spinkit.dart';
@@ -25,7 +25,7 @@ class _PostDetailState extends State<PostDetail> {
   String id = "";
   String token = "";
   bool loading = false;
-  PostModel post = PostModel("", "", [], "", "", false, "", "", "", "", "", "", "");
+  PostModel post = PostModel("", "", [], "", "", false, "", "", "", "", "", "", "",{},{});
 
   @override
   void initState() {
@@ -72,7 +72,9 @@ class _PostDetailState extends State<PostDetail> {
                 jsonDecode(value.body)["created"],
                 "",
                 jsonDecode(value.body)["user"]["id"].toString(),
-                jsonDecode(value.body)["myLike"] == null ? "like" : jsonDecode(value.body)["myLike"].toString()
+                jsonDecode(value.body)["myLike"] == null ? "like" : jsonDecode(value.body)["myLike"].toString(),
+              {},
+              {}
             );
           });
       });

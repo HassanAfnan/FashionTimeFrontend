@@ -126,7 +126,10 @@ class _MyProfileScreenState extends State<MyProfileScreen> with SingleTickerProv
                       value["user"]["id"].toString(),
                       value["myLike"] == null
                           ? "like"
-                          : value["myLike"].toString()));
+                          : value["myLike"].toString(),
+                    {},
+                    {}
+                  ));
 
                 });
                 mediaLink.add(value['upload']['media'][0]['video'].toString());
@@ -152,7 +155,10 @@ class _MyProfileScreenState extends State<MyProfileScreen> with SingleTickerProv
                     value["user"]["id"].toString(),
                     value["myLike"] == null
                         ? "like"
-                        : value["myLike"].toString()));
+                        : value["myLike"].toString(),
+                    {},
+                  {}
+                ));
               });
               mediaLink.add(value['upload']['media'][0]['image'].toString());
               print("imageslinks is ${mediaLink.toString()}");
@@ -285,7 +291,9 @@ class _MyProfileScreenState extends State<MyProfileScreen> with SingleTickerProv
                       value["created"],
                       value1!,
                       value["user"]["id"].toString(),
-                      value["myLike"] == null ? "like" : value["myLike"].toString()
+                      value["myLike"] == null ? "like" : value["myLike"].toString(),
+                    {},
+                    {}
                   ));
                 });
               });
@@ -305,7 +313,9 @@ class _MyProfileScreenState extends State<MyProfileScreen> with SingleTickerProv
                     value["created"],
                     "",
                     value["user"]["id"].toString(),
-                    value["myLike"] == null ? "like" : value["myLike"].toString()
+                    value["myLike"] == null ? "like" : value["myLike"].toString(),
+                  {},
+                  {}
                 ));
               });
             }
@@ -360,7 +370,9 @@ class _MyProfileScreenState extends State<MyProfileScreen> with SingleTickerProv
                     value["commentsCount"].toString(),
                     value["created"],value1!,
                     value["user"]["id"].toString(),
-                    value["myLike"] == null ? "like" : value["myLike"].toString()
+                    value["myLike"] == null ? "like" : value["myLike"].toString(),
+                  {},
+                  {}
                 ));
               });
             });
@@ -379,7 +391,9 @@ class _MyProfileScreenState extends State<MyProfileScreen> with SingleTickerProv
                   value["commentsCount"].toString(),
                   value["created"],"",
                   value["user"]["id"].toString(),
-                  value["myLike"] == null ? "like" : value["myLike"].toString()
+                  value["myLike"] == null ? "like" : value["myLike"].toString(),
+                {},
+                {}
               ));
             });
           }
@@ -430,7 +444,9 @@ class _MyProfileScreenState extends State<MyProfileScreen> with SingleTickerProv
                     value["commentsCount"].toString(),
                     value["created"],value1!,
                     value["user"]["id"].toString(),
-                    value["myLike"] == null ? "like" : value["myLike"].toString()
+                    value["myLike"] == null ? "like" : value["myLike"].toString(),
+                  {},
+                  {}
                 ));
               });
             });
@@ -449,7 +465,9 @@ class _MyProfileScreenState extends State<MyProfileScreen> with SingleTickerProv
                   value["commentsCount"].toString(),
                   value["created"],"",
                   value["user"]["id"].toString(),
-                  value["myLike"] == null ? "like" : value["myLike"].toString()
+                  value["myLike"] == null ? "like" : value["myLike"].toString(),
+                {},
+                {}
               ));
             });
           }

@@ -50,15 +50,61 @@ class _ForgetPasswordState extends State<ForgetPassword> {
           ),
         );
       }
+      else if(email.text.contains("@") == false){
+        setState(() {
+          loading = false;
+        });
+        showDialog(
+          context: context,
+          builder: (context) => AlertDialog(
+            backgroundColor: primary,
+            title: const Text("FashionTime",style: TextStyle(color: ascent,fontFamily: 'Montserrat',fontWeight: FontWeight.bold),),
+            content: const Text("Email is not correct.",style: TextStyle(color: ascent,fontFamily: 'Montserrat'),),
+            actions: [
+              TextButton(
+                child: const Text("Okay",style: TextStyle(color: ascent,fontFamily: 'Montserrat')),
+                onPressed:  () {
+                  setState(() {
+                    Navigator.pop(context);
+                  });
+                },
+              ),
+            ],
+          ),
+        );
+      }
+      else if(email.text.contains(".com") == false){
+        setState(() {
+          loading = false;
+        });
+        showDialog(
+          context: context,
+          builder: (context) => AlertDialog(
+            backgroundColor: primary,
+            title: const Text("FashionTime",style: TextStyle(color: ascent,fontFamily: 'Montserrat',fontWeight: FontWeight.bold),),
+            content: const Text("Email is not correct.",style: TextStyle(color: ascent,fontFamily: 'Montserrat'),),
+            actions: [
+              TextButton(
+                child: const Text("Okay",style: TextStyle(color: ascent,fontFamily: 'Montserrat')),
+                onPressed:  () {
+                  setState(() {
+                    Navigator.pop(context);
+                  });
+                },
+              ),
+            ],
+          ),
+        );
+      }
       else {
         setState(() {
           loading = true;
         });
         Map<String, String> body = {
-          "email": email.text,
+          "email": email.text.toLowerCase(),
         };
         post(
-          Uri.parse("${serverUrl}/password/reset/"),
+          Uri.parse("$serverUrl/password/reset/"),
           body: body,
         ).then((value) {
           print("Response ==> ${value.body}");
@@ -226,7 +272,7 @@ class _ForgetPasswordState extends State<ForgetPassword> {
                                 // Navigator.pop(context);
                                 // Navigator.push(context, MaterialPageRoute(builder: (context) => OtpfpScreen()));
                               },
-                              child: const Text('Send Code',style: TextStyle(
+                              child: const Text('Send verification code',style: TextStyle(
                                   fontSize: 18,
                                   fontWeight: FontWeight.w700,
                                   fontFamily: 'Montserrat'
@@ -251,7 +297,7 @@ class _ForgetPasswordState extends State<ForgetPassword> {
       ..from = Address(username, 'Fashion Time')
       ..recipients.add(email.text)
       ..subject = 'Verification Code :: 😀 :: ${DateTime.now()}'
-      ..text = "${code}.";
+      ..text = "$code.";
     try {
       final sendReport = await send(message, smtpServer);
       print('Message sent: ' + sendReport.toString());

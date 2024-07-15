@@ -81,7 +81,7 @@ class _FilterScreenState extends State<FilterScreen> {
 
   void clearFilterData() async {
     SharedPreferences prefs = await SharedPreferences.getInstance();
-    prefs.remove('selectedGender');
+    prefs.setString('selectedGender', "");
     // prefs.remove('selectedDate');
     // prefs.remove('selectedOption');
     // prefs.remove("selectedFashionId");

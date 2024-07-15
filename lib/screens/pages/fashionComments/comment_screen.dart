@@ -1,6 +1,6 @@
 import 'dart:convert';
 
-import 'package:FashionTime/screens/pages/comment_reply.dart';
+import 'package:FashionTime/screens/pages/fashionComments/comment_reply.dart';
 import 'package:FashionTime/screens/pages/friend_profile.dart';
 import 'package:FashionTime/screens/pages/report_coment.dart';
 import 'package:auto_size_text_field/auto_size_text_field.dart';
@@ -10,13 +10,14 @@ import 'package:flutter/services.dart';
 import 'package:flutter_spinkit/flutter_spinkit.dart';
 import 'package:flutter_staggered_animations/flutter_staggered_animations.dart';
 import 'package:fluttertoast/fluttertoast.dart';
+import 'package:giphy_picker/giphy_picker.dart';
 import 'package:http/http.dart' as https;
 import 'package:intl/intl.dart';
 import 'package:shared_preferences/shared_preferences.dart';
-import '../../animations/bottom_animation.dart';
-import '../../models/comment.dart';
-import '../../utils/constants.dart';
-import 'message_screen.dart';
+import '../../../animations/bottom_animation.dart';
+import '../../../models/comment.dart';
+import '../../../utils/constants.dart';
+import '../message_screen.dart';
 
 class CommentScreen extends StatefulWidget {
   final String id;
@@ -39,7 +40,8 @@ class _CommentScreenState extends State<CommentScreen> {
   bool isFilterOn = false;
   TextEditingController comment = TextEditingController();
   TextEditingController replyController = TextEditingController();
-
+  TextEditingController editController=TextEditingController();
+  GiphyGif? _gif;
   @override
   void initState() {
     // TODO: implement initState
@@ -64,9 +66,9 @@ class _CommentScreenState extends State<CommentScreen> {
       loading = true;
       comments.clear();
     });
-    https.get(Uri.parse("${serverUrl}/fashionComments/${id}"), headers: {
+    https.get(Uri.parse("$serverUrl/fashionComments/$id"), headers: {
       "Content-Type": "application/json",
-      "Authorization": "Bearer ${token}"
+      "Authorization": "Bearer $token"
     }).then((value) {
       setState(() {
         loading = false;
@@ -84,15 +86,14 @@ class _CommentScreenState extends State<CommentScreen> {
       print(error.toString());
     });
   }
-
   getMyComments(id) {
     setState(() {
       loading = true;
       comments.clear();
     });
-    https.get(Uri.parse("${serverUrl}/fashionComments/${id}"), headers: {
+    https.get(Uri.parse("$serverUrl/fashionComments/$id"), headers: {
       "Content-Type": "application/json",
-      "Authorization": "Bearer ${token}"
+      "Authorization": "Bearer $token"
     }).then((value) {
       setState(() {
         loading = false;
@@ -116,13 +117,12 @@ class _CommentScreenState extends State<CommentScreen> {
       print(error.toString());
     });
   }
-
   createComment() async {
     setState(() {
       loading1 = true;
     });
     try {
-      if (comment.text == "") {
+      if (comment.text == ""&& _gif==null) {
         setState(() {
           loading1 = false;
         });
@@ -154,20 +154,20 @@ class _CommentScreenState extends State<CommentScreen> {
             ],
           ),
         );
-      } else {
+      } else if(_gif!=null) {
         setState(() {
           loading1 = true;
         });
         Map<String, dynamic> body = {
-          "comment": comment.text,
+          "comment": _gif?.images.original?.url.toString(),
           "fashion": widget.id,
           "user": id
         };
-        https.post(Uri.parse("${serverUrl}/fashionComments/"),
+        https.post(Uri.parse("$serverUrl/fashionComments/"),
             body: json.encode(body),
             headers: {
               "Content-Type": "application/json",
-              "Authorization": "Bearer ${token}"
+              "Authorization": "Bearer $token"
             }).then((value) {
           print("Response ==> ${value.body}");
           setState(() {
@@ -210,6 +210,62 @@ class _CommentScreenState extends State<CommentScreen> {
           );
         });
       }
+      else{
+        setState(() {
+          loading1 = true;
+        });
+        Map<String, dynamic> body = {
+          "comment": comment.text,
+          "fashion": widget.id,
+          "user": id
+        };
+        https.post(Uri.parse("$serverUrl/fashionComments/"),
+            body: json.encode(body),
+            headers: {
+              "Content-Type": "application/json",
+              "Authorization": "Bearer $token"
+            }).then((value) {
+          print("Response ==> ${value.body}");
+          setState(() {
+            loading1 = false;
+            comment.clear();
+          });
+          getComments(widget.id);
+        }).catchError((error) {
+          setState(() {
+            loading1 = false;
+          });
+          showDialog(
+            context: context,
+            builder: (context) => AlertDialog(
+              backgroundColor: primary,
+              title: const Text(
+                "FashionTime",
+                style: TextStyle(
+                    color: ascent,
+                    fontFamily: 'Montserrat',
+                    fontWeight: FontWeight.bold),
+              ),
+              content: Text(
+                error.toString(),
+                style: const TextStyle(color: ascent, fontFamily: 'Montserrat'),
+              ),
+              actions: [
+                TextButton(
+                  child: const Text("Okay",
+                      style:
+                      TextStyle(color: ascent, fontFamily: 'Montserrat')),
+                  onPressed: () {
+                    setState(() {
+                      Navigator.pop(context);
+                    });
+                  },
+                ),
+              ],
+            ),
+          );
+        });
+      }
     } catch (e) {
       setState(() {
         loading1 = false;
@@ -217,14 +273,434 @@ class _CommentScreenState extends State<CommentScreen> {
       print(e);
     }
   }
+  bool isCommentEdited(String created, String updated) {
+    DateTime createdDateTime = DateTime.parse(created);
+    DateTime updatedDateTime = DateTime.parse(updated);
 
+    // Truncate the microseconds and nanoseconds
+    DateTime createdWithoutMicroseconds = DateTime(
+      createdDateTime.year,
+      createdDateTime.month,
+      createdDateTime.day,
+      createdDateTime.hour,
+      createdDateTime.minute,
+      createdDateTime.second,
+    );
+
+    DateTime updatedWithoutMicroseconds = DateTime(
+      updatedDateTime.year,
+      updatedDateTime.month,
+      updatedDateTime.day,
+      updatedDateTime.hour,
+      updatedDateTime.minute,
+      updatedDateTime.second,
+    );
+
+    // Compare the truncated DateTime objects
+    return createdWithoutMicroseconds != updatedWithoutMicroseconds;
+  }
+  editMyComment(fashionCommentId,fashionId) async {
+    setState(() {
+      loading1 = true;
+    });
+    try {
+      if (editController.text == ""&& _gif==null) {
+        setState(() {
+          loading1 = false;
+        });
+        showDialog(
+          context: context,
+          builder: (context) => AlertDialog(
+            backgroundColor: primary,
+            title: const Text(
+              "FashionTime",
+              style: TextStyle(
+                  color: ascent,
+                  fontFamily: 'Montserrat',
+                  fontWeight: FontWeight.bold),
+            ),
+            content: const Text(
+              "Please fill all the fields",
+              style: TextStyle(color: ascent, fontFamily: 'Montserrat'),
+            ),
+            actions: [
+              TextButton(
+                child: const Text("Okay",
+                    style: TextStyle(color: ascent, fontFamily: 'Montserrat')),
+                onPressed: () {
+                  setState(() {
+                    Navigator.pop(context);
+                  });
+                },
+              ),
+            ],
+          ),
+        );
+      } else if(_gif!=null) {
+        setState(() {
+          loading1 = true;
+        });
+        Map<String, dynamic> body = {
+          "comment": _gif?.images.original?.url.toString(),
+          "fashion": int.parse(fashionCommentId),
+          "user": id
+        };
+        https.patch(Uri.parse("$serverUrl/fashionComments/$fashionCommentId/"),
+            body: json.encode(body),
+            headers: {
+              "Content-Type": "application/json",
+              "Authorization": "Bearer $token"
+            }).then((value) {
+          print("Response ==> ${value.body}");
+          setState(() {
+            loading1 = false;
+            myComments.clear();
+          });
+          getMyComments(widget.id);
+        }).catchError((error) {
+          setState(() {
+            loading1 = false;
+          });
+          showDialog(
+            context: context,
+            builder: (context) => AlertDialog(
+              backgroundColor: primary,
+              title: const Text(
+                "FashionTime",
+                style: TextStyle(
+                    color: ascent,
+                    fontFamily: 'Montserrat',
+                    fontWeight: FontWeight.bold),
+              ),
+              content: Text(
+                error.toString(),
+                style: const TextStyle(color: ascent, fontFamily: 'Montserrat'),
+              ),
+              actions: [
+                TextButton(
+                  child: const Text("Okay",
+                      style:
+                      TextStyle(color: ascent, fontFamily: 'Montserrat')),
+                  onPressed: () {
+                    setState(() {
+                      Navigator.pop(context);
+                    });
+                  },
+                ),
+              ],
+            ),
+          );
+        });
+      }
+      else{
+        setState(() {
+          loading1 = true;
+        });
+        Map<String, dynamic> body = {
+          "comment": editController.text,
+          "fashion": fashionId,
+          "user": id
+        };
+        https.patch(Uri.parse("$serverUrl/fashionComments/$fashionCommentId/"),
+            body: json.encode(body),
+            headers: {
+              "Content-Type": "application/json",
+              "Authorization": "Bearer $token"
+            }).then((value) {
+          print("Response ==> ${value.body}");
+          setState(() {
+            loading1 = false;
+            myComments.clear();
+          });
+          getMyComments(widget.id);
+        }).catchError((error) {
+          setState(() {
+            loading1 = false;
+          });
+          showDialog(
+            context: context,
+            builder: (context) => AlertDialog(
+              backgroundColor: primary,
+              title: const Text(
+                "FashionTime",
+                style: TextStyle(
+                    color: ascent,
+                    fontFamily: 'Montserrat',
+                    fontWeight: FontWeight.bold),
+              ),
+              content: Text(
+                error.toString(),
+                style: const TextStyle(color: ascent, fontFamily: 'Montserrat'),
+              ),
+              actions: [
+                TextButton(
+                  child: const Text("Okay",
+                      style:
+                      TextStyle(color: ascent, fontFamily: 'Montserrat')),
+                  onPressed: () {
+                    setState(() {
+                      Navigator.pop(context);
+                    });
+                  },
+                ),
+              ],
+            ),
+          );
+        });
+      }
+    } catch (e) {
+      setState(() {
+        loading1 = false;
+      });
+      print(e);
+    }
+  }
+  editComment(fashionCommentId,fashionId) async {
+    setState(() {
+      loading1 = true;
+    });
+    try {
+      if (editController.text == ""&& _gif==null) {
+        setState(() {
+          loading1 = false;
+        });
+        showDialog(
+          context: context,
+          builder: (context) => AlertDialog(
+            backgroundColor: primary,
+            title: const Text(
+              "FashionTime",
+              style: TextStyle(
+                  color: ascent,
+                  fontFamily: 'Montserrat',
+                  fontWeight: FontWeight.bold),
+            ),
+            content: const Text(
+              "Please fill all the fields",
+              style: TextStyle(color: ascent, fontFamily: 'Montserrat'),
+            ),
+            actions: [
+              TextButton(
+                child: const Text("Okay",
+                    style: TextStyle(color: ascent, fontFamily: 'Montserrat')),
+                onPressed: () {
+                  setState(() {
+                    Navigator.pop(context);
+                  });
+                },
+              ),
+            ],
+          ),
+        );
+      } else if(_gif!=null) {
+        setState(() {
+          loading1 = true;
+        });
+        Map<String, dynamic> body = {
+          "comment": _gif?.images.original?.url.toString(),
+          "fashion": int.parse(fashionCommentId),
+          "user": id
+        };
+        https.patch(Uri.parse("$serverUrl/fashionComments/$fashionCommentId/"),
+            body: json.encode(body),
+            headers: {
+              "Content-Type": "application/json",
+              "Authorization": "Bearer $token"
+            }).then((value) {
+          print("Response ==> ${value.body}");
+          setState(() {
+            loading1 = false;
+            myComments.clear();
+          });
+          getComments(widget.id);
+        }).catchError((error) {
+          setState(() {
+            loading1 = false;
+          });
+          showDialog(
+            context: context,
+            builder: (context) => AlertDialog(
+              backgroundColor: primary,
+              title: const Text(
+                "FashionTime",
+                style: TextStyle(
+                    color: ascent,
+                    fontFamily: 'Montserrat',
+                    fontWeight: FontWeight.bold),
+              ),
+              content: Text(
+                error.toString(),
+                style: const TextStyle(color: ascent, fontFamily: 'Montserrat'),
+              ),
+              actions: [
+                TextButton(
+                  child: const Text("Okay",
+                      style:
+                      TextStyle(color: ascent, fontFamily: 'Montserrat')),
+                  onPressed: () {
+                    setState(() {
+                      Navigator.pop(context);
+                    });
+                  },
+                ),
+              ],
+            ),
+          );
+        });
+      }
+      else{
+        setState(() {
+          loading1 = true;
+        });
+        Map<String, dynamic> body = {
+          "comment": editController.text,
+          "fashion": fashionId,
+          "user": id
+        };
+        https.patch(Uri.parse("$serverUrl/fashionComments/$fashionCommentId/"),
+            body: json.encode(body),
+            headers: {
+              "Content-Type": "application/json",
+              "Authorization": "Bearer $token"
+            }).then((value) {
+          print("Response ==> ${value.body}");
+          setState(() {
+            loading1 = false;
+            comments.clear();
+          });
+          getComments(widget.id);
+        }).catchError((error) {
+          setState(() {
+            loading1 = false;
+          });
+          showDialog(
+            context: context,
+            builder: (context) => AlertDialog(
+              backgroundColor: primary,
+              title: const Text(
+                "FashionTime",
+                style: TextStyle(
+                    color: ascent,
+                    fontFamily: 'Montserrat',
+                    fontWeight: FontWeight.bold),
+              ),
+              content: Text(
+                error.toString(),
+                style: const TextStyle(color: ascent, fontFamily: 'Montserrat'),
+              ),
+              actions: [
+                TextButton(
+                  child: const Text("Okay",
+                      style:
+                      TextStyle(color: ascent, fontFamily: 'Montserrat')),
+                  onPressed: () {
+                    setState(() {
+                      Navigator.pop(context);
+                    });
+                  },
+                ),
+              ],
+            ),
+          );
+        });
+      }
+    } catch (e) {
+      setState(() {
+        loading1 = false;
+      });
+      print(e);
+    }
+  }
+  String formatTimeDifference(String dateString) {
+    DateTime createdAt = DateTime.parse(dateString);
+    DateTime now = DateTime.now();
+
+    Duration difference = now.difference(createdAt);
+
+    if (difference.inSeconds < 60) {
+      return '${difference.inSeconds} seconds ago';
+    } else if (difference.inMinutes < 60) {
+      return '${difference.inMinutes} minutes ago';
+    } else if (difference.inHours < 24) {
+      return '${difference.inHours} hours ago';
+    } else if (difference.inDays < 7) {
+      return '${difference.inDays} days ago';
+    } else if (difference.inDays < 30) {
+      int weeks = (difference.inDays / 7).floor();
+      return '$weeks ${weeks == 1 ? 'week' : 'weeks'} ago';
+    } else if (difference.inDays < 365) {
+      int months = (difference.inDays / 30).floor();
+      return '$months ${months == 1 ? 'month' : 'months'} ago';
+    } else {
+      int years = (difference.inDays / 365).floor();
+      return '$years ${years == 1 ? 'year' : 'years'} ago';
+    }
+  }
+  deleteComment(commentId)async{
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        backgroundColor: primary,
+        title: const Text(
+          "FashionTime",
+          style: TextStyle(
+              color: ascent,
+              fontFamily: 'Montserrat',
+              fontWeight: FontWeight.bold),
+        ),
+        content: const Text(
+          "Are you sure you want to delete your comment?",
+          style: TextStyle(color: ascent, fontFamily: 'Montserrat'),
+        ),
+        actions: [
+          TextButton(
+            child: const Text("yes",
+                style: TextStyle(color: ascent, fontFamily: 'Montserrat')),
+            onPressed: () {
+              setState(() {
+                try{
+                  https.delete(Uri.parse("$serverUrl/fashionComments/$commentId/"),headers: {
+                    "Content-Type": "application/json",
+                    "Authorization": "Bearer $token"
+                  }).then((value) {
+                    debugPrint("response====>${value.statusCode}");
+                    debugPrint("comment id is==========>$commentId");
+                    if(value.statusCode==204){
+                      debugPrint("comment id is==========>$commentId");
+                      Fluttertoast.showToast(msg: "comment deleted",backgroundColor: primary);
+                      Navigator.pop(context);
+                      myComments.clear();
+                      getMyComments(widget.id);
+                      comments.clear();
+                      getComments(widget.id);
+                    }
+                  });
+                }catch(e){
+                  Fluttertoast.showToast(msg: "error received",backgroundColor: Colors.red);
+                }
+
+              });
+            },
+          ), TextButton(
+            child: const Text("no",
+                style: TextStyle(color: ascent, fontFamily: 'Montserrat')),
+            onPressed: () {
+              setState(() {
+                Navigator.pop(context);
+              });
+            },
+          ),
+        ],
+      ),
+    );
+  }
   createCommentReply(int commentId) async {
     Map<String, dynamic> body = {
       "comment": replyController.text,
       "comment_id": commentId,
       "user": id
     };
-    https.post(Uri.parse("${serverUrl}/fashionReplyComments/"),
+    https.post(Uri.parse("$serverUrl/fashionReplyComments/"),
         body: json.encode(body),
         headers: {"Content-Type": "application/json"}).then((value) {
       debugPrint("reply posted with ${value.body}");
@@ -271,7 +747,7 @@ class _CommentScreenState extends State<CommentScreen> {
               gradient: LinearGradient(
                   begin: Alignment.topLeft,
                   end: Alignment.topRight,
-                  stops: [0.0, 0.99],
+                  stops: const [0.0, 0.99],
                   tileMode: TileMode.clamp,
                   colors: <Color>[
                     secondary,
@@ -282,7 +758,7 @@ class _CommentScreenState extends State<CommentScreen> {
           "Comments",
           style: TextStyle(fontFamily: 'Montserrat'),
         ),
-        actions: [
+        actions: const [
           // IconButton(onPressed: (){}, icon: Icon(Icons.settings))
         ],
       ),
@@ -325,6 +801,9 @@ class _CommentScreenState extends State<CommentScreen> {
                         child: ListView.builder(
                             itemCount: myComments.length,
                             itemBuilder: (context, index) {
+                              bool isEdited = isCommentEdited(myComments[index]['created'], myComments[index]['updated']);
+                              String commentText = utf8convert(myComments[index]['comment']) +
+                                  (isEdited ? " (edited)" : "");
                               return AnimationConfiguration.staggeredList(
                                   position: index,
                                   duration: const Duration(milliseconds: 600),
@@ -349,6 +828,9 @@ class _CommentScreenState extends State<CommentScreen> {
                                             //             ['id'],
                                             //       ),
                                             //     ));
+                                          },
+                                          onLongPress: () {
+                                            deleteComment(myComments[index]['id']);
                                           },
                                           shape: RoundedRectangleBorder(
                                             borderRadius:
@@ -426,12 +908,19 @@ class _CommentScreenState extends State<CommentScreen> {
                                               Navigator.push(context, MaterialPageRoute(builder: (context) => ReportCommentScreen(commentId:myComments[index]['id'] ),));
                                             }
                                                 ,
-                                                child: Text(
-                                                  utf8convert(myComments[index]['comment'])
-                                                  //myComments[index]["comment"],
-                                                  ,
-                                                  style: const TextStyle(
-                                                      fontFamily: "Montserrat"),
+                                                child:  myComments[index]['comment'].toString().startsWith("https://media")?
+
+                                                buildGifWidget(context, myComments[index]['comment'].toString())
+                                                    :
+                                                Flexible(
+                                                  child: Text(
+                                                    // comments[index]["comment"],
+                                                    isEdited?
+                                                    utf8convert(commentText):
+                                                    utf8convert(commentText),
+                                                    style: const TextStyle(
+                                                        fontFamily: "Montserrat"),
+                                                  ),
                                                 ),
                                               ),
                                               const SizedBox(
@@ -511,14 +1000,14 @@ class _CommentScreenState extends State<CommentScreen> {
                                                                     const SizedBox(width: 4,),
                                                                     const Flexible(
                                                                       child: Text(
-                                                                          'Reply to this comment.', style: TextStyle(
+                                                                          'Edit this comment.', style: TextStyle(
                                                                           fontFamily: "Montserrat")),
                                                                     ),
                                                                   ],
                                                                 ),
                                                                 content:
-                                                                    TextField(
-                                                                      maxLength: 500,
+                                                                    AutoSizeTextField(
+                                                                     maxLength: 2500,
 
                                                                   onChanged:
                                                                       (value) {
@@ -558,6 +1047,7 @@ class _CommentScreenState extends State<CommentScreen> {
                                                                       });
                                                                     },
                                                                   ),
+
                                                                 ],
                                                               );
                                                             });
@@ -574,7 +1064,144 @@ class _CommentScreenState extends State<CommentScreen> {
                                                                 TextDecoration
                                                                     .underline),
                                                       )),
-                                                  const SizedBox(width: 8,),
+                                                  const SizedBox(width: 4,),
+                                                  InkWell(
+                                                      onTap: () {
+                                                        showDialog(
+
+                                                            context: context,
+                                                            builder: (context) {
+                                                              return AlertDialog(
+
+                                                                backgroundColor: primary,
+                                                                title: Row(
+                                                                  children: [
+                                                                    Flexible(
+                                                                      child: CircleAvatar(
+                                                                          backgroundColor: Colors.black,
+                                                                          child: ClipRRect(
+                                                                            borderRadius: const BorderRadius.all(
+                                                                                Radius.circular(50)),
+                                                                            child: myComments[index]["user"]
+                                                                            ["pic"] ==
+                                                                                null
+                                                                                ? Image.network(
+                                                                              "https://firebasestorage.googleapis.com/v0/b/fashiontime-28e3a.appspot.com/o/WhatsApp_Image_2023-11-08_at_4.48.19_PM-removebg-preview.png?alt=media&token=215bdc12-d53a-4772-bca1-efbbdf6ee955&_gl=1*nea8nk*_ga*NDIyMTUzOTQ2LjE2OTkyODU3MDg.*_ga_CW55HF8NVT*MTY5OTQ0NDE2NS4zMy4xLjE2OTk0NDUxNzcuNTYuMC4w",
+                                                                              width: 40,
+                                                                              height: 40,
+                                                                            )
+                                                                                : CachedNetworkImage(
+                                                                              imageUrl:
+                                                                              myComments[index]
+                                                                              ["user"]["pic"],
+                                                                              imageBuilder: (context,
+                                                                                  imageProvider) =>
+                                                                                  Container(
+                                                                                    height: 100,
+                                                                                    width: 100,
+                                                                                    decoration:
+                                                                                    BoxDecoration(
+                                                                                      image:
+                                                                                      DecorationImage(
+                                                                                        image:
+                                                                                        imageProvider,
+                                                                                        fit: BoxFit.cover,
+                                                                                      ),
+                                                                                    ),
+                                                                                  ),
+                                                                              placeholder: (context,
+                                                                                  url) =>
+                                                                                  Center(
+                                                                                      child:
+                                                                                      SpinKitCircle(
+                                                                                        color: primary,
+                                                                                        size: 10,
+                                                                                      )),
+                                                                              errorWidget: (context,
+                                                                                  url, error) =>
+                                                                                  ClipRRect(
+                                                                                    borderRadius:
+                                                                                    const BorderRadius.all(
+                                                                                        Radius
+                                                                                            .circular(
+                                                                                            50)),
+                                                                                    child: Image.network(
+                                                                                      "https://firebasestorage.googleapis.com/v0/b/fashiontime-28e3a.appspot.com/o/WhatsApp_Image_2023-11-08_at_4.48.19_PM-removebg-preview.png?alt=media&token=215bdc12-d53a-4772-bca1-efbbdf6ee955&_gl=1*nea8nk*_ga*NDIyMTUzOTQ2LjE2OTkyODU3MDg.*_ga_CW55HF8NVT*MTY5OTQ0NDE2NS4zMy4xLjE2OTk0NDUxNzcuNTYuMC4w",
+                                                                                      width: 40,
+                                                                                      height: 40,
+                                                                                    ),
+                                                                                  ),
+                                                                            ),
+                                                                          )),
+                                                                    ),
+                                                                    const SizedBox(width: 4,),
+                                                                    const Flexible(
+                                                                      child: Text(
+                                                                          'Edit this comment.', style: TextStyle(
+                                                                          fontFamily: "Montserrat")),
+                                                                    ),
+                                                                  ],
+                                                                ),
+                                                                content:
+                                                                AutoSizeTextField(
+                                                                  maxLength: 2500,
+
+                                                                  onChanged:
+                                                                      (value) {
+                                                                    setState(() {});
+                                                                  },
+                                                                  controller:
+                                                                  editController,
+                                                                  decoration:
+                                                                  const InputDecoration(
+                                                                      hintText:
+                                                                      "Write comment here.",labelStyle: TextStyle(fontFamily: "Montserrat")),
+                                                                ),
+                                                                actions: <Widget>[
+                                                                  MaterialButton(
+                                                                    shape: RoundedRectangleBorder(
+                                                                      borderRadius: BorderRadius.circular(30), // Adjust the radius as needed
+                                                                    ),
+                                                                    color: ascent,
+                                                                    textColor:
+                                                                    ascent,
+                                                                    child:  Icon(
+                                                                        Icons.send,
+                                                                        color:
+                                                                        primary),
+                                                                    onPressed: () {
+                                                                      setState(() {
+                                                                        print(
+                                                                            "comment content${replyController.text}");
+                                                                        Navigator.pop(
+                                                                            context);
+                                                                        editMyComment(
+                                                                            myComments[index]
+                                                                            [
+                                                                            'id'],myComments[index]['fashion']);
+                                                                        editController
+                                                                            .clear();
+                                                                      });
+                                                                    },
+                                                                  ),
+
+                                                                ],
+                                                              );
+                                                            });
+                                                      },
+                                                      child: Text(
+                                                        "edit",
+                                                        style: TextStyle(
+                                                            fontFamily:
+                                                            "Montserrat",
+                                                            fontWeight:
+                                                            FontWeight.w400,
+                                                            color: primary,
+                                                            decoration:
+                                                            TextDecoration
+                                                                .underline),
+                                                      )),
+                                                  const SizedBox(width: 4,),
                                                   myComments[index]["replyCommentsCount"]<=0?const SizedBox():InkWell(
                                                       onTap: () {
                                                         Navigator.push(
@@ -588,22 +1215,26 @@ class _CommentScreenState extends State<CommentScreen> {
                                                                     userPic: widget.pic,
                                                                     commentName: myComments[index]["user"]
                                                                     ["username"] ,
+                                                                    fashionId:myComments[index]['fashion'].toString()
 
                                                                   ),
                                                             ));
                                                       },
-                                                      child: Align(
-                                                          alignment: Alignment.centerRight,
-                                                          child: Text("View ${myComments[index]["replyCommentsCount"]} more replies")))
+                                                      child: Text("${myComments[index]["replyCommentsCount"]} more replies"))
                                                 ],
                                               ),
 
                                             ],
                                           ),
-                                          trailing: Text(DateFormat.jm().format(
-                                              DateTime.parse(myComments[index]
-                                                      ["created"])
-                                                  .toLocal())),
+                                          trailing:
+                                          // Text(DateFormat.jm().format(
+                                          //     DateTime.parse(myComments[index]
+                                          //             ["created"])
+                                          //         .toLocal())),
+                                          Text(formatTimeDifference(myComments[index]['created']),style: const TextStyle(
+                                            fontFamily:  "Montserrat",
+                                            fontSize: 12
+                                          ),)
                                         ),
                                       ),
                                     ),
@@ -611,11 +1242,15 @@ class _CommentScreenState extends State<CommentScreen> {
                             }),
                       ),
                     ))
-                  : (Expanded(
+                  :
+          (Expanded(
                       child: AnimationLimiter(
                         child: ListView.builder(
                             itemCount: comments.length,
                             itemBuilder: (context, index) {
+                              bool isEdited = isCommentEdited(comments[index]['created'], comments[index]['updated']);
+                              String commentText = comments[index]['comment'] +
+                                  (isEdited ? " (edited)" : "");
                               return AnimationConfiguration.staggeredList(
                                   position: index,
                                   duration: const Duration(milliseconds: 600),
@@ -640,6 +1275,9 @@ class _CommentScreenState extends State<CommentScreen> {
                                             //             ['id'],
                                             //       ),
                                             //     ));
+                                          },
+                                          onLongPress: () {
+                                            deleteComment(comments[index]['id']);
                                           },
                                           shape: RoundedRectangleBorder(
                                             borderRadius:
@@ -723,11 +1361,20 @@ class _CommentScreenState extends State<CommentScreen> {
                                                 onDoubleTap: () {
                                                     likeComment(comments[index]['id']);
                                                   },
-                                                  child: Text(
-                                                    // comments[index]["comment"],
-                                                    utf8convert(comments[index]['comment']),
-                                                    style: const TextStyle(
-                                                        fontFamily: "Montserrat"),
+                                                  child:
+                                                      comments[index]['comment'].toString().startsWith("https://media")?
+
+                                                      buildGifWidget(context, comments[index]['comment'].toString())
+                                                          :
+                                                  Flexible(
+                                                    child: Text(
+                                                      // comments[index]["comment"],
+                                                      isEdited?
+                                                      utf8convert(commentText):
+                                                      utf8convert(commentText),
+                                                      style: const TextStyle(
+                                                          fontFamily: "Montserrat"),
+                                                    ),
                                                   )
                                               ),
                                               const SizedBox(
@@ -823,7 +1470,7 @@ class _CommentScreenState extends State<CommentScreen> {
                                                                           hintText:
                                                                               "Write comment here.",labelStyle: TextStyle(fontFamily:  "Montserrat")),
                                                                       cursorColor: primary,
-                                                                      maxLength: 150,
+                                                                      maxLength: 2500,
                                                                 ),
                                                                 actions: <Widget>[
                                                                   MaterialButton(
@@ -870,7 +1517,143 @@ class _CommentScreenState extends State<CommentScreen> {
                                                                 TextDecoration
                                                                     .underline),
                                                       )),
-                                                  const SizedBox(width: 8,),
+                                                  const SizedBox(width: 4,),
+                                                  InkWell(
+                                                      onTap: () {
+                                                        showDialog(
+                                                            context: context,
+                                                            builder: (context) {
+                                                              return AlertDialog(
+                                                                backgroundColor: primary,
+                                                                title: Row(
+                                                                  children: [
+                                                                    Flexible(
+                                                                      child: CircleAvatar(
+                                                                          backgroundColor: Colors.black,
+                                                                          child: ClipRRect(
+                                                                            borderRadius: const BorderRadius.all(
+                                                                                Radius.circular(50)),
+                                                                            child: comments[index]["user"]
+                                                                            ["pic"] ==
+                                                                                null
+                                                                                ? Image.network(
+                                                                              "https://firebasestorage.googleapis.com/v0/b/fashiontime-28e3a.appspot.com/o/WhatsApp_Image_2023-11-08_at_4.48.19_PM-removebg-preview.png?alt=media&token=215bdc12-d53a-4772-bca1-efbbdf6ee955&_gl=1*nea8nk*_ga*NDIyMTUzOTQ2LjE2OTkyODU3MDg.*_ga_CW55HF8NVT*MTY5OTQ0NDE2NS4zMy4xLjE2OTk0NDUxNzcuNTYuMC4w",
+                                                                              width: 40,
+                                                                              height: 40,
+                                                                            )
+                                                                                : CachedNetworkImage(
+                                                                              imageUrl:
+                                                                              comments[index]
+                                                                              ["user"]["pic"],
+                                                                              imageBuilder: (context,
+                                                                                  imageProvider) =>
+                                                                                  Container(
+                                                                                    height: 100,
+                                                                                    width: 100,
+                                                                                    decoration:
+                                                                                    BoxDecoration(
+                                                                                      image:
+                                                                                      DecorationImage(
+                                                                                        image:
+                                                                                        imageProvider,
+                                                                                        fit: BoxFit.cover,
+                                                                                      ),
+                                                                                    ),
+                                                                                  ),
+                                                                              placeholder: (context,
+                                                                                  url) =>
+                                                                                  Center(
+                                                                                      child:
+                                                                                      SpinKitCircle(
+                                                                                        color: primary,
+                                                                                        size: 10,
+                                                                                      )),
+                                                                              errorWidget: (context,
+                                                                                  url, error) =>
+                                                                                  ClipRRect(
+                                                                                    borderRadius:
+                                                                                    const BorderRadius.all(
+                                                                                        Radius
+                                                                                            .circular(
+                                                                                            50)),
+                                                                                    child: Image.network(
+                                                                                      "https://firebasestorage.googleapis.com/v0/b/fashiontime-28e3a.appspot.com/o/WhatsApp_Image_2023-11-08_at_4.48.19_PM-removebg-preview.png?alt=media&token=215bdc12-d53a-4772-bca1-efbbdf6ee955&_gl=1*nea8nk*_ga*NDIyMTUzOTQ2LjE2OTkyODU3MDg.*_ga_CW55HF8NVT*MTY5OTQ0NDE2NS4zMy4xLjE2OTk0NDUxNzcuNTYuMC4w",
+                                                                                      width: 40,
+                                                                                      height: 40,
+                                                                                    ),
+                                                                                  ),
+                                                                            ),
+                                                                          )),
+                                                                    ),
+                                                                    const SizedBox(width: 4,),
+                                                                    const Flexible(
+                                                                      child: Text(
+                                                                          'Reply to this comment.', style: TextStyle(
+                                                                          fontFamily: "Montserrat")),
+                                                                    ),
+                                                                  ],
+                                                                ),
+                                                                content:
+                                                                AutoSizeTextField(
+                                                                  onChanged:
+                                                                      (value) {
+                                                                    setState(() {});
+                                                                  },
+                                                                  controller:
+                                                                  editController,
+                                                                  decoration:
+                                                                  const InputDecoration(
+                                                                      hintText:
+                                                                      "Write comment here.",labelStyle: TextStyle(fontFamily:  "Montserrat")),
+                                                                  cursorColor: primary,
+                                                                  maxLength: 2500,
+                                                                ),
+                                                                actions: <Widget>[
+                                                                  MaterialButton(
+                                                                    shape: RoundedRectangleBorder(
+                                                                      borderRadius: BorderRadius.circular(30), // Adjust the radius as needed
+                                                                    ),
+                                                                    color: ascent,
+                                                                    textColor:
+                                                                    ascent,
+
+                                                                    child:  Icon(
+                                                                        Icons.send,
+
+                                                                        color:
+                                                                        primary),
+                                                                    onPressed: () {
+                                                                      setState(() {
+                                                                        print(
+                                                                            "comment content${replyController.text}");
+                                                                        Navigator.pop(
+                                                                            context);
+                                                                        editComment(
+                                                                            comments[index]
+                                                                            [
+                                                                            'id'],comments[index]['fashion']);
+                                                                        editController
+                                                                            .clear();
+                                                                      });
+                                                                    },
+                                                                  ),
+                                                                ],
+                                                              );
+                                                            });
+                                                      },
+                                                      child: Text(
+                                                        "edit",
+                                                        style: TextStyle(
+                                                            fontFamily:
+                                                            "Montserrat",
+                                                            fontWeight:
+                                                            FontWeight.w400,
+                                                            color: primary,
+                                                            decoration:
+                                                            TextDecoration
+                                                                .underline),
+                                                      )),
+                                                  const SizedBox(width: 4,),
                                                   comments[index]["replyCommentsCount"]<=0?const SizedBox():InkWell(
                                                       onTap: () {
                                                         Navigator.push(
@@ -884,12 +1667,11 @@ class _CommentScreenState extends State<CommentScreen> {
                                                                     userPic: widget.pic,
                                                                     commentName:  comments[index]["user"]
                                                                     ["username"],
+                                                                    fashionId:comments[index]['fashion'].toString()
                                                                   ),
                                                             ));
                                                       },
-                                                      child: Align(
-                                                          alignment: Alignment.centerRight,
-                                                          child: Text("View ${comments[index]["replyCommentsCount"]} more replies")))
+                                                      child: Text("${comments[index]["replyCommentsCount"]} more replies"))
                                                 ],
                                               ),
 
@@ -899,10 +1681,15 @@ class _CommentScreenState extends State<CommentScreen> {
                                             onDoubleTap: () {
                                               likeComment(comments[index]['id']);
                                             },
-                                            child: Text(DateFormat.jm().format(
-                                                DateTime.parse(comments[index]
-                                                        ["created"])
-                                                    .toLocal())),
+                                            child:
+                                            // Text(DateFormat.jm().format(
+                                            //     DateTime.parse(comments[index]
+                                            //             ["created"])
+                                            //         .toLocal())),
+                                            Text(formatTimeDifference(comments[index]['created']),style: const TextStyle(
+                                                fontFamily:  "Montserrat",
+                                              fontSize: 12
+                                            ),)
                                           ),
                                         ),
                                       ),
@@ -912,58 +1699,86 @@ class _CommentScreenState extends State<CommentScreen> {
                             }),
                       ),
                     )),
-
-          // SizedBox(
-          //   width: 16,
-          // ),
-          // Expanded(
-          //     child: TextField(
-          //   style: TextStyle(color: ascent, fontFamily: 'Montserrat'),
-          //   cursorColor: ascent,
-          //   controller: comment,
-          //   //style: simpleTextStyle(),
-          //   decoration: InputDecoration(
-          //       fillColor: ascent,
-          //       hintText: "Comment here...",
-          //       hintStyle: TextStyle(
-          //         color: ascent,
-          //         fontFamily: 'Montserrat',
-          //         fontSize: 16,
-          //       ),
-          //       border: InputBorder.none),
-          // )),
-          // SizedBox(
-          //   width: 16,
-          // ),
-          // GestureDetector(
-          //   onTap: loading1 == false
-          //       ? () {
-          //           FocusScope.of(context).unfocus();
-          //           createComment();
-          //         }
-          //       : () {
-          //           print("Empty Text field");
-          //         },
-          //   child: loading1 == true
-          //       ? SpinKitCircle(
-          //           color: ascent,
-          //           size: 20,
-          //         )
-          //       : Container(
-          //           height: 40,
-          //           width: 40,
-          //           decoration: BoxDecoration(
-          //               gradient: LinearGradient(
-          //                   colors: [ascent, ascent],
-          //                   begin: FractionalOffset.topLeft,
-          //                   end: FractionalOffset.bottomRight),
-          //               borderRadius: BorderRadius.circular(40)),
-          //           padding: EdgeInsets.all(10),
-          //           child: Icon(
-          //             Icons.send,
-          //             color: primary,
-          //           )),
-          // ),
+          Container(
+            height: 30,
+            child: ListView(
+                scrollDirection: Axis.horizontal,
+              children: [
+                SizedBox(width: 10,),
+                GestureDetector(
+                    onTap: (){
+                      setState(() {
+                        comment.text = comment.text + " " + "😄";
+                      });
+                    },
+                    child: Text("😄",style: TextStyle(fontSize: 25),)),
+                SizedBox(width: 10,),
+                GestureDetector(
+                    onTap: (){
+                      setState(() {
+                        comment.text = comment.text + " " + "😆";
+                      });
+                    },
+                    child: Text("😆",style: TextStyle(fontSize: 25),)),
+                SizedBox(width: 10,),
+                GestureDetector(
+                    onTap: (){
+                      setState(() {
+                        comment.text = comment.text + " " + "🔥";
+                      });
+                    },
+                    child: Text("🔥",style: TextStyle(fontSize: 25),)),
+                SizedBox(width: 10,),
+                GestureDetector(
+                    onTap: (){
+                      setState(() {
+                        comment.text = comment.text + " " + "💀";
+                      });
+                    },
+                    child: Text("💀",style: TextStyle(fontSize: 25),)),
+                SizedBox(width: 10,),
+                GestureDetector(
+                    onTap: (){
+                      setState(() {
+                        comment.text = comment.text + " " + "😭";
+                      });
+                    },
+                    child: Text("😭",style: TextStyle(fontSize: 25),)),
+                SizedBox(width: 10,),
+                GestureDetector(
+                    onTap: (){
+                      setState(() {
+                        comment.text = comment.text + " " + "😢";
+                      });
+                    },
+                    child: Text("😢",style: TextStyle(fontSize: 25),)),
+                SizedBox(width: 10,),
+                GestureDetector(
+                    onTap: (){
+                      setState(() {
+                        comment.text = comment.text + " " + "❤️";
+                      });
+                    },
+                    child: Text("❤️",style: TextStyle(fontSize: 25),)),
+                SizedBox(width: 10,),
+                GestureDetector(
+                    onTap: (){
+                      setState(() {
+                        comment.text = comment.text + " " + "🥰";
+                      });
+                    },
+                    child: Text("🥰",style: TextStyle(fontSize: 25),)),
+                SizedBox(width: 10,),
+                GestureDetector(
+                    onTap: (){
+                      setState(() {
+                        comment.text = comment.text + " " + "😍";
+                      });
+                    },
+                    child: Text("😍",style: TextStyle(fontSize: 25),)),
+              ]
+            ),
+          ),
           WidgetAnimator(
             Container(
               alignment: Alignment.bottomCenter,
@@ -1017,7 +1832,7 @@ class _CommentScreenState extends State<CommentScreen> {
                                     size: 10,
                                   )),
                               errorWidget: (context, url, error) =>
-                                  const Icon(Icons.error),
+                                  const Icon(Icons.person),
                             ),
                           )),
                       const SizedBox(width: 14,),
@@ -1047,6 +1862,42 @@ class _CommentScreenState extends State<CommentScreen> {
                             ),
                           )),
                       const SizedBox(width: 16,),
+                      Padding(
+                        padding: const EdgeInsets.only(bottom: 12,right: 16),
+                        child: IconButton(
+                          icon: const Icon(Icons.gif,size: 40),
+                          onPressed: ()async {
+                            final gif = await GiphyPicker.pickGif(
+                              context: context,
+                              apiKey: giphyKey,
+                            );
+                            if (gif != null) {
+                              setState(() {
+                                _gif = gif;
+                                debugPrint("gif link==========>${_gif?.images.original?.url}");
+
+
+                              });
+                              showDialog(
+                                context: context,
+                                builder: (BuildContext context) {
+                                  return AlertDialog(
+                                    backgroundColor: primary,
+                                    title: const Text('GIF Selected'),
+                                    content: _gif?.images.original?.url != null
+                                        ? Image(image: NetworkImage(_gif!.images.original!.url!))
+                                        : const Text('No GIF URL available'),
+                                    actions: <Widget>[
+                                      IconButton(icon: const Icon(Icons.send), onPressed: () { createComment();
+                                      Navigator.of(context).pop();},),
+                                    ],
+                                  );
+                                },
+                              );
+                            }
+                          },
+                        ),
+                      ),
                       GestureDetector(
                         onTap: () {
                           createComment();
@@ -1079,4 +1930,23 @@ class _CommentScreenState extends State<CommentScreen> {
       ),
     );
   }
+}
+Widget buildGifWidget(BuildContext context,String gifUrl) {
+  debugPrint("gif link after sending msg========>$gifUrl");
+  return Stack(
+    alignment: Alignment.center,
+    children: [
+      Image.network(gifUrl),
+      FutureBuilder(
+        future: precacheImage(NetworkImage(gifUrl), context),
+        builder: (context, snapshot) {
+          if (snapshot.connectionState == ConnectionState.waiting) {
+            return Center(child: CircularProgressIndicator(color: primary));
+          } else {
+            return const SizedBox.shrink(); // Empty container when image is loaded
+          }
+        },
+      ),
+    ],
+  );
 }

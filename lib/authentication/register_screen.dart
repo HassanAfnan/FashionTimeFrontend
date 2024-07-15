@@ -92,13 +92,6 @@ class _RegisterState extends State<Register> {
     }
   }
 
-
-
-
-
-
-
-
   signUp() async {
     setState(() {
       loading = true;
@@ -157,7 +150,7 @@ class _RegisterState extends State<Register> {
           });
           FirebaseMessaging.instance.getToken().then((value1) {
             Map<String, String> body = {
-              "email": email.text,
+              "email": email.text.toLowerCase(),
               "name": name.text,
               "username":username.text,
               "password": password.text,
@@ -166,7 +159,7 @@ class _RegisterState extends State<Register> {
               "fcmToken": value1!
             };
             post(
-              Uri.parse("${serverUrl}/api/signup/"),
+              Uri.parse("$serverUrl/api/signup/"),
               body: body,
             ).then((value) {
               print(" user created with Response ==> ${json.decode(value.body)}");
@@ -396,6 +389,8 @@ class _RegisterState extends State<Register> {
                         inputFormatters: [
                           FilteringTextInputFormatter.deny(
                               RegExp(r'\s')),
+                          FilteringTextInputFormatter(RegExp(r'[A-Z]'), allow: false),
+                          FilteringTextInputFormatter.allow(RegExp(r'[a-zA-Z]'))
                         ],
                         controller: username,
                         style: const TextStyle(
@@ -552,7 +547,7 @@ class _RegisterState extends State<Register> {
                       ],
                     ),
                   ),
-                  const SizedBox(height: 20,),
+                  const SizedBox(height: 10,),
                   GestureDetector(
                     onTap: (){
                       _launchPolicy();
@@ -561,6 +556,22 @@ class _RegisterState extends State<Register> {
                       mainAxisAlignment: MainAxisAlignment.center,
                       children: const [
                         Text(" Privacy Policy",style: TextStyle(
+                            color: Colors.black54,
+                            fontFamily: 'Montserrat',
+                            fontWeight: FontWeight.bold
+                        ),)
+                      ],
+                    ),
+                  ),
+                  SizedBox(height: 8,),
+                  GestureDetector(
+                    onTap: (){
+                      _launchEula();
+                    },
+                    child: Row(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: const [
+                        Text(" End User License Agreement",style: TextStyle(
                             color: Colors.black54,
                             fontFamily: 'Montserrat',
                             fontWeight: FontWeight.bold
@@ -670,56 +681,61 @@ class _RegisterState extends State<Register> {
     );
   }
   _launchURL() async {
-    final Uri url = Uri.parse('https://fashion-time.vercel.app');
+    final Uri url = Uri.parse('https://fashion-time-d945b.web.app/terms-and-conditions');
     if (!await launchUrl(url)) {
       throw Exception('Could not launch $url');
     }
   }
+
   _launchPolicy() async {
-    final Uri url = Uri.parse('https://fashion-time.vercel.app/policy.html');
+    final Uri url = Uri.parse('https://fashion-time-d945b.web.app/');
+    if (!await launchUrl(url)) {
+      throw Exception('Could not launch $url');
+    }
+  }
+  _launchEula() async {
+    final Uri url = Uri.parse('https://fashion-time-d945b.web.app/EULA');
     if (!await launchUrl(url)) {
       throw Exception('Could not launch $url');
     }
   }
   sendEmail(code,data) async {
-    String username = userID;
-    String password = passID;
+    // String username = userID;
+    // String password = passID;
+    //
+    // final smtpServer = gmail(username, password);
+    // final message = Message()
+    //   ..from = Address(username, 'Fashion Time')
+    //   ..recipients.add(email.text)
+    //   ..subject = 'Verification Code :: 😀 :: ${DateTime.now()}'
+    //   ..text = "Your verification code is ${code}.";
+    {
+      // final sendReport = await send(message, smtpServer);
+      // print('Message sent: ' + sendReport.toString());
 
-    final smtpServer = gmail(username, password);
-    final message = Message()
-      ..from = Address(username, 'Fashion Time')
-      ..recipients.add(email.text)
-      ..subject = 'Verification Code :: 😀 :: ${DateTime.now()}'
-      ..text = "Your verification code is ${code}.";
-    try {
-      final sendReport = await send(message, smtpServer);
-      print('Message sent: ' + sendReport.toString());
-      setState(() {
-        loading = false;
-      });
-        Navigator.push(context, MaterialPageRoute(builder: (context) => OtpScreen(
-          id: data["user"]["id"].toString(),
-          name: data["user"]["name"],
-          email: data["user"]["email"],
-          phone_number: data["user"]["phone_number"],
-          username: data["user"]["username"],
-          gender: data["user"]["gender"],
-          access_token: data["access_token"],
-          pic: data["user"]["pic"] == null ? "https://firebasestorage.googleapis.com/v0/b/fashiontime-28e3a.appspot.com/o/WhatsApp_Image_2023-11-08_at_4.48.19_PM-removebg-preview.png?alt=media&token=215bdc12-d53a-4772-bca1-efbbdf6ee955&_gl=1*nea8nk*_ga*NDIyMTUzOTQ2LjE2OTkyODU3MDg.*_ga_CW55HF8NVT*MTY5OTQ0NDE2NS4zMy4xLjE2OTk0NDUxNzcuNTYuMC4w" :data["user"]["pic"],
-          fcmToken: data["user"]["fcmToken"],
-        )));
-    } on MailerException catch (e) {
-      setState(() {
-        loading = false;
-      });
-      print('Message not sent.');
-      print(e.message);
-      for (var p in e.problems) {
-        print('Problem: ${p.code}: ${p.msg}');
+      if (data != null && data.containsKey("user") && data["user"] != null) {
+        setState(() {
+          loading = false;
+        });
+        Navigator.push(
+          context,
+          MaterialPageRoute(
+            builder: (context) =>
+                OtpScreen(
+                  id: data["user"]["id"].toString(),
+                  name: data["user"]["name"] ?? "",
+                  email: data["user"]["email"] ?? "",
+                  phone_number: data["user"]["phone_number"] ?? "",
+                  username: data["user"]["username"] ?? "",
+                  gender: data["user"]["gender"] ?? "",
+                  access_token: data["access_token"] ?? "",
+                  pic: data["user"]["pic"] == null
+                      ? "https://firebasestorage.googleapis.com/v0/b/fashiontime-28e3a.appspot.com/o/WhatsApp_Image_2023-11-08_at_4.48.19_PM-removebg-preview.png?alt=media&token=215bdc12-d53a-4772-bca1-efbbdf6ee955&_gl=1*nea8nk*_ga*NDIyMTUzOTQ2LjE2OTkyODU3MDg.*_ga_CW55HF8NVT*MTY5OTQ0NDE2NS4zMy4xLjE2OTk0NDUxNzcuNTYuMC4w"
+                      : data["user"]["pic"] ?? "",
+                  fcmToken: data["user"]["fcmToken"] ?? "",
+                ),
+          ),
+        );
       }
     }
-  }
-}
-
-
-
+    }}

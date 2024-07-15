@@ -5,6 +5,7 @@ import 'package:FashionTime/screens/pages/friend_profile.dart';
 import 'package:FashionTime/screens/pages/reel_comment.dart';
 import 'package:FashionTime/screens/pages/reels.dart';
 import 'package:FashionTime/screens/pages/report_reel.dart';
+import 'package:FashionTime/screens/pages/user_like.dart';
 import 'package:chewie/chewie.dart';
 import 'package:flutter/material.dart';
 import 'package:fluttertoast/fluttertoast.dart';
@@ -13,7 +14,7 @@ import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:video_player/video_player.dart';
 import 'package:http/http.dart' as https;
 import '../../utils/constants.dart';
-import 'liked_user_reel.dart';
+import 'post_like_user.dart';
 
 class ReelsInitializerScreen extends StatefulWidget {
   final String? videoLink;
@@ -43,7 +44,10 @@ class ReelsInitializerScreen extends StatefulWidget {
     this.myLikes,
     this.onLikeCreated,
     this.onDislikeCreated,
-    this.refreshReel, required this.userPic, required this.friendId, required this.isCommentEnabled,
+    this.refreshReel,
+    required this.userPic,
+    required this.friendId,
+    required this.isCommentEnabled,
   });
 
   @override
@@ -55,7 +59,7 @@ class _ReelsInitializerScreenState extends State<ReelsInitializerScreen> {
   ChewieController? _chewieController;
   bool isPlaying = true;
   bool isLiked = false;
-  bool heartIcon=false;
+  bool heartIcon = false;
 
   @override
   void initState() {
@@ -73,6 +77,7 @@ class _ReelsInitializerScreenState extends State<ReelsInitializerScreen> {
             ..initialize().then((_) {
               if (isPlaying) {
                 _videoPlayerController!.play();
+                _videoPlayerController!.setVolume(0.0);
               }
             });
     }
@@ -128,7 +133,7 @@ class _ReelsInitializerScreenState extends State<ReelsInitializerScreen> {
   }
 
   Future<void> createLike() async {
-    heartIcon=true;
+    heartIcon = true;
     const String apiUrl = '$serverUrl/fashionReelLikes/';
     final Map<String, dynamic> postLike = {
       'likeEmoji': 1,
@@ -146,7 +151,7 @@ class _ReelsInitializerScreenState extends State<ReelsInitializerScreen> {
         setState(() {
           debugPrint("like posted");
           isLiked = true;
-          heartIcon=false;
+          heartIcon = false;
           // showToast(primary, "Reel liked");
           if (widget.onLikeCreated != null) {
             widget.onLikeCreated!();
@@ -188,66 +193,96 @@ class _ReelsInitializerScreenState extends State<ReelsInitializerScreen> {
   Widget build(BuildContext context) {
     return GestureDetector(
       onTap: () {
-        _togglePlayPause();
+        setState(() {
+          _videoPlayerController!.setVolume(1.0);
+        });
       },
       onDoubleTap: () {
         createLike();
       },
+      onLongPress: () {
+        _togglePlayPause();
+      },
       child: Stack(children: [
         ReelScreen(controller: _videoPlayerController),
-
         Padding(
           padding: const EdgeInsets.all(8.0),
           child: Column(
             children: [
               Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                mainAxisAlignment: MainAxisAlignment.end,
                 children: [
-                  Text("Flicks",
-                      style: TextStyle(
-                          color: primary,
-                          fontSize: 30,
-                          fontFamily: 'Montserrat',
-                          decoration: TextDecoration.none)),
-                  Padding(
-                    padding: const EdgeInsets.all(8.0),
-                    child: GestureDetector(
-                        onTap: () {
-                          _videoPlayerController!.pause();
-                          Navigator.push(
-                              context,
-                              MaterialPageRoute(
-                                builder: (context) => CreateReelScreen(
-                                  refreshReel: () {
-                                    widget.refreshReel!();
-                                  },
-                                ),
-                              ));
-                        },
-                        child: Icon(
-                          Icons.add,
-                          color: primary,
-                          size: 40,
-                        ),
-
-
-                        // Image.asset(
-                        //   "assets/reelIcon.png",
-                        //   width: 30,
-                        //   height: 30,
-                        //   color: primary,
-                        // )
-                        ),
+                  PopupMenuButton(
+                    color: primary,
+                    itemBuilder: (context) {
+                      return [
+                        PopupMenuItem(
+                            child: GestureDetector(
+                                onTap: () {
+                                  _videoPlayerController!.pause();
+                                  Navigator.push(
+                                      context,
+                                      MaterialPageRoute(
+                                        builder: (context) => CreateReelScreen(
+                                          refreshReel: () {
+                                            widget.refreshReel!();
+                                          },
+                                        ),
+                                      ));
+                                },
+                                child: const Icon(
+                                  Icons.add,
+                                ))),
+                        PopupMenuItem(
+                            child: GestureDetector(
+                                onTap: () {
+                                  {
+                                    Navigator.push(
+                                        context,
+                                        MaterialPageRoute(
+                                            builder: (context) =>
+                                                ReelReportScreen(
+                                                    reelId: widget.reelId!,
+                                                    userId: widget.userId!)));
+                                  }
+                                },
+                                child: const Icon(
+                                  Icons.report_gmailerrorred,
+                                )))
+                      ];
+                    },
                   ),
-
+                  // Padding(
+                  //   padding: const EdgeInsets.all(5.0),
+                  //   child: GestureDetector(
+                  //       onTap: () {
+                  //         _videoPlayerController!.pause();
+                  //         Navigator.push(
+                  //             context,
+                  //             MaterialPageRoute(
+                  //               builder: (context) => CreateReelScreen(
+                  //                 refreshReel: () {
+                  //                   widget.refreshReel!();
+                  //                 },
+                  //               ),
+                  //             ));
+                  //       },
+                  //       child: Icon(
+                  //         Icons.more_vert,
+                  //         color: primary,
+                  //         size: 40,
+                  //       ),
+                  //
+                  //       ),
+                  // ),
                 ],
               ),
-              Align(
-                alignment: Alignment.topRight,
-                child: IconButton(onPressed:() {
-                Navigator.push(context, MaterialPageRoute(builder: (context) => ReelReportScreen(reelId: widget.reelId!,userId: widget.userId!)));
-                },  icon: Icon(Icons.report,color: primary,size: 30,)),
-              ),
+              // Align(
+              //   alignment: Alignment.topRight,
+              //   child: IconButton(onPressed:() {
+              //   Navigator.push(context, MaterialPageRoute(builder: (context) => ReelReportScreen(reelId: widget.reelId!,userId: widget.userId!)));
+              //   },  icon: Icon(Icons.report,color: primary,size: 30,)),
+              // ),
               const SizedBox(
                 height: 70,
               ),
@@ -260,14 +295,21 @@ class _ReelsInitializerScreenState extends State<ReelsInitializerScreen> {
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
               const SizedBox(),
-               Center(child: Visibility(visible: heartIcon,child:  Icon(Icons.favorite,size: 60,color: primary,))),
+              Center(
+                  child: Visibility(
+                      visible: heartIcon,
+                      child: Icon(
+                        Icons.favorite,
+                        size: 60,
+                        color: primary,
+                      ))),
               Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
                   Column(
                     children: [
                       const SizedBox(
-                        height: 100,
+                        height: 50,
                       ),
                       Row(
                         children: [
@@ -288,9 +330,16 @@ class _ReelsInitializerScreenState extends State<ReelsInitializerScreen> {
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
                               GestureDetector(
-                              onTap: () {
-                                  Navigator.push(context, MaterialPageRoute(builder: (context) =>FriendProfileScreen(id: widget.friendId.toString(), username: widget.name!) ,));
-                              },
+                                onTap: () {
+                                  Navigator.push(
+                                      context,
+                                      MaterialPageRoute(
+                                        builder: (context) =>
+                                            FriendProfileScreen(
+                                                id: widget.friendId.toString(),
+                                                username: widget.name!),
+                                      ));
+                                },
                                 child: Text(widget.name!,
                                     style: const TextStyle(
                                         color: ascent,
@@ -323,8 +372,15 @@ class _ReelsInitializerScreenState extends State<ReelsInitializerScreen> {
                   ),
                   Column(
                     children: [
-
                       GestureDetector(
+                          onLongPress: () {
+                            Navigator.push(
+                                context,
+                                MaterialPageRoute(
+                                  builder: (context) => UserLikeScreen(
+                                      reelId: widget.reelId.toString()),
+                                ));
+                          },
                           onTap: () {
                             widget.myLikes == null
                                 ? createLike()
@@ -343,7 +399,7 @@ class _ReelsInitializerScreenState extends State<ReelsInitializerScreen> {
                                 )),
                       GestureDetector(
                         onLongPress: () {
-Navigator.push(context,MaterialPageRoute(builder: (context) => const LikedUserReelScreen(),));
+//Navigator.push(context,MaterialPageRoute(builder: (context) => const LikedUserReelScreen(),));
                         },
                         child: Text("${widget.likeCount}",
                             style: const TextStyle(
@@ -352,18 +408,25 @@ Navigator.push(context,MaterialPageRoute(builder: (context) => const LikedUserRe
                                 fontFamily: 'Montserrat',
                                 decoration: TextDecoration.none)),
                       ),
-                      widget.isCommentEnabled==true?
-                      GestureDetector(
-                        onTap: () {
-                          _videoPlayerController!.pause();
-                          Navigator.push(context, MaterialPageRoute(builder: (context) =>  ReelCommentScreen(userPic: widget.userPic,reelId: widget.reelId!),));
-                        },
-                        child:Icon(
-                          FontAwesomeIcons.comment,
-                          color: primary,
-                          size: 26,
-                        ) ,
-                      ):const SizedBox()
+                      widget.isCommentEnabled == true
+                          ? GestureDetector(
+                              onTap: () {
+                                _videoPlayerController!.pause();
+                                Navigator.push(
+                                    context,
+                                    MaterialPageRoute(
+                                      builder: (context) => ReelCommentScreen(
+                                          userPic: widget.userPic,
+                                          reelId: widget.reelId!),
+                                    ));
+                              },
+                              child: Icon(
+                                FontAwesomeIcons.comment,
+                                color: primary,
+                                size: 26,
+                              ),
+                            )
+                          : const SizedBox()
                     ],
                   )
                 ],

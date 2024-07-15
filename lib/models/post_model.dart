@@ -14,7 +14,9 @@ class PostModel {
   late String thumbnail;
   late String userid;
   late String mylike;
-
+  late List<dynamic>? hashtags;
+  late Map<String,dynamic> event;
+  late Map<String,dynamic> topBadge;
 
   PostModel(
 
@@ -31,9 +33,12 @@ class PostModel {
        this.thumbnail,
        this.userid,
        this.mylike,
+       this.event,
+      this.topBadge,
       {
         this.addMeInFashionWeek,
-        this.isCommentEnabled
+        this.isCommentEnabled,
+        this.hashtags,
       }
       );
 

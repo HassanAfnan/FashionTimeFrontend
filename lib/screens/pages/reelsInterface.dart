@@ -26,7 +26,7 @@ class _ReelsInterfaceScreenState extends State<ReelsInterfaceScreen> {
     SharedPreferences preferences = await SharedPreferences.getInstance();
     id = preferences.getString("id")!;
     token = preferences.getString("token")!;
-    getAllReels();
+    getAllReels(1);
   }
   showToast(Color bg, String toastMsg) {
     Fluttertoast.showToast(
@@ -57,8 +57,8 @@ class _ReelsInterfaceScreenState extends State<ReelsInterfaceScreen> {
   //     debugPrint('Failed to load data. Status code: ${response.statusCode}');
   //   }
   // }
-  Future<void> getAllReels() async {
-    const String apiUrl = '$serverUrl/fashionReel/';
+  Future<void> getAllReels(int pagination) async {
+     String apiUrl = '$serverUrl/fashionReel/?page=$pagination';
 
     try {
       final response = await https.get(Uri.parse(apiUrl), headers: {
@@ -78,15 +78,13 @@ class _ReelsInterfaceScreenState extends State<ReelsInterfaceScreen> {
             debugPrint("reel data length ${reels.length}");
           });
 
-          // If you need to handle pagination, you can check the "next" field.
           final dynamic nextUrl = responseData['next'];
           if (nextUrl != null) {
               pageNumber++;
-            // You have a next page; you can fetch more data using the next URL.
-            // Example: fetchMoreData(nextUrl);
+
           }
           else{
-            showToast(Colors.green, "You are up to date");
+            //showToast(Colors.green, "You are up to date");
           }
         } else {
           debugPrint("Unexpected data format or null value: $responseData");
@@ -140,7 +138,7 @@ class _ReelsInterfaceScreenState extends State<ReelsInterfaceScreen> {
   }
 
   refreshReels()async{
-    getAllReels();
+    getAllReels(1);
   }
 
 
@@ -164,9 +162,9 @@ class _ReelsInterfaceScreenState extends State<ReelsInterfaceScreen> {
                 ReelsInitializerScreen(
                   videoLink:
                   reels[index]['upload']['media'][0]['video'],name: reels[index]['user']['name'],reelDescription: reels[index]['description'],likeCount: reels[index]["likesCount"],userId: int.parse(id),token: token,reelId: reels[index]['id'],myLikes: reels[index]['myLike'],onLikeCreated: () {
-                    getAllReels();
+                    getAllReels(1);
                   },onDislikeCreated: () {
-                    getAllReels();
+                    getAllReels(1);
                   },refreshReel: () {
                   refreshReels();
                   },userPic: reels[index]['user']['pic'] ?? "",
@@ -199,7 +197,8 @@ class _ReelsInterfaceScreenState extends State<ReelsInterfaceScreen> {
                 ),
                 onTap: () {
                   setState(() {
-                    getMoreReels();
+                    pageNumber++;
+                    getAllReels(pageNumber);
                   });
                 },
               ),
