@@ -74,7 +74,7 @@ dependencies:
   firebase_messaging_platform_interface: 3.1.6
   firebase_storage_platform_interface: 4.1.15
   firebase_core_platform_interface: 4.5.1
-  uuid: ^4.0.0
+  uuid: ^3.0.1
 #  flutter_ringtone_player: ^3.2.0
   flutter_callkit_incoming:
   permission_handler: ^11.0.1
@@ -104,7 +104,14 @@ dependencies:
   showcaseview: ^2.1.0
   image_editor_plus: ^0.2.0
   image_cropper: ^4.0.1
-  social_media_recorder: ^1.1.13
+  audioplayers: ^4.0.0
+  record_mp3: ^3.0.0
+  sizer: ^2.0.15
+
+
+
+#  social_media_recorder: ^1.1.13
+##  assets_audio_player: ^3.0.3
 
 dev_dependencies:
   flutter_test:

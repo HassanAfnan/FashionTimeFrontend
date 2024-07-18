@@ -1,21 +1,25 @@
 import 'dart:convert';
+import 'package:FashionTime/screens/pages/controllers/audio_controller.dart';
 import 'package:FashionTime/screens/pages/reactions/reactions.dart';
 import 'package:FashionTime/screens/pages/shared_post.dart';
+import 'package:audioplayers/audioplayers.dart';
 import 'package:auto_size_text_field/auto_size_text_field.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:FashionTime/helpers/database_methods.dart';
 import 'package:file_picker/file_picker.dart';
+import 'package:firebase_storage/firebase_storage.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_file_downloader/flutter_file_downloader.dart';
 import 'package:flutter_spinkit/flutter_spinkit.dart';
 import 'package:fluttertoast/fluttertoast.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
+import 'package:get/get.dart';
 import 'package:image_picker/image_picker.dart';
+import 'package:permission_handler/permission_handler.dart';
+import 'package:record_mp3/record_mp3.dart';
 import 'package:shared_preferences/shared_preferences.dart';
-import 'package:social_media_recorder/audio_encoder_type.dart';
-import 'package:social_media_recorder/screen/social_media_recorder.dart';
 import 'package:video_compress/video_compress.dart';
 import 'package:video_player/video_player.dart';
 import 'package:video_thumbnail/video_thumbnail.dart';
@@ -28,6 +32,7 @@ import 'friend_profile.dart';
 import 'dart:io';
 import 'package:http_parser/http_parser.dart';
 import 'package:giphy_picker/giphy_picker.dart';
+import 'package:path_provider/path_provider.dart';
 
 class MessageScreen extends StatefulWidget {
   final String friendId;
@@ -105,10 +110,169 @@ class _MessageScreenState extends State<MessageScreen> {
   var decoded;
   GiphyGif? _gif;
   final FocusNode messageFocusNode = FocusNode();
-
   bool checkedValue = true;
   List<Map<String, String>> media = [];
   List<Map<String, String>> media1 = [];
+  late String recordFilePath;
+
+  AudioController audioController = Get.put(AudioController());
+  AudioPlayer audioPlayer = AudioPlayer();
+  String audioURL = "";
+  int i = 0;
+
+  Future<String> getFilePath() async {
+    Directory storageDirectory = await getApplicationDocumentsDirectory();
+    String sdPath =
+        "${storageDirectory.path}/record${DateTime.now().microsecondsSinceEpoch}.acc";
+    var d = Directory(sdPath);
+    if (!d.existsSync()) {
+      d.createSync(recursive: true);
+    }
+    return "$sdPath/test_${i++}.mp3";
+  }
+
+  Future<bool> checkPermission() async {
+    if (!await Permission.microphone.isGranted) {
+      PermissionStatus status = await Permission.microphone.request();
+      if (status != PermissionStatus.granted) {
+        return false;
+      }
+    }
+    return true;
+  }
+
+  void startRecord() async {
+    audioController.isRecording.value = true;
+    bool hasPermission = await checkPermission();
+    if (hasPermission) {
+      recordFilePath = await getFilePath();
+      RecordMp3.instance.start(recordFilePath, (type) {
+        setState(() {});
+      });
+    } else {}
+    setState(() {});
+  }
+
+  void stopRecord() async {
+    setState(() {
+      audioController.isRecording.value = false;
+    });
+    bool stop = RecordMp3.instance.stop();
+    audioController.end.value = DateTime.now();
+    audioController.calcDuration();
+    var ap = AudioPlayer();
+    await ap.play(AssetSource("assets_Notification.mp3"));
+    ap.onPlayerComplete.listen((a) {});
+    if (stop) {
+      audioController.isSending.value = true;
+      await uploadAudio();
+    }
+  }
+
+  UploadTask uploadAudioToFB(var audioFile, String fileName) {
+    Reference reference = FirebaseStorage.instance.ref().child(fileName);
+    UploadTask uploadTask = reference.putFile(audioFile);
+    return uploadTask;
+  }
+
+  uploadAudio() async {
+    UploadTask uploadTask = uploadAudioToFB(File(recordFilePath),
+        "audio/${DateTime.now().millisecondsSinceEpoch.toString()}");
+    try {
+      TaskSnapshot snapshot = await uploadTask;
+      audioURL = await snapshot.ref.getDownloadURL();
+      String strVal = audioURL.toString();
+      setState(() {
+        audioController.isSending.value = false;
+        print("Audio URL ==> "+strVal);
+        addMessage();
+        // onSendMessage(strVal, TypeMessage.audio,
+        //     duration: audioController.total);
+      });
+    } on FirebaseException catch (e) {
+      setState(() {
+        audioController.isSending.value = false;
+      });
+      Fluttertoast.showToast(msg: e.message ?? e.toString());
+    }
+  }
+
+  Widget _audio({
+    String? message,
+    bool? isCurrentUser,
+    int? index,
+    String? time,
+    String? duration,
+  }) {
+    return Container(
+      width: MediaQuery.of(context).size.width * 0.75,
+      padding: EdgeInsets.all(8),
+      decoration: BoxDecoration(
+        color: isCurrentUser! ? primary : primary.withOpacity(0.18),
+        borderRadius: BorderRadius.circular(10),
+      ),
+      child: Row(
+        children: [
+          GestureDetector(
+            onTap: () {
+              audioController.onPressedPlayButton(index!, message!);
+              // changeProg(duration: duration);
+            },
+            onSecondaryTap: () {
+              audioPlayer.stop();
+              //   audioController.completedPercentage.value = 0.0;
+            },
+            child: Obx(
+                  () => (audioController.isRecordPlaying &&
+                  audioController.currentId == index)
+                  ? Icon(
+                Icons.cancel,
+                color: isCurrentUser ? Colors.white : primary,
+              )
+                  : Icon(
+                Icons.play_arrow,
+                color: isCurrentUser ? Colors.white : primary,
+              ),
+            ),
+          ),
+          Obx(
+                () => Expanded(
+              child: Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 0),
+                child: Stack(
+                  clipBehavior: Clip.none,
+                  alignment: Alignment.center,
+                  children: [
+                    // Text(audioController.completedPercentage.value.toString(),style: TextStyle(color: Colors.white),),
+                    LinearProgressIndicator(
+                      minHeight: 5,
+                      backgroundColor: Colors.grey,
+                      valueColor: AlwaysStoppedAnimation<Color>(
+                        isCurrentUser! ? Colors.white : primary,
+                      ),
+                      value: (audioController.isRecordPlaying &&
+                          audioController.currentId == index)
+                          ? audioController.completedPercentage.value
+                          : audioController.totalDuration.value.toDouble(),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+          ),
+          SizedBox(
+            width: 10,
+          ),
+          Text(
+            duration!,
+            style: TextStyle(
+                fontSize: 12, color: isCurrentUser ? Colors.white : primary),
+          ),
+        ],
+      ),
+    );
+  }
+
   getCashedData() async {
     SharedPreferences preferences = await SharedPreferences.getInstance();
     name = preferences.getString("name")!;
@@ -185,7 +349,8 @@ class _MessageScreenState extends State<MessageScreen> {
         repliedMessage = null;
       });
       FocusScope.of(context).unfocus();
-    } else if (imageLink != '') {
+    }
+    else if (imageLink != '') {
       Map<String, dynamic> chatMessageMap = {
         "sendBy": name!,
         "message": imageLink,
@@ -206,7 +371,8 @@ class _MessageScreenState extends State<MessageScreen> {
         repliedMessage = null;
       });
       FocusScope.of(context).unfocus();
-    } else if (videoLink != '') {
+    }
+    else if (videoLink != '') {
       Map<String, dynamic> chatMessageMap = {
         "sendBy": name!,
         "message": videoLink,
@@ -227,7 +393,8 @@ class _MessageScreenState extends State<MessageScreen> {
         repliedMessage = null;
       });
       FocusScope.of(context).unfocus();
-    } else if (fileLink != '') {
+    }
+    else if (fileLink != '') {
       Map<String, dynamic> chatMessageMap = {
         "sendBy": name!,
         "message": fileLink,
@@ -248,7 +415,8 @@ class _MessageScreenState extends State<MessageScreen> {
         repliedMessage = null;
       });
       FocusScope.of(context).unfocus();
-    } else if (_gif != null) {
+    }
+    else if (_gif != null) {
       debugPrint("gif if block called");
       Map<String, dynamic> chatMessageMap = {
         "sendBy": name!,
@@ -258,7 +426,6 @@ class _MessageScreenState extends State<MessageScreen> {
         'reply': repliedMessage,
         "emoji":"none"
       };
-
       DatabaseMethods().addMessage(widget.chatRoomId!, chatMessageMap);
       _controller.jumpTo(_controller.position.maxScrollExtent);
       await DatabaseMethods().getIsMuteField(widget.chatRoomId!)
@@ -267,6 +434,28 @@ class _MessageScreenState extends State<MessageScreen> {
       setState(() {
         messageEditingController.text = "";
         _gif = null;
+        repliedMessage = null;
+      });
+      FocusScope.of(context).unfocus();
+    }
+    else if (audioURL != ""){
+      debugPrint("audio url if block called");
+      Map<String, dynamic> chatMessageMap = {
+        "sendBy": name!,
+        "message":audioURL,
+        'time': DateTime.now().millisecondsSinceEpoch,
+        'image': pic,
+        'reply': repliedMessage,
+        "emoji":"none"
+      };
+      DatabaseMethods().addMessage(widget.chatRoomId!, chatMessageMap);
+      _controller.jumpTo(_controller.position.maxScrollExtent);
+      await DatabaseMethods().getIsMuteField(widget.chatRoomId!)
+          ? null
+          : sendNotification(name!, "Document", widget.fcm);
+      setState(() {
+        messageEditingController.text = "";
+        audioURL = "";
         repliedMessage = null;
       });
       FocusScope.of(context).unfocus();
@@ -483,6 +672,66 @@ class _MessageScreenState extends State<MessageScreen> {
       });
     });
   }
+  // uploadAudio(imagePath) async {
+  //   bool _play = false;
+  //   Navigator.pop(context);
+  //   var decoded;
+  //   var request = https.MultipartRequest('POST', Uri.parse("$serverUrl/fileUploader/"));
+  //   request.files.add(await https.MultipartFile.fromPath(
+  //     'document',
+  //     imagePath,
+  //     contentType: MediaType('m4a','mp4'),
+  //   ));
+  //   request.send().then((value) {
+  //     value.stream.forEach((element) {
+  //       decoded = utf8.decode(element);
+  //       print(jsonDecode(decoded)["document"]);
+  //       imageLink = jsonDecode(decoded)["document"];
+  //       // showDialog(
+  //       //   context: context,
+  //       //   builder: (BuildContext context) {
+  //       //     return AlertDialog(
+  //       //       backgroundColor: primary,
+  //       //       title: const Text('Recorded Audio'),
+  //       //       content:Container(
+  //       //         height: 100,
+  //       //         child: AudioWidget.network(
+  //       //           url: imageLink,
+  //       //           play: _play,
+  //       //           child: TextButton(
+  //       //               child: Text(
+  //       //                 _play ? "pause" : "play",
+  //       //               ),
+  //       //               onPressed: () {
+  //       //                 setState(() {
+  //       //                   _play = !_play;
+  //       //                 });
+  //       //               }),
+  //       //           onReadyToPlay: (duration) {
+  //       //             //onReadyToPlay
+  //       //           },
+  //       //           onPositionChanged: (current, duration) {
+  //       //             //onPositionChanged
+  //       //           },
+  //       //         ),
+  //       //       ),
+  //       //       actions: <Widget>[
+  //       //         IconButton(
+  //       //           icon: const Icon(Icons.send),
+  //       //           onPressed: () {
+  //       //             addMessage();
+  //       //             Navigator.of(context).pop();
+  //       //           },
+  //       //         ),
+  //       //       ],
+  //       //     );
+  //       //   },
+  //       // );
+  //       Fluttertoast.showToast(
+  //           msg: "Done! Proceed to continue", backgroundColor: primary);
+  //     });
+  //   });
+  // }
   uploadVideoMedia(imagePath) async {
 
     final request = MultipartRequest(
@@ -596,6 +845,8 @@ class _MessageScreenState extends State<MessageScreen> {
                         ["reply"],
                     emoji:(snapshot.data! as QuerySnapshot).docs[index]
                     ["emoji"] ,
+                    audio: _audio,
+                    index: index  ,
                   );
                 })
             : Container();
@@ -837,10 +1088,13 @@ class _MessageScreenState extends State<MessageScreen> {
                       ),
                     );
                   },
-                  child: Text(
-                    widget.name,
-                    style: const TextStyle(
-                        color: ascent, fontFamily: 'Montserrat'),
+                  child: Flexible(
+                    child: Text(
+                      widget.name,
+                      style: const TextStyle(
+                        fontSize: 12,
+                          color: ascent, fontFamily: 'Montserrat'),
+                    ),
                   )),
             ],
           ),
@@ -882,7 +1136,7 @@ class _MessageScreenState extends State<MessageScreen> {
                           ),
                         )
                       : Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
                           children: [
                             Container(
                               alignment: Alignment.bottomCenter,
@@ -907,7 +1161,6 @@ class _MessageScreenState extends State<MessageScreen> {
                                   child: Row(
                                     mainAxisAlignment: MainAxisAlignment.end,
                                     children: [
-
                                       if(isRecording == false) Padding(
                                         padding:
                                             const EdgeInsets.only(bottom: 2),
@@ -975,6 +1228,21 @@ class _MessageScreenState extends State<MessageScreen> {
                                           },
                                         ),
                                       ),
+                                      GestureDetector(
+                                        child: Icon(Icons.mic, color: ascent,size: 25,),
+                                        onLongPress: () async {
+                                          var audioPlayer = AudioPlayer();
+                                          await audioPlayer.play(AssetSource("assets_Notification.mp3"));
+                                          audioPlayer.onPlayerComplete.listen((a) {
+                                            audioController.start.value = DateTime.now();
+                                            startRecord();
+                                          });
+                                        },
+                                        onLongPressEnd: (details) {
+                                          stopRecord();
+                                        },
+                                      ),
+                                      SizedBox(width: 10,),
                                       if(isRecording == false) Expanded(
                                           child: AutoSizeTextField(
                                         textCapitalization:
@@ -993,9 +1261,11 @@ class _MessageScreenState extends State<MessageScreen> {
                                         cursorColor: ascent,
                                         controller: messageEditingController,
                                         //style: simpleTextStyle(),
-                                        decoration: const InputDecoration(
+                                        decoration: InputDecoration(
                                             fillColor: ascent,
-                                            hintText: "Message ...",
+                                            hintText:   audioController.isRecording.value == true
+                                                ? "Recording audio..."
+                                                : "Your message...",
                                             hintStyle: TextStyle(
                                               color: ascent,
                                               fontFamily: 'Montserrat',
@@ -1209,70 +1479,6 @@ class _MessageScreenState extends State<MessageScreen> {
                                                         ),
                                                       ),
                                                       SizedBox(height: 20,),
-                                                      // ListTile(
-                                                      //   leading: const Icon(
-                                                      //       Icons.file_present),
-                                                      //   title: const Text(
-                                                      //     'File upload',
-                                                      //     style: TextStyle(
-                                                      //         fontFamily:
-                                                      //         'Montserrat'),
-                                                      //   ),
-                                                      //   onTap: () {
-                                                      //     pickFile();
-                                                      //   },
-                                                      // ),
-                                                      // ListTile(
-                                                      //   leading: const Icon(
-                                                      //       Icons.videocam),
-                                                      //   title: const Text(
-                                                      //     'Video from gallery',
-                                                      //     style: TextStyle(
-                                                      //         fontFamily:
-                                                      //         'Montserrat'),
-                                                      //   ),
-                                                      //   onTap: () {
-                                                      //     _pickVideo();
-                                                      //   },
-                                                      // ),
-                                                      // ListTile(
-                                                      //   leading: const Icon(Icons
-                                                      //       .fiber_smart_record),
-                                                      //   title: const Text(
-                                                      //     'Record video',
-                                                      //     style: TextStyle(
-                                                      //         fontFamily:
-                                                      //         'Montserrat'),
-                                                      //   ),
-                                                      //   onTap: () {
-                                                      //     _pickVideoFromCamera();
-                                                      //   },
-                                                      // ),
-                                                      // ListTile(
-                                                      //     leading: const Icon(
-                                                      //         Icons.image),
-                                                      //     title: const Text(
-                                                      //       'Image from Gallery',
-                                                      //       style: TextStyle(
-                                                      //           fontFamily:
-                                                      //           'Montserrat'),
-                                                      //     ),
-                                                      //     onTap: () {
-                                                      //       _pickImageFromGallery();
-                                                      //     }),
-                                                      // ListTile(
-                                                      //   leading: const Icon(
-                                                      //       Icons.camera_alt),
-                                                      //   title: const Text(
-                                                      //     'Capture image',
-                                                      //     style: TextStyle(
-                                                      //         fontFamily:
-                                                      //         'Montserrat'),
-                                                      //   ),
-                                                      //   onTap: () {
-                                                      //     _pickImageFromCamera();
-                                                      //   },
-                                                      // ),
                                                     ],
                                                   );
                                                 });
@@ -1311,33 +1517,6 @@ class _MessageScreenState extends State<MessageScreen> {
                                               color: primary,
                                             ))),
                                       ),
-                                      Padding(
-                                        padding: const EdgeInsets.all(8.0),
-                                        child: Container(
-                                          height: 50,
-                                          child: SocialMediaRecorder(
-                                              fullRecordPackageHeight:45,
-                                              initRecordPackageWidth:45,
-                                              radius: BorderRadius.all(Radius.circular(200)),
-                                              startRecording: () {
-                                                print("start called");
-                                                // setState(() {
-                                                //   isRecording = true;
-                                                // });
-                                              },
-                                              stopRecording: (_time) {
-                                                print("stop called");
-                                                // setState(() {
-                                                //   isRecording = false;
-                                                // });
-                                              },
-                                              sendRequestFunction: (soundFile, _time) {
-                                                //  print("the current path is ${soundFile.path}");
-                                              },
-                                            encode: AudioEncoderType.AAC
-                                          ),
-                                        ),
-                                      ),
                                     ],
                                   ),
                                 ),
@@ -1365,6 +1544,8 @@ class MessageTile extends StatefulWidget {
   final Function(String) onSwipeReply;
   final String? reply;
   final String emoji;
+  final Function audio;
+  final int index;
 
   const MessageTile(
       {required this.message,
@@ -1375,7 +1556,10 @@ class MessageTile extends StatefulWidget {
       required this.time,
       required this.onSwipeReply,
       this.reply,
-      required this.emoji});
+      required this.emoji,
+      required this.audio,
+      required this.index
+      });
 
   @override
   _MessageTileState createState() => _MessageTileState();
@@ -1402,6 +1586,8 @@ class _MessageTileState extends State<MessageTile> {
         widget.message.endsWith('.docx') ||
         widget.message.endsWith('.txt') ||
         widget.message.endsWith('.pptx');
+
+    bool isAudio = widget.message.contains("https://firebasestorage.googleapis.com/");
 
     if (widget.message.contains("http") && widget.message.contains(")")) {
       postId = widget.message.split(")")[1];
@@ -1430,7 +1616,7 @@ class _MessageTileState extends State<MessageTile> {
       child: AnimatedContainer(
         duration: const Duration(milliseconds: 200),
         transform: Matrix4.translationValues(offsetX, 0, 0),
-        padding: EdgeInsets.only(
+        padding: isAudio == true ? EdgeInsets.zero : EdgeInsets.only(
           top: 8,
           bottom: 8,
           left: widget.sendByMe ? 0 : 24,
@@ -1515,8 +1701,8 @@ class _MessageTileState extends State<MessageTile> {
                     ),
               gradient: LinearGradient(
                 colors: widget.sendByMe
-                    ? [Colors.grey, Colors.grey]
-                    : [dark1, dark1],
+                    ? [isAudio == true ? Colors.transparent : Colors.grey,isAudio == true ? Colors.transparent : Colors.grey]
+                    : [isAudio == true ? Colors.transparent : dark1, isAudio == true ? Colors.transparent : dark1],
               ),
             ),
             child: Column(
@@ -1542,32 +1728,34 @@ class _MessageTileState extends State<MessageTile> {
                             ? _buildFileWidget(context)
                             : isGif
                                 ? buildGifWidget(context)
-                                : imageUrl != "" && postId != ""
-                                    ? _buildSharedImageWidget(context, imageUrl,
-                                        postId) // Display as image or gif
-                                    : widget.reply != null &&
-                                            (widget.reply!.endsWith(".png") ||
-                                                widget.reply!
-                                                    .endsWith(".jpeg") ||
-                                                widget.reply!
-                                                    .endsWith(".jpg") ||
-                                                widget.reply!.startsWith(
-                                                        "https://media") ==
-                                                    true)
-                                        ? SizedBox(
-                                            height: 50,
-                                            width: 60,
-                                            child: Image.network(widget.reply!))
-                                        : widget.reply != null
-                                            ? Text(
-                                                "Replied to : ${widget.reply}",
-                                                style: const TextStyle(
-                                                  color: ascent,
-                                                  fontSize: 12,
-                                                  fontWeight: FontWeight.bold,
-                                                ),
-                                              )
-                                            : const SizedBox(),
+                                : isAudio
+                                    ? widget.audio(message: widget.message,isCurrentUser: widget.sendByMe,index:widget.index,time: "10:00 am",duration:"0:08")
+                                    : imageUrl != "" && postId != ""
+                                        ? _buildSharedImageWidget(context, imageUrl,
+                                            postId) // Display as image or gif
+                                        : widget.reply != null &&
+                                                (widget.reply!.endsWith(".png") ||
+                                                    widget.reply!
+                                                        .endsWith(".jpeg") ||
+                                                    widget.reply!
+                                                        .endsWith(".jpg") ||
+                                                    widget.reply!.startsWith(
+                                                            "https://media") ==
+                                                        true)
+                                            ? SizedBox(
+                                                height: 50,
+                                                width: 60,
+                                                child: Image.network(widget.reply!))
+                                            : widget.reply != null
+                                                ? Text(
+                                                    "Replied to : ${widget.reply}",
+                                                    style: const TextStyle(
+                                                      color: ascent,
+                                                      fontSize: 12,
+                                                      fontWeight: FontWeight.bold,
+                                                    ),
+                                                  )
+                                                : const SizedBox(),
 
                 widget.reply != null?  const Divider(color: ascent):const SizedBox(),
                 isImageOr
@@ -1578,18 +1766,20 @@ class _MessageTileState extends State<MessageTile> {
                             ? const SizedBox()
                             : isGif
                                 ? const SizedBox()
-                                : imageUrl != "" && postId != ""
+                                : isAudio
                                     ? const SizedBox()
-                                    : Text(
-                                        widget.message,
-                                        textAlign: TextAlign.start,
-                                        style: const TextStyle(
-                                          color: ascent,
-                                          fontSize: 16,
-                                          fontFamily: 'Montserrat',
-                                          fontWeight: FontWeight.w400,
-                                        ),
-                                      ),
+                                    : imageUrl != "" && postId != ""
+                                        ? const SizedBox()
+                                        : Text(
+                                            widget.message,
+                                            textAlign: TextAlign.start,
+                                            style: const TextStyle(
+                                              color: ascent,
+                                              fontSize: 16,
+                                              fontFamily: 'Montserrat',
+                                              fontWeight: FontWeight.w400,
+                                            ),
+                                          ),
                 const SizedBox(height: 5),
                 Row(
                   children: [

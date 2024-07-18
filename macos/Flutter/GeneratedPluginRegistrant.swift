@@ -6,6 +6,7 @@ import FlutterMacOS
 import Foundation
 
 import agora_rtc_engine
+import audioplayers_darwin
 import cloud_firestore
 import connectivity_plus_macos
 import file_selector_macos
@@ -16,7 +17,6 @@ import flutter_local_notifications
 import image_editor_common
 import iris_method_channel
 import path_provider_foundation
-import record_macos
 import share_plus
 import shared_preferences_foundation
 import sqflite
@@ -26,6 +26,7 @@ import wakelock_macos
 
 func RegisterGeneratedPlugins(registry: FlutterPluginRegistry) {
   AgoraRtcNgPlugin.register(with: registry.registrar(forPlugin: "AgoraRtcNgPlugin"))
+  AudioplayersDarwinPlugin.register(with: registry.registrar(forPlugin: "AudioplayersDarwinPlugin"))
   FLTFirebaseFirestorePlugin.register(with: registry.registrar(forPlugin: "FLTFirebaseFirestorePlugin"))
   ConnectivityPlugin.register(with: registry.registrar(forPlugin: "ConnectivityPlugin"))
   FileSelectorPlugin.register(with: registry.registrar(forPlugin: "FileSelectorPlugin"))
@@ -36,7 +37,6 @@ func RegisterGeneratedPlugins(registry: FlutterPluginRegistry) {
   ImageEditorPlugin.register(with: registry.registrar(forPlugin: "ImageEditorPlugin"))
   IrisMethodChannelPlugin.register(with: registry.registrar(forPlugin: "IrisMethodChannelPlugin"))
   PathProviderPlugin.register(with: registry.registrar(forPlugin: "PathProviderPlugin"))
-  RecordMacosPlugin.register(with: registry.registrar(forPlugin: "RecordMacosPlugin"))
   SharePlusMacosPlugin.register(with: registry.registrar(forPlugin: "SharePlusMacosPlugin"))
   SharedPreferencesPlugin.register(with: registry.registrar(forPlugin: "SharedPreferencesPlugin"))
   SqflitePlugin.register(with: registry.registrar(forPlugin: "SqflitePlugin"))
