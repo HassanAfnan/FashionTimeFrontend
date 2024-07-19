@@ -17,6 +17,7 @@ import 'package:fluttertoast/fluttertoast.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:get/get.dart';
 import 'package:image_picker/image_picker.dart';
+import 'package:intl/intl.dart';
 import 'package:permission_handler/permission_handler.dart';
 import 'package:record_mp3/record_mp3.dart';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -114,7 +115,7 @@ class _MessageScreenState extends State<MessageScreen> {
   List<Map<String, String>> media = [];
   List<Map<String, String>> media1 = [];
   late String recordFilePath;
-
+  bool audioUploading = false;
   AudioController audioController = Get.put(AudioController());
   AudioPlayer audioPlayer = AudioPlayer();
   String audioURL = "";
@@ -130,7 +131,6 @@ class _MessageScreenState extends State<MessageScreen> {
     }
     return "$sdPath/test_${i++}.mp3";
   }
-
   Future<bool> checkPermission() async {
     if (!await Permission.microphone.isGranted) {
       PermissionStatus status = await Permission.microphone.request();
@@ -140,7 +140,6 @@ class _MessageScreenState extends State<MessageScreen> {
     }
     return true;
   }
-
   void startRecord() async {
     audioController.isRecording.value = true;
     bool hasPermission = await checkPermission();
@@ -152,8 +151,8 @@ class _MessageScreenState extends State<MessageScreen> {
     } else {}
     setState(() {});
   }
-
   void stopRecord() async {
+    DateFormat dateFormat = DateFormat("HH:mm");
     setState(() {
       audioController.isRecording.value = false;
     });
@@ -165,17 +164,18 @@ class _MessageScreenState extends State<MessageScreen> {
     ap.onPlayerComplete.listen((a) {});
     if (stop) {
       audioController.isSending.value = true;
-      await uploadAudio();
+      await uploadAudio(dateFormat.format(audioController.end.value),audioController.total);
     }
   }
-
   UploadTask uploadAudioToFB(var audioFile, String fileName) {
     Reference reference = FirebaseStorage.instance.ref().child(fileName);
     UploadTask uploadTask = reference.putFile(audioFile);
     return uploadTask;
   }
-
-  uploadAudio() async {
+  uploadAudio(String time, String duration) async {
+    setState(() {
+      audioUploading = true;
+    });
     UploadTask uploadTask = uploadAudioToFB(File(recordFilePath),
         "audio/${DateTime.now().millisecondsSinceEpoch.toString()}");
     try {
@@ -185,18 +185,18 @@ class _MessageScreenState extends State<MessageScreen> {
       setState(() {
         audioController.isSending.value = false;
         print("Audio URL ==> "+strVal);
-        addMessage();
+        addMessage(time,duration);
         // onSendMessage(strVal, TypeMessage.audio,
         //     duration: audioController.total);
       });
     } on FirebaseException catch (e) {
       setState(() {
         audioController.isSending.value = false;
+        audioUploading = false;
       });
       Fluttertoast.showToast(msg: e.message ?? e.toString());
     }
   }
-
   Widget _audio({
     String? message,
     bool? isCurrentUser,
@@ -305,7 +305,7 @@ class _MessageScreenState extends State<MessageScreen> {
     });
     getUserInfogetChats();
   }
-  addMessage() async {
+  addMessage(String time,String duration) async {
     if (messageEditingController.text.isNotEmpty && repliedMessage != null) {
       Map<String, dynamic> chatMessageMap = {
         "sendBy": name!,
@@ -442,11 +442,12 @@ class _MessageScreenState extends State<MessageScreen> {
       debugPrint("audio url if block called");
       Map<String, dynamic> chatMessageMap = {
         "sendBy": name!,
-        "message":audioURL,
+        "message": audioURL,
         'time': DateTime.now().millisecondsSinceEpoch,
         'image': pic,
         'reply': repliedMessage,
-        "emoji":"none"
+        "emoji":"none",
+        "duration":duration
       };
       DatabaseMethods().addMessage(widget.chatRoomId!, chatMessageMap);
       _controller.jumpTo(_controller.position.maxScrollExtent);
@@ -457,6 +458,7 @@ class _MessageScreenState extends State<MessageScreen> {
         messageEditingController.text = "";
         audioURL = "";
         repliedMessage = null;
+         audioUploading = false;
       });
       FocusScope.of(context).unfocus();
     }
@@ -545,7 +547,7 @@ class _MessageScreenState extends State<MessageScreen> {
                   IconButton(
                     icon: const Icon(Icons.send),
                     onPressed: () {
-                      addMessage();
+                      addMessage("","");
                       Navigator.of(context).pop();
                     },
                   ),
@@ -658,7 +660,7 @@ class _MessageScreenState extends State<MessageScreen> {
                   IconButton(
                     icon: const Icon(Icons.send),
                     onPressed: () {
-                      addMessage();
+                      addMessage("","");
                       Navigator.of(context).pop();
                     },
                   ),
@@ -672,68 +674,7 @@ class _MessageScreenState extends State<MessageScreen> {
       });
     });
   }
-  // uploadAudio(imagePath) async {
-  //   bool _play = false;
-  //   Navigator.pop(context);
-  //   var decoded;
-  //   var request = https.MultipartRequest('POST', Uri.parse("$serverUrl/fileUploader/"));
-  //   request.files.add(await https.MultipartFile.fromPath(
-  //     'document',
-  //     imagePath,
-  //     contentType: MediaType('m4a','mp4'),
-  //   ));
-  //   request.send().then((value) {
-  //     value.stream.forEach((element) {
-  //       decoded = utf8.decode(element);
-  //       print(jsonDecode(decoded)["document"]);
-  //       imageLink = jsonDecode(decoded)["document"];
-  //       // showDialog(
-  //       //   context: context,
-  //       //   builder: (BuildContext context) {
-  //       //     return AlertDialog(
-  //       //       backgroundColor: primary,
-  //       //       title: const Text('Recorded Audio'),
-  //       //       content:Container(
-  //       //         height: 100,
-  //       //         child: AudioWidget.network(
-  //       //           url: imageLink,
-  //       //           play: _play,
-  //       //           child: TextButton(
-  //       //               child: Text(
-  //       //                 _play ? "pause" : "play",
-  //       //               ),
-  //       //               onPressed: () {
-  //       //                 setState(() {
-  //       //                   _play = !_play;
-  //       //                 });
-  //       //               }),
-  //       //           onReadyToPlay: (duration) {
-  //       //             //onReadyToPlay
-  //       //           },
-  //       //           onPositionChanged: (current, duration) {
-  //       //             //onPositionChanged
-  //       //           },
-  //       //         ),
-  //       //       ),
-  //       //       actions: <Widget>[
-  //       //         IconButton(
-  //       //           icon: const Icon(Icons.send),
-  //       //           onPressed: () {
-  //       //             addMessage();
-  //       //             Navigator.of(context).pop();
-  //       //           },
-  //       //         ),
-  //       //       ],
-  //       //     );
-  //       //   },
-  //       // );
-  //       Fluttertoast.showToast(
-  //           msg: "Done! Proceed to continue", backgroundColor: primary);
-  //     });
-  //   });
-  // }
   uploadVideoMedia(imagePath) async {
-
     final request = MultipartRequest(
       'POST',
       Uri.parse("$serverUrl/fileUploader/"),
@@ -792,7 +733,7 @@ class _MessageScreenState extends State<MessageScreen> {
                     IconButton(
                       icon: const Icon(Icons.send),
                       onPressed: () {
-                        addMessage();
+                        addMessage("","");
                         Navigator.of(context).pop();
                       },
                     ),
@@ -846,7 +787,9 @@ class _MessageScreenState extends State<MessageScreen> {
                     emoji:(snapshot.data! as QuerySnapshot).docs[index]
                     ["emoji"] ,
                     audio: _audio,
-                    index: index  ,
+                    index: index,
+                    duration:(snapshot.data! as QuerySnapshot).docs[index].data()!.toString().contains("duration") == true ?
+                    (snapshot.data! as QuerySnapshot).docs[index]["duration"] : ""
                   );
                 })
             : Container();
@@ -1122,7 +1065,20 @@ class _MessageScreenState extends State<MessageScreen> {
                   padding: const EdgeInsets.only(bottom: 80.0),
                   child: chatMessages(),
                 ),
-                WidgetAnimator(
+                audioUploading == true ? Positioned(
+                  bottom: 30,
+                  right: 20,
+                  left: 20,
+                  child: Container(
+                    height: 30,
+                    child: Row(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        SpinKitCircle(color: primary,)
+                      ],
+                    ),
+                  ),
+                ) : WidgetAnimator(
                   widget.isBlocked == true
                       ? Padding(
                           padding: const EdgeInsets.only(bottom: 10.0),
@@ -1210,7 +1166,7 @@ class _MessageScreenState extends State<MessageScreen> {
                                                           icon: const Icon(
                                                               Icons.send),
                                                           onPressed: () {
-                                                            addMessage();
+                                                            addMessage("","");
                                                           },
                                                         ),
                                                       ),
@@ -1397,7 +1353,7 @@ class _MessageScreenState extends State<MessageScreen> {
                                                                             icon: const Icon(
                                                                                 Icons.send),
                                                                             onPressed: () {
-                                                                              addMessage();
+                                                                              addMessage("","");
                                                                               Navigator.of(context)
                                                                                   .pop();
                                                                             },
@@ -1455,7 +1411,7 @@ class _MessageScreenState extends State<MessageScreen> {
                                                                             icon: const Icon(
                                                                                 Icons.send),
                                                                             onPressed: () {
-                                                                              addMessage();
+                                                                              addMessage("","");
                                                                               Navigator.of(context)
                                                                                   .pop();
                                                                             },
@@ -1494,7 +1450,7 @@ class _MessageScreenState extends State<MessageScreen> {
                                       if(isRecording == false) const SizedBox(width: 4,),
                                       if(isRecording == false) GestureDetector(
                                         onTap: () {
-                                          addMessage();
+                                          addMessage("","");
                                         },
                                         child: Container(
                                             height: 45,
@@ -1546,6 +1502,7 @@ class MessageTile extends StatefulWidget {
   final String emoji;
   final Function audio;
   final int index;
+  final String duration;
 
   const MessageTile(
       {required this.message,
@@ -1558,7 +1515,7 @@ class MessageTile extends StatefulWidget {
       this.reply,
       required this.emoji,
       required this.audio,
-      required this.index
+      required this.index, required this.duration
       });
 
   @override
@@ -1568,6 +1525,12 @@ class MessageTile extends StatefulWidget {
 class _MessageTileState extends State<MessageTile> {
   double offsetX = 0.0;
    String replyingString='';
+  @override
+  void initState() {
+    // TODO: implement initState
+    super.initState();
+    print("duration ==> ${widget.duration}");
+  }
   @override
   Widget build(BuildContext context) {
     DateTime msgTime = DateTime.fromMillisecondsSinceEpoch(widget.time);
@@ -1594,6 +1557,7 @@ class _MessageTileState extends State<MessageTile> {
       imageUrl = widget.message.split(")")[0];
       print("post id is=====>${postId}");
     }
+
 
     return GestureDetector(
       onHorizontalDragUpdate: (details) {
@@ -1729,7 +1693,7 @@ class _MessageTileState extends State<MessageTile> {
                             : isGif
                                 ? buildGifWidget(context)
                                 : isAudio
-                                    ? widget.audio(message: widget.message,isCurrentUser: widget.sendByMe,index:widget.index,time: "10:00 am",duration:"0:08")
+                                    ? widget.audio(message: widget.message,isCurrentUser: widget.sendByMe,index:widget.index,time: "10:00 am",duration:widget.duration)
                                     : imageUrl != "" && postId != ""
                                         ? _buildSharedImageWidget(context, imageUrl,
                                             postId) // Display as image or gif

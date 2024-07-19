@@ -122,7 +122,7 @@ class DatabaseMethods {
         .doc(chatRoomId)
         .collection("chats")
         .add(chatMessageData).catchError((e){
-      //print(e.toString());
+      print("Error --> "+e.toString());
     });
   }
 

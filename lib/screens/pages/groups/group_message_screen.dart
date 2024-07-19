@@ -1,8 +1,10 @@
 import 'dart:convert';
 import 'dart:io';
 
+import 'package:FashionTime/screens/pages/controllers/audio_controller.dart';
 import 'package:FashionTime/screens/pages/friend_profile.dart';
 import 'package:FashionTime/screens/pages/reel_comment.dart';
+import 'package:audioplayers/audioplayers.dart';
 import 'package:auto_size_text_field/auto_size_text_field.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
@@ -11,21 +13,27 @@ import 'package:FashionTime/helpers/database_methods.dart';
 import 'package:FashionTime/screens/pages/groups/group_details.dart';
 import 'package:emoji_keyboard_flutter/emoji_keyboard_flutter.dart';
 import 'package:file_picker/file_picker.dart';
+import 'package:firebase_storage/firebase_storage.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_file_downloader/flutter_file_downloader.dart';
 import 'package:flutter_spinkit/flutter_spinkit.dart';
 import 'package:fluttertoast/fluttertoast.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
+import 'package:get/get.dart';
 import 'package:giphy_picker/giphy_picker.dart';
 import 'package:http_parser/http_parser.dart';
 import 'package:image_picker/image_picker.dart';
+import 'package:intl/intl.dart';
+import 'package:permission_handler/permission_handler.dart';
+import 'package:record_mp3/record_mp3.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:http/http.dart' as https;
 import 'package:video_compress/video_compress.dart';
 import 'package:video_player/video_player.dart';
 import 'package:video_thumbnail/video_thumbnail.dart';
 
+import 'package:path_provider/path_provider.dart';
 import '../../../helpers/multipart_request.dart';
 import '../../../utils/constants.dart';
 import '../message_screen.dart';
@@ -83,6 +91,167 @@ class _GroupMessageScreenState extends State<GroupMessageScreen> {
   File _cameraImage = File("");
   String id="";
   String username='';
+
+  late String recordFilePath;
+  bool audioUploading = false;
+  AudioController audioController = Get.put(AudioController());
+  AudioPlayer audioPlayer = AudioPlayer();
+  String audioURL = "";
+  int i = 0;
+
+  Future<String> getFilePath() async {
+    Directory storageDirectory = await getApplicationDocumentsDirectory();
+    String sdPath =
+        "${storageDirectory.path}/record${DateTime.now().microsecondsSinceEpoch}.acc";
+    var d = Directory(sdPath);
+    if (!d.existsSync()) {
+      d.createSync(recursive: true);
+    }
+    return "$sdPath/test_${i++}.mp3";
+  }
+  Future<bool> checkPermission() async {
+    if (!await Permission.microphone.isGranted) {
+      PermissionStatus status = await Permission.microphone.request();
+      if (status != PermissionStatus.granted) {
+        return false;
+      }
+    }
+    return true;
+  }
+  void startRecord() async {
+    audioController.isRecording.value = true;
+    bool hasPermission = await checkPermission();
+    if (hasPermission) {
+      recordFilePath = await getFilePath();
+      RecordMp3.instance.start(recordFilePath, (type) {
+        setState(() {});
+      });
+    } else {}
+    setState(() {});
+  }
+  void stopRecord() async {
+    DateFormat dateFormat = DateFormat("HH:mm");
+    setState(() {
+      audioController.isRecording.value = false;
+    });
+    bool stop = RecordMp3.instance.stop();
+    audioController.end.value = DateTime.now();
+    audioController.calcDuration();
+    var ap = AudioPlayer();
+    await ap.play(AssetSource("assets_Notification.mp3"));
+    ap.onPlayerComplete.listen((a) {});
+    if (stop) {
+      audioController.isSending.value = true;
+      await uploadAudio(dateFormat.format(audioController.end.value),audioController.total);
+    }
+  }
+  UploadTask uploadAudioToFB(var audioFile, String fileName) {
+    Reference reference = FirebaseStorage.instance.ref().child(fileName);
+    UploadTask uploadTask = reference.putFile(audioFile);
+    return uploadTask;
+  }
+  uploadAudio(String time, String duration) async {
+    setState(() {
+      audioUploading = true;
+    });
+    UploadTask uploadTask = uploadAudioToFB(File(recordFilePath),
+        "audio/${DateTime.now().millisecondsSinceEpoch.toString()}");
+    try {
+      TaskSnapshot snapshot = await uploadTask;
+      audioURL = await snapshot.ref.getDownloadURL();
+      String strVal = audioURL.toString();
+      setState(() {
+        audioController.isSending.value = false;
+        print("Audio URL ==> "+strVal);
+        addMessage(time,duration);
+        // onSendMessage(strVal, TypeMessage.audio,
+        //     duration: audioController.total);
+      });
+    } on FirebaseException catch (e) {
+      setState(() {
+        audioController.isSending.value = false;
+        audioUploading = false;
+      });
+      Fluttertoast.showToast(msg: e.message ?? e.toString());
+    }
+  }
+  Widget _audio({
+    String? message,
+    bool? isCurrentUser,
+    int? index,
+    String? time,
+    String? duration,
+  }) {
+    return Container(
+      width: MediaQuery.of(context).size.width * 0.75,
+      padding: EdgeInsets.all(8),
+      decoration: BoxDecoration(
+        color: isCurrentUser! ? primary : primary.withOpacity(0.18),
+        borderRadius: BorderRadius.circular(10),
+      ),
+      child: Row(
+        children: [
+          GestureDetector(
+            onTap: () {
+              audioController.onPressedPlayButton(index!, message!);
+              // changeProg(duration: duration);
+            },
+            onSecondaryTap: () {
+              audioPlayer.stop();
+              //   audioController.completedPercentage.value = 0.0;
+            },
+            child: Obx(
+                  () => (audioController.isRecordPlaying &&
+                  audioController.currentId == index)
+                  ? Icon(
+                Icons.cancel,
+                color: isCurrentUser ? Colors.white : primary,
+              )
+                  : Icon(
+                Icons.play_arrow,
+                color: isCurrentUser ? Colors.white : primary,
+              ),
+            ),
+          ),
+          Obx(
+                () => Expanded(
+              child: Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 0),
+                child: Stack(
+                  clipBehavior: Clip.none,
+                  alignment: Alignment.center,
+                  children: [
+                    // Text(audioController.completedPercentage.value.toString(),style: TextStyle(color: Colors.white),),
+                    LinearProgressIndicator(
+                      minHeight: 5,
+                      backgroundColor: Colors.grey,
+                      valueColor: AlwaysStoppedAnimation<Color>(
+                        isCurrentUser! ? Colors.white : primary,
+                      ),
+                      value: (audioController.isRecordPlaying &&
+                          audioController.currentId == index)
+                          ? audioController.completedPercentage.value
+                          : audioController.totalDuration.value.toDouble(),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+          ),
+          SizedBox(
+            width: 10,
+          ),
+          Text(
+            duration!,
+            style: TextStyle(
+                fontSize: 12, color: isCurrentUser ? Colors.white : primary),
+          ),
+        ],
+      ),
+    );
+  }
+
+
   getCashedData() async {
     SharedPreferences preferences = await SharedPreferences.getInstance();
     name = preferences.getString("name")!;
@@ -110,9 +279,7 @@ class _GroupMessageScreenState extends State<GroupMessageScreen> {
     });
     getUserInfogetChats();
   }
-
-
-  addMessage() {
+  addMessage(String time, String duration) async {
     if (messageEditingController.text.isNotEmpty&&_gif==null) {
       Map<String, dynamic> chatMessageMap = {
         "sendBy": name!,
@@ -199,8 +366,26 @@ class _GroupMessageScreenState extends State<GroupMessageScreen> {
       });
       FocusScope.of(context).unfocus();
     }
+    else if (audioURL != ""){
+      debugPrint("audio url if block called");
+      Map<String, dynamic> chatMessageMap = {
+        "sendBy": name!,
+        "message": audioURL,
+        'time': DateTime.now().millisecondsSinceEpoch,
+        'image': pic,
+        "duration":duration
+      };
+      DatabaseMethods().addGroupMessage(widget.chatRoomId!, chatMessageMap);
+      _controller.jumpTo(_controller.position.maxScrollExtent);
+      setState(() {
+        messageEditingController.text = "";
+        audioURL = "";
+        audioUploading = false;
+        // repliedMessage = null;
+      });
+      FocusScope.of(context).unfocus();
+    }
   }
-
   sendNotification(String name,String message,String token) async {
     print("Entered");
     print("1- "+name);
@@ -230,7 +415,6 @@ class _GroupMessageScreenState extends State<GroupMessageScreen> {
       print(value1.body.toString());
     });
   }
-
   getUserInfogetChats(){
     DatabaseMethods().getGroupChats(widget.chatRoomId!).then((val) {
       setState(() {
@@ -286,7 +470,8 @@ class _GroupMessageScreenState extends State<GroupMessageScreen> {
                 title: const Text('File Selected'),
                 content:Text("${jsonDecode(decoded)["document"]}"),
                 actions: <Widget>[
-                  IconButton(icon: const Icon(Icons.send), onPressed: () { addMessage();
+                  IconButton(icon: const Icon(Icons.send), onPressed: () {
+                    addMessage("","");
                   Navigator.of(context).pop();},),
                 ],
               );
@@ -331,7 +516,6 @@ class _GroupMessageScreenState extends State<GroupMessageScreen> {
       });
     }
   }
-
   pickFile() async {
     FilePickerResult? result = await FilePicker.platform.pickFiles(
       type: FileType.custom,
@@ -405,7 +589,8 @@ class _GroupMessageScreenState extends State<GroupMessageScreen> {
                 title: const Text('Image Selected'),
                 content:Image(image: NetworkImage("${jsonDecode(decoded)["document"]}"),),
                 actions: <Widget>[
-                  IconButton(icon: const Icon(Icons.send), onPressed: () { addMessage();
+                  IconButton(icon: const Icon(Icons.send), onPressed: () {
+                    addMessage("","");
                   Navigator.of(context).pop();},),
                 ],
               );
@@ -468,7 +653,8 @@ class _GroupMessageScreenState extends State<GroupMessageScreen> {
                   title: const Text('Video Selected'),
                   content:Image(image: NetworkImage("${value.toString()}"),),
                   actions: <Widget>[
-                    IconButton(icon: const Icon(Icons.send), onPressed: () { addMessage();
+                    IconButton(icon: const Icon(Icons.send), onPressed: () {
+                      addMessage("","");
                     Navigator.of(context).pop();},),
                   ],
                 );
@@ -485,8 +671,6 @@ class _GroupMessageScreenState extends State<GroupMessageScreen> {
     File image = File(pickedFile!.path);
     uploadMedia(File(pickedFile!.path).path);
   }
-
-
   Widget chatMessages(){
     return StreamBuilder(
       stream: chats,
@@ -508,11 +692,15 @@ class _GroupMessageScreenState extends State<GroupMessageScreen> {
           itemCount: (snapshot.data!).docs.length,
           itemBuilder: (context, index) {
             return MessageTile(
-              message: (snapshot.data!).docs[index]["message"],
-              sendByMe: name! == (snapshot.data!).docs[index]["sendBy"],
-              url: (snapshot.data!).docs[index]["image"],
-              time: (snapshot.data!).docs[index]["time"],
-              name: (snapshot.data!).docs[index]["sendBy"],
+                message: (snapshot.data!).docs[index]["message"],
+                sendByMe: name! == (snapshot.data!).docs[index]["sendBy"],
+                url: (snapshot.data!).docs[index]["image"],
+                time: (snapshot.data!).docs[index]["time"],
+                name: (snapshot.data!).docs[index]["sendBy"],
+                audio: _audio,
+                index: index,
+                duration:(snapshot.data! as QuerySnapshot).docs[index].data()!.toString().contains("duration") == true ?
+                (snapshot.data! as QuerySnapshot).docs[index]["duration"] : ""
               //id: int.parse((snapshot.data!).docs[index]["id"].toString()),
               //username: (snapshot.data!).docs[index]["username"],
             );
@@ -723,7 +911,20 @@ class _GroupMessageScreenState extends State<GroupMessageScreen> {
                 padding: const EdgeInsets.only(bottom:80.0),
                 child: chatMessages(),
               ),
-              Row(
+              audioUploading == true ? Positioned(
+                bottom: 30,
+                right: 20,
+                left: 20,
+                child: Container(
+                  height: 30,
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      SpinKitCircle(color: primary,)
+                    ],
+                  ),
+                ),
+              ) : Row(
                 children: [
                   WidgetAnimator(
                     Container(
@@ -738,7 +939,7 @@ class _GroupMessageScreenState extends State<GroupMessageScreen> {
                         ),
                         child: Container(
                           padding:
-                          const EdgeInsets.symmetric(horizontal: 8),
+                          const EdgeInsets.symmetric(horizontal: 5),
                           decoration: BoxDecoration(
                             borderRadius: const BorderRadius.all(
                                 Radius.circular(20)),
@@ -795,7 +996,7 @@ class _GroupMessageScreenState extends State<GroupMessageScreen> {
                                                   icon: const Icon(
                                                       Icons.send),
                                                   onPressed: () {
-                                                    addMessage();
+                                                    addMessage("","");
                                                   },
                                                 ),
                                               ),
@@ -813,6 +1014,21 @@ class _GroupMessageScreenState extends State<GroupMessageScreen> {
                                   },
                                 ),
                               ),
+                              GestureDetector(
+                                child: Icon(Icons.mic, color: ascent,size: 25,),
+                                onLongPress: () async {
+                                  var audioPlayer = AudioPlayer();
+                                  await audioPlayer.play(AssetSource("assets_Notification.mp3"));
+                                  audioPlayer.onPlayerComplete.listen((a) {
+                                    audioController.start.value = DateTime.now();
+                                    startRecord();
+                                  });
+                                },
+                                onLongPressEnd: (details) {
+                                  stopRecord();
+                                },
+                              ),
+                              SizedBox(width: 10,),
                               Expanded(
                                   child: AutoSizeTextField(
                                     textCapitalization:
@@ -830,9 +1046,11 @@ class _GroupMessageScreenState extends State<GroupMessageScreen> {
                                     cursorColor: ascent,
                                     controller: messageEditingController,
                                     //style: simpleTextStyle(),
-                                    decoration: const InputDecoration(
+                                    decoration: InputDecoration(
                                         fillColor: ascent,
-                                        hintText: "Message ...",
+                                        hintText:  audioController.isRecording.value == true
+                                            ? "Recording audio..."
+                                            : "Your message...",
                                         hintStyle: TextStyle(
                                           color: ascent,
                                           fontFamily: 'Montserrat',
@@ -840,214 +1058,6 @@ class _GroupMessageScreenState extends State<GroupMessageScreen> {
                                         ),
                                         border: InputBorder.none),
                                   )),
-                              // const SizedBox(width: 16,),
-
-                              // Padding(
-                              //   padding:
-                              //   const EdgeInsets.only(bottom: 2),
-                              //   child: IconButton(
-                              //     icon: const Icon(Icons.gif, size: 26),
-                              //     onPressed: () async {
-                              //       final gif =
-                              //       await GiphyPicker.pickGif(
-                              //           context: context,
-                              //           apiKey: giphyKey,
-                              //           sticker: false);
-                              //       if (gif != null) {
-                              //         setState(() {
-                              //           _gif = gif;
-                              //           debugPrint(
-                              //               "gif link==========>${_gif?.images.original?.url}");
-                              //         });
-                              //         // ignore: use_build_context_synchronously
-                              //         showDialog(
-                              //           context: context,
-                              //           builder:
-                              //               (BuildContext context) {
-                              //             return AlertDialog(
-                              //               backgroundColor: primary,
-                              //               title: const Text(
-                              //                   'GIF Selected'),
-                              //               content: _gif
-                              //                   ?.images
-                              //                   .original
-                              //                   ?.url !=
-                              //                   null
-                              //                   ? Image(
-                              //                   image: NetworkImage(
-                              //                       _gif!
-                              //                           .images
-                              //                           .original!
-                              //                           .url!))
-                              //                   : const Text(
-                              //                   'No GIF URL available'),
-                              //               actions: <Widget>[
-                              //                 IconButton(
-                              //                   icon: const Icon(
-                              //                       Icons.send),
-                              //                   onPressed: () {
-                              //                     addMessage();
-                              //                     Navigator.of(context)
-                              //                         .pop();
-                              //                   },
-                              //                 ),
-                              //               ],
-                              //             );
-                              //           },
-                              //         );
-                              //       }
-                              //     },
-                              //   ),
-                              // ),
-                              // Padding(
-                              //   padding:
-                              //   const EdgeInsets.only(bottom: 2),
-                              //   child: IconButton(
-                              //     icon: const Icon(
-                              //         FontAwesomeIcons.noteSticky,
-                              //         size: 20),
-                              //     onPressed: () async {
-                              //       final sticker =
-                              //       await GiphyPicker.pickGif(
-                              //         context: context,
-                              //         apiKey: giphyKey,
-                              //         sticker: true,
-                              //         searchHintText:
-                              //         "Search for stickers",
-                              //       );
-                              //       if (sticker != null) {
-                              //         setState(() {
-                              //           _gif = sticker;
-                              //           debugPrint(
-                              //               "gif link==========>${_gif?.images.original?.url}");
-                              //         });
-                              //         // ignore: use_build_context_synchronously
-                              //         showDialog(
-                              //           context: context,
-                              //           builder:
-                              //               (BuildContext context) {
-                              //             return AlertDialog(
-                              //               backgroundColor: primary,
-                              //               title: const Text(
-                              //                   'Sticker Selected'),
-                              //               content: _gif
-                              //                   ?.images
-                              //                   .original
-                              //                   ?.url !=
-                              //                   null
-                              //                   ? Image(
-                              //                   image: NetworkImage(
-                              //                       _gif!
-                              //                           .images
-                              //                           .original!
-                              //                           .url!))
-                              //                   : const Text(
-                              //                   'No Sticker URL available'),
-                              //               actions: <Widget>[
-                              //                 IconButton(
-                              //                   icon: const Icon(
-                              //                       Icons.send),
-                              //                   onPressed: () {
-                              //                     addMessage();
-                              //                     Navigator.of(context)
-                              //                         .pop();
-                              //                   },
-                              //                 ),
-                              //               ],
-                              //             );
-                              //           },
-                              //         );
-                              //       }
-                              //     },
-                              //   ),
-                              // ),
-                              // Padding(
-                              //   padding:
-                              //   const EdgeInsets.only(bottom: 2),
-                              //   child: IconButton(
-                              //     icon: const Icon(Icons.attach_file,
-                              //         size: 24),
-                              //     onPressed: () {
-                              //       FocusScope.of(context).unfocus();
-                              //       setState(() {
-                              //         // loading = true;
-                              //       });
-                              //       showModalBottomSheet(
-                              //           context: context,
-                              //           builder: (BuildContext bc) {
-                              //             return Wrap(
-                              //               children: <Widget>[
-                              //                 ListTile(
-                              //                   leading: const Icon(
-                              //                       Icons.file_present),
-                              //                   title: const Text(
-                              //                     'File upload',
-                              //                     style: TextStyle(
-                              //                         fontFamily:
-                              //                         'Montserrat'),
-                              //                   ),
-                              //                   onTap: () {
-                              //                     pickFile();
-                              //                   },
-                              //                 ),
-                              //                 ListTile(
-                              //                   leading: const Icon(
-                              //                       Icons.videocam),
-                              //                   title: const Text(
-                              //                     'Video from gallery',
-                              //                     style: TextStyle(
-                              //                         fontFamily:
-                              //                         'Montserrat'),
-                              //                   ),
-                              //                   onTap: () {
-                              //                     _pickVideo();
-                              //                   },
-                              //                 ),
-                              //                 ListTile(
-                              //                   leading: const Icon(Icons
-                              //                       .fiber_smart_record),
-                              //                   title: const Text(
-                              //                     'Record video',
-                              //                     style: TextStyle(
-                              //                         fontFamily:
-                              //                         'Montserrat'),
-                              //                   ),
-                              //                   onTap: () {
-                              //                     _pickVideoFromCamera();
-                              //                   },
-                              //                 ),
-                              //                 ListTile(
-                              //                     leading: const Icon(
-                              //                         Icons.image),
-                              //                     title: const Text(
-                              //                       'Image from Gallery',
-                              //                       style: TextStyle(
-                              //                           fontFamily:
-                              //                           'Montserrat'),
-                              //                     ),
-                              //                     onTap: () {
-                              //                       _pickImageFromGallery();
-                              //                     }),
-                              //                 ListTile(
-                              //                   leading: const Icon(
-                              //                       Icons.camera_alt),
-                              //                   title: const Text(
-                              //                     'Capture image',
-                              //                     style: TextStyle(
-                              //                         fontFamily:
-                              //                         'Montserrat'),
-                              //                   ),
-                              //                   onTap: () {
-                              //                     _pickImageFromCamera();
-                              //                   },
-                              //                 ),
-                              //               ],
-                              //             );
-                              //           });
-                              //     },
-                              //   ),
-                              // ),
-
                               GestureDetector(
                                 onTap: () {
                                   _pickImageFromCamera();
@@ -1172,7 +1182,7 @@ class _GroupMessageScreenState extends State<GroupMessageScreen> {
                                                                     icon: const Icon(
                                                                         Icons.send),
                                                                     onPressed: () {
-                                                                      addMessage();
+                                                                      addMessage("","");
                                                                       Navigator.of(context)
                                                                           .pop();
                                                                     },
@@ -1230,7 +1240,7 @@ class _GroupMessageScreenState extends State<GroupMessageScreen> {
                                                                     icon: const Icon(
                                                                         Icons.send),
                                                                     onPressed: () {
-                                                                      addMessage();
+                                                                      addMessage("","");
                                                                       Navigator.of(context)
                                                                           .pop();
                                                                     },
@@ -1332,7 +1342,7 @@ class _GroupMessageScreenState extends State<GroupMessageScreen> {
                               ),
                               GestureDetector(
                                 onTap: () {
-                                  addMessage();
+                                  addMessage("","");
                                 },
                                 child: Container(
                                     height: 34,
@@ -1363,7 +1373,7 @@ class _GroupMessageScreenState extends State<GroupMessageScreen> {
                   ),
                   GestureDetector(
                     onTap: () {
-                      addMessage();
+                      addMessage("","");
                     },
                     child: Padding(
                       padding: EdgeInsets.only(top: MediaQuery.of(context).size.height),
@@ -1466,9 +1476,12 @@ class MessageTile extends StatelessWidget {
   final String url;
   int time;
   String name;
+  final Function audio;
+  final int index;
+  final String duration;
 
 
-  MessageTile({required this.message, required this.sendByMe,required this.url,required this.time,required this.name});
+  MessageTile({required this.message, required this.sendByMe,required this.url,required this.time,required this.name, required this.audio, required this.index, required this.duration});
 
 
   @override
@@ -1482,6 +1495,7 @@ class MessageTile extends StatelessWidget {
         message.endsWith('.png');
     bool isVideo=message.endsWith('.mp4')||message.endsWith('.mov');
     bool isFile=message.endsWith('.pdf')||message.endsWith('.docx')||message.endsWith('.txt')||message.endsWith('.pptx');
+    bool isAudio = message.contains("https://firebasestorage.googleapis.com/");
 
     return Container(
       padding: EdgeInsets.only(
@@ -1515,7 +1529,7 @@ class MessageTile extends StatelessWidget {
           margin: sendByMe
               ? const EdgeInsets.only(left: 30)
               : const EdgeInsets.only(right: 30),
-          padding: const EdgeInsets.only(
+          padding: isAudio == true ? EdgeInsets.zero : EdgeInsets.only(
               top: 17, bottom: 17, left: 20, right: 20),
           decoration: BoxDecoration(
             borderRadius: sendByMe
@@ -1531,54 +1545,16 @@ class MessageTile extends StatelessWidget {
             ),
             gradient: LinearGradient(
               colors: sendByMe
-                  ? [primary, primary]
-                  : [dark1, dark1],
+                  ? [isAudio == true ? Colors.transparent : primary, isAudio == true ? Colors.transparent : primary]
+                  : [isAudio == true ? Colors.transparent : dark1, isAudio == true ? Colors.transparent : dark1],
             ),
           ),
           child: Column(
-
             children: [
-
               const SizedBox(height: 10),
-              isGif?buildGifWidget(context):isImageOr?_buildMediaWidget(context):isVideo?_buildVideoPlayer(context):isFile?_buildFileWidget(context):
+              isGif?buildGifWidget(context):isImageOr?_buildMediaWidget(context):isVideo?_buildVideoPlayer(context):isFile?_buildFileWidget(context):isAudio?audio(message: message,isCurrentUser: sendByMe,index: index,time: "10:00 am",duration: duration):
               Row(
                 children: [
-                  // Container(
-                  //   height: 50,
-                  //   width: 50,
-                  //   decoration: BoxDecoration(
-                  //     color: Colors.black.withOpacity(0.6),
-                  //     borderRadius: const BorderRadius.all(Radius.circular(120)),
-                  //   ),
-                  //   child: ClipRRect(
-                  //     borderRadius: const BorderRadius.all(Radius.circular(120)),
-                  //     child: CachedNetworkImage(
-                  //       imageUrl: url,
-                  //       imageBuilder: (context, imageProvider) => Container(
-                  //         height: 40,
-                  //         width: 40,
-                  //         decoration: BoxDecoration(
-                  //           borderRadius: const BorderRadius.all(Radius.circular(120)),
-                  //           image: DecorationImage(
-                  //             image: imageProvider,
-                  //             fit: BoxFit.cover,
-                  //           ),
-                  //         ),
-                  //       ),
-                  //       placeholder: (context, url) =>
-                  //           SpinKitCircle(color: primary, size: 20),
-                  //       errorWidget: (context, url, error) => ClipRRect(
-                  //         borderRadius: const BorderRadius.all(Radius.circular(50)),
-                  //         child: Image.network(
-                  //           "https://firebasestorage.googleapis.com/v0/b/fashiontime-28e3a.appspot.com/o/WhatsApp_Image_2023-11-08_at_4.48.19_PM-removebg-preview.png?alt=media&token=215bdc12-d53a-4772-bca1-efbbdf6ee955&_gl=1*nea8nk*_ga*NDIyMTUzOTQ2LjE2OTkyODU3MDg.*_ga_CW55HF8NVT*MTY5OTQ0NDE2NS4zMy4xLjE2OTk0NDUxNzcuNTYuMC4w",
-                  //           width: 40,
-                  //           height: 40,
-                  //         ),
-                  //       ),
-                  //     ),
-                  //   ),
-                  // ),
-                  // const SizedBox(width: 20),
                   GestureDetector(
                     onTap: () {
                       // Navigator.push(context, MaterialPageRoute(builder: (context) => FriendProfileScreen(id: , username: ),));
@@ -1639,16 +1615,6 @@ class MessageTile extends StatelessWidget {
     );
   }
 
-  void _showPopupMenu(context) async {
-    // await showMenu(
-    //   context: context,
-    //   items: [
-    //     PopupMenuItem(
-    //         child: const Text('Delete'), value: 1),
-    //   ],
-    //   elevation: 8.0,
-    // );
-  }
   Widget buildGifWidget(BuildContext context) {
     debugPrint("gif link after sending msg========>$message");
     return Stack(
