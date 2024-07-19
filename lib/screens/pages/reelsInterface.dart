@@ -199,6 +199,7 @@ class _ReelsInterfaceScreenState extends State<ReelsInterfaceScreen> {
                   },refreshReel: () {
                   refreshReels();
                   },userPic: reels[index]['user']['pic'] ?? "",
+                  reelCount:reels[index]['viewsCount'].toString(),
                 friendId: reels[index]['user']['id'].toString(),isCommentEnabled: reels[index]["isCommentOff"],);
             },
             itemCount: reels.length,

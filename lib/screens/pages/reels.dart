@@ -24,9 +24,9 @@ class _ReelScreenState extends State<ReelScreen> {
   Widget build(BuildContext context) {
     return _controller.value.isInitialized
         ? Container(
-            alignment: Alignment.topCenter,
-            child: VideoPlayer(_controller),
-          )
+           alignment: Alignment.topCenter,
+           child: VideoPlayer(_controller),
+         )
         : Shimmer.fromColors(
             baseColor: primary,
             highlightColor: ascent,

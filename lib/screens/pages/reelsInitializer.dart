@@ -31,6 +31,7 @@ class ReelsInitializerScreen extends StatefulWidget {
   final String userPic;
   final String friendId;
   final bool isCommentEnabled;
+  final String reelCount;
   // final String pic;
   const ReelsInitializerScreen({
     super.key,
@@ -47,7 +48,7 @@ class ReelsInitializerScreen extends StatefulWidget {
     this.refreshReel,
     required this.userPic,
     required this.friendId,
-    required this.isCommentEnabled,
+    required this.isCommentEnabled, required this.reelCount,
   });
 
   @override
@@ -193,15 +194,15 @@ class _ReelsInitializerScreenState extends State<ReelsInitializerScreen> {
   Widget build(BuildContext context) {
     return GestureDetector(
       onTap: () {
-        setState(() {
-          _videoPlayerController!.setVolume(1.0);
-        });
+        _togglePlayPause();
       },
       onDoubleTap: () {
         createLike();
       },
       onLongPress: () {
-        _togglePlayPause();
+        setState(() {
+          _videoPlayerController!.setVolume(1.0);
+        });
       },
       child: Stack(children: [
         ReelScreen(controller: _videoPlayerController),
@@ -287,6 +288,23 @@ class _ReelsInitializerScreenState extends State<ReelsInitializerScreen> {
                 height: 70,
               ),
             ],
+          ),
+        ),
+        Padding(
+          padding: const EdgeInsets.only(left:12.0,top: 12),
+          child: Container(
+            width: 60,
+            child: Row(
+              children: [
+                Text(widget.reelCount,style: TextStyle(fontSize: 10),),
+                SizedBox(width: 4,),
+                Icon(
+                  Icons.remove_red_eye,
+                  size: 20,
+                  color: primary,
+                ),
+              ],
+            ),
           ),
         ),
         Padding(
