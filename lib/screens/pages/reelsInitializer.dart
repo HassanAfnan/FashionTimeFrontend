@@ -8,8 +8,10 @@ import 'package:FashionTime/screens/pages/report_reel.dart';
 import 'package:FashionTime/screens/pages/user_like.dart';
 import 'package:chewie/chewie.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_spinkit/flutter_spinkit.dart';
 import 'package:fluttertoast/fluttertoast.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 // ignore: depend_on_referenced_packages
 import 'package:video_player/video_player.dart';
 import 'package:http/http.dart' as https;
@@ -61,6 +63,48 @@ class _ReelsInitializerScreenState extends State<ReelsInitializerScreen> {
   bool isPlaying = true;
   bool isLiked = false;
   bool heartIcon = false;
+  Map<String,dynamic> data = {};
+  bool loading = false;
+  String id = "";
+  String token = "";
+  bool requestLoader1 = false;
+
+  getCachedData() async {
+    SharedPreferences preferences = await SharedPreferences.getInstance();
+    id = preferences.getString("id")!;
+    token = preferences.getString("token")!;
+    getMyFriends(widget.friendId);
+  }
+
+  getMyFriends(id){
+    setState(() {
+      loading = true;
+    });
+    try{
+      https.get(
+          Uri.parse("$serverUrl/user/api/allUsers/$id"),
+          headers: {
+            "Content-Type": "application/json",
+            "Authorization": "Bearer $token"
+          }
+      ).then((value){
+        print("Data ==> ${data.toString()}");
+        setState(() {
+          data = jsonDecode(value.body);
+        });
+        print("Friend data "+data.toString());
+        print(jsonDecode(value.body).toString());
+        setState(() {
+          loading = false;
+        });
+      });
+    }catch(e){
+      setState(() {
+        loading = false;
+      });
+      print("Error --> $e");
+    }
+  }
 
   @override
   void initState() {
@@ -70,6 +114,8 @@ class _ReelsInitializerScreenState extends State<ReelsInitializerScreen> {
     //
     //   }))..setLooping(true)..initialize().then((_)=>_videoPlayerController!.play());
     // }
+    getCachedData();
+    print("Friend id ==> ${widget.friendId}");
     if (widget.videoLink!.isNotEmpty) {
       _videoPlayerController =
           VideoPlayerController.networkUrl(Uri.parse(widget.videoLink!))
@@ -188,6 +234,56 @@ class _ReelsInitializerScreenState extends State<ReelsInitializerScreen> {
     } catch (e) {
       debugPrint("error disliking reel ${e.toString()}");
     }
+  }
+  addFan(from,to){
+    setState(() {
+      requestLoader1 = true;
+    });
+    https.post(
+      Uri.parse("$serverUrl/fansRequests/"),
+      headers: {
+        "Content-Type": "application/json",
+        "Authorization": "Bearer $token"
+      },
+      body: json.encode({
+        "from_user": from,
+        "to_user": to
+      }),
+    ).then((value){
+      setState(() {
+        requestLoader1 = false;
+      });
+      print(value.body.toString());
+      getMyFriends(widget.friendId);
+    }).catchError((value){
+      setState(() {
+        requestLoader1 = false;
+      });
+      print(value);
+    });
+  }
+  removeFan(fanId){
+    setState(() {
+      requestLoader1 = true;
+    });
+    https.delete(
+      Uri.parse("$serverUrl/fansfansRequests/$fanId/"),
+      headers: {
+        "Content-Type": "application/json",
+        "Authorization": "Bearer $token"
+      },
+    ).then((value){
+      setState(() {
+        requestLoader1 = false;
+      });
+      print(value.body.toString());
+      getMyFriends(widget.friendId);
+    }).catchError((value){
+      setState(() {
+        requestLoader1 = false;
+      });
+      print(value);
+    });
   }
 
   @override
@@ -444,7 +540,50 @@ class _ReelsInitializerScreenState extends State<ReelsInitializerScreen> {
                                 size: 26,
                               ),
                             )
-                          : const SizedBox()
+                          : const SizedBox(),
+                      if(widget.friendId != id)
+                      loading == true ? SpinKitCircle(color: ascent, size: 20,) : GestureDetector(
+                        onTap: () {
+                          if(data["isFan"] == false){
+                            addFan(id,widget.friendId);
+
+                          }else if(data["isFan"] == true) {
+                            removeFan(widget.friendId);
+                          }
+                          //Navigator.push(context,MaterialPageRoute(builder: (context) => EditProfile()));
+                        },
+                        child: Card(
+                          shape: const RoundedRectangleBorder(
+                              borderRadius: BorderRadius.all(Radius.circular(15))
+                          ),
+                          child: Container(
+                            alignment: Alignment.center,
+                            height: 30,
+                            width: MediaQuery.of(context).size.width * 0.2,
+                            decoration: BoxDecoration(
+                                gradient: LinearGradient(
+                                    begin: Alignment.topLeft,
+                                    end: Alignment.topRight,
+                                    stops: const [0.0, 0.99],
+                                    tileMode: TileMode.clamp,
+                                    colors: data["isFan"] == true ? [
+                                      Colors.grey,
+                                      Colors.grey
+                                    ] : <Color>[
+                                      secondary,
+                                      primary,
+                                    ]),
+                                borderRadius: const BorderRadius.all(Radius.circular(12))
+                            ),
+                            child: requestLoader1 == true ? const SpinKitCircle(color: ascent, size: 20,) : Text(data["isFan"] == true ? 'Unfan' :'Fan',style: const TextStyle(
+                                fontSize: 10,
+                                fontWeight: FontWeight.w700,
+                                fontFamily: 'Montserrat'
+                            ),),
+                          ),
+                        ),
+                      ),
+                      SizedBox(height: 20,)
                     ],
                   )
                 ],
