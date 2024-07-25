@@ -1,5 +1,6 @@
 import 'dart:async';
 import 'dart:convert';
+import 'dart:ffi';
 import 'dart:io';
 
 import 'package:FashionTime/screens/pages/post_like_user.dart';
@@ -1514,7 +1515,8 @@ class _HomeFeedScreenState extends State<HomeFeedScreen> {
                                   children: [
                                     Container(
                                       decoration: BoxDecoration(
-                                          border: posts[index].topBadge["badge"] == null ? null : Border.all(color: Colors.yellowAccent,width: 4),
+                                          border: posts[index].addMeInFashionWeek ==
+                                              true ? Border.all(color: Colors.yellowAccent,width: 4): null,
                                           gradient: LinearGradient(
                                               begin: Alignment.topLeft,
                                               end: Alignment.topRight,
@@ -1524,277 +1526,290 @@ class _HomeFeedScreenState extends State<HomeFeedScreen> {
                                                 secondary,
                                                 primary,
                                               ])),
-                                      child: Padding(
-                                        padding: const EdgeInsets.only(
-                                            left: 10.0,
-                                            right: 10,
-                                            top: 5,
-                                            bottom: 5),
-                                        child: Row(
-                                          mainAxisAlignment:
-                                              MainAxisAlignment.spaceBetween,
-                                          children: [
-                                            GestureDetector(
-                                              onTap: () {
-                                                posts[index].userName == name
-                                                    ? Navigator.push(
-                                                        context,
-                                                        MaterialPageRoute(
-                                                            builder: (context) =>
-                                                                MyProfileScreen(
-                                                                  id: posts[
+                                      child: Row(
+                                        mainAxisAlignment:
+                                            MainAxisAlignment.spaceBetween,
+                                        children: [
+                                          GestureDetector(
+                                            onTap: () {
+                                              posts[index].userName == name
+                                                  ? Navigator.push(
+                                                      context,
+                                                      MaterialPageRoute(
+                                                          builder: (context) =>
+                                                              MyProfileScreen(
+                                                                id: posts[
+                                                                        index]
+                                                                    .userid,
+                                                                username: posts[
+                                                                        index]
+                                                                    .userName,
+                                                              )))
+                                                  : Navigator.push(
+                                                      context,
+                                                      MaterialPageRoute(
+                                                          builder: (context) =>
+                                                              FriendProfileScreen(
+                                                                id: posts[
+                                                                        index]
+                                                                    .userid,
+                                                                username: posts[
+                                                                        index]
+                                                                    .userName,
+                                                              )));
+                                            },
+                                            child: Padding(
+                                              padding:
+                                                  const EdgeInsets.all(4.0),
+                                              child: SizedBox(
+                                                width: 150,
+                                                child: Row(
+                                                  children: [
+                                                    const SizedBox(
+                                                      width: 10,
+                                                    ),
+                                                    CircleAvatar(
+                                                        backgroundColor:
+                                                            dark1,
+                                                        child: ClipRRect(
+                                                          borderRadius:
+                                                              const BorderRadius
+                                                                      .all(
+                                                                  Radius
+                                                                      .circular(
+                                                                          50)),
+                                                          child: posts[index]
+                                                                      .userPic ==
+                                                                  null
+                                                              ? Image.network(
+                                                                  "https://firebasestorage.googleapis.com/v0/b/fashiontime-28e3a.appspot.com/o/WhatsApp_Image_2023-11-08_at_4.48.19_PM-removebg-preview.png?alt=media&token=215bdc12-d53a-4772-bca1-efbbdf6ee955&_gl=1*nea8nk*_ga*NDIyMTUzOTQ2LjE2OTkyODU3MDg.*_ga_CW55HF8NVT*MTY5OTQ0NDE2NS4zMy4xLjE2OTk0NDUxNzcuNTYuMC4w",
+                                                                  width: 40,
+                                                                  height: 40,
+                                                                )
+                                                              : CachedNetworkImage(
+                                                                  imageUrl: posts[
                                                                           index]
-                                                                      .userid,
-                                                                  username: posts[
-                                                                          index]
-                                                                      .userName,
-                                                                )))
-                                                    : Navigator.push(
-                                                        context,
-                                                        MaterialPageRoute(
-                                                            builder: (context) =>
-                                                                FriendProfileScreen(
-                                                                  id: posts[
-                                                                          index]
-                                                                      .userid,
-                                                                  username: posts[
-                                                                          index]
-                                                                      .userName,
-                                                                )));
-                                              },
-                                              child: Padding(
-                                                padding:
-                                                    const EdgeInsets.all(4.0),
-                                                child: SizedBox(
-                                                  width: 150,
-                                                  child: Row(
-                                                    children: [
-                                                      const SizedBox(
-                                                        width: 10,
-                                                      ),
-                                                      CircleAvatar(
-                                                          backgroundColor:
-                                                              dark1,
-                                                          child: ClipRRect(
-                                                            borderRadius:
-                                                                const BorderRadius
-                                                                        .all(
-                                                                    Radius
-                                                                        .circular(
-                                                                            50)),
-                                                            child: posts[index]
-                                                                        .userPic ==
-                                                                    null
-                                                                ? Image.network(
-                                                                    "https://firebasestorage.googleapis.com/v0/b/fashiontime-28e3a.appspot.com/o/WhatsApp_Image_2023-11-08_at_4.48.19_PM-removebg-preview.png?alt=media&token=215bdc12-d53a-4772-bca1-efbbdf6ee955&_gl=1*nea8nk*_ga*NDIyMTUzOTQ2LjE2OTkyODU3MDg.*_ga_CW55HF8NVT*MTY5OTQ0NDE2NS4zMy4xLjE2OTk0NDUxNzcuNTYuMC4w",
-                                                                    width: 40,
-                                                                    height: 40,
-                                                                  )
-                                                                : CachedNetworkImage(
-                                                                    imageUrl: posts[
-                                                                            index]
-                                                                        .userPic,
-                                                                    imageBuilder:
-                                                                        (context,
-                                                                                imageProvider) =>
-                                                                            Container(
-                                                                      height: MediaQuery.of(context)
-                                                                              .size
-                                                                              .height *
-                                                                          0.7,
-                                                                      width: MediaQuery.of(
-                                                                              context)
-                                                                          .size
-                                                                          .width,
-                                                                      decoration:
-                                                                          BoxDecoration(
+                                                                      .userPic,
+                                                                  imageBuilder:
+                                                                      (context,
+                                                                              imageProvider) =>
+                                                                          Container(
+                                                                    height: MediaQuery.of(context)
+                                                                            .size
+                                                                            .height *
+                                                                        0.7,
+                                                                    width: MediaQuery.of(
+                                                                            context)
+                                                                        .size
+                                                                        .width,
+                                                                    decoration:
+                                                                        BoxDecoration(
+                                                                      image:
+                                                                          DecorationImage(
                                                                         image:
-                                                                            DecorationImage(
-                                                                          image:
-                                                                              imageProvider,
-                                                                          fit: BoxFit
-                                                                              .cover,
-                                                                        ),
+                                                                            imageProvider,
+                                                                        fit: BoxFit
+                                                                            .cover,
                                                                       ),
                                                                     ),
-                                                                    placeholder: (context,
-                                                                            url) =>
-                                                                        Center(
-                                                                            child:
-                                                                                SpinKitCircle(
-                                                                      color:
-                                                                          primary,
-                                                                      size: 10,
-                                                                    )),
-                                                                    errorWidget: (context,
-                                                                            url,
-                                                                            error) =>
-                                                                        ClipRRect(
-                                                                            borderRadius:
-                                                                                const BorderRadius.all(Radius.circular(50)),
-                                                                            child: Image.network(
-                                                                              "https://firebasestorage.googleapis.com/v0/b/fashiontime-28e3a.appspot.com/o/WhatsApp_Image_2023-11-08_at_4.48.19_PM-removebg-preview.png?alt=media&token=215bdc12-d53a-4772-bca1-efbbdf6ee955&_gl=1*nea8nk*_ga*NDIyMTUzOTQ2LjE2OTkyODU3MDg.*_ga_CW55HF8NVT*MTY5OTQ0NDE2NS4zMy4xLjE2OTk0NDUxNzcuNTYuMC4w",
-                                                                              width: 40,
-                                                                              height: 40,
-                                                                            )),
                                                                   ),
-                                                          )),
-                                                      const SizedBox(
-                                                        width: 10,
-                                                      ),
-                                                      Text(
-                                                        posts[index].userName,
-                                                        style: const TextStyle(
-                                                            fontFamily:
-                                                                'Montserrat',
-                                                            color: ascent,
-                                                            fontWeight:
-                                                                FontWeight
-                                                                    .bold),
-                                                      ),
-                                                    ],
-                                                  ),
+                                                                  placeholder: (context,
+                                                                          url) =>
+                                                                      Center(
+                                                                          child:
+                                                                              SpinKitCircle(
+                                                                    color:
+                                                                        primary,
+                                                                    size: 10,
+                                                                  )),
+                                                                  errorWidget: (context,
+                                                                          url,
+                                                                          error) =>
+                                                                      ClipRRect(
+                                                                          borderRadius:
+                                                                              const BorderRadius.all(Radius.circular(50)),
+                                                                          child: Image.network(
+                                                                            "https://firebasestorage.googleapis.com/v0/b/fashiontime-28e3a.appspot.com/o/WhatsApp_Image_2023-11-08_at_4.48.19_PM-removebg-preview.png?alt=media&token=215bdc12-d53a-4772-bca1-efbbdf6ee955&_gl=1*nea8nk*_ga*NDIyMTUzOTQ2LjE2OTkyODU3MDg.*_ga_CW55HF8NVT*MTY5OTQ0NDE2NS4zMy4xLjE2OTk0NDUxNzcuNTYuMC4w",
+                                                                            width: 40,
+                                                                            height: 40,
+                                                                          )),
+                                                                ),
+                                                        )),
+                                                    const SizedBox(
+                                                      width: 10,
+                                                    ),
+                                                    Text(
+                                                      posts[index].userName,
+                                                      style: const TextStyle(
+                                                          fontFamily:
+                                                              'Montserrat',
+                                                          color: ascent,
+                                                          fontWeight:
+                                                              FontWeight
+                                                                  .bold),
+                                                    ),
+                                                  ],
                                                 ),
                                               ),
                                             ),
-                                            PopupMenuButton(
-                                                icon: const Icon(
-                                                  Icons.more_horiz,
-                                                  color: ascent,
-                                                ),
-                                                onSelected: (value) {
-                                                  if (value == 0) {
-                                                    Navigator.push(
-                                                        context,
-                                                        MaterialPageRoute(
-                                                            builder: (context) =>
-                                                                ReportScreen(
-                                                                    reportedID:
-                                                                        posts[index]
-                                                                            .userid)));
-                                                  }
-                                                  if (value == 1) {
-                                                    description.text =
-                                                        posts[index]
-                                                            .description;
-                                                    showDialog(
-                                                      context: context,
-                                                      builder: (context) =>
-                                                          StatefulBuilder(
-                                                              builder: (context,
-                                                                  setState) {
-                                                        updateBool = false;
-                                                        return AlertDialog(
-                                                          backgroundColor:
-                                                              primary,
-                                                          title: const Text(
-                                                            "Edit Description",
-                                                            style: TextStyle(
+                                          ),
+                                          PopupMenuButton(
+                                              icon: const Icon(
+                                                Icons.more_horiz,
+                                                color: ascent,
+                                              ),
+                                              onSelected: (value) {
+                                                if (value == 0) {
+                                                  Navigator.push(
+                                                      context,
+                                                      MaterialPageRoute(
+                                                          builder: (context) =>
+                                                              ReportScreen(
+                                                                  reportedID:
+                                                                      posts[index]
+                                                                          .userid)));
+                                                }
+                                                if (value == 1) {
+                                                  description.text =
+                                                      posts[index]
+                                                          .description;
+                                                  showDialog(
+                                                    context: context,
+                                                    builder: (context) =>
+                                                        StatefulBuilder(
+                                                            builder: (context,
+                                                                setState) {
+                                                      updateBool = false;
+                                                      return AlertDialog(
+                                                        backgroundColor:
+                                                            primary,
+                                                        title: const Text(
+                                                          "Edit Description",
+                                                          style: TextStyle(
+                                                              color: ascent,
+                                                              fontFamily:
+                                                                  'Montserrat',
+                                                              fontWeight:
+                                                                  FontWeight
+                                                                      .bold),
+                                                        ),
+                                                        content: SizedBox(
+                                                          width:
+                                                              MediaQuery.of(
+                                                                      context)
+                                                                  .size
+                                                                  .width,
+                                                          child: TextField(
+                                                            maxLines: 5,
+                                                            controller:
+                                                                description,
+                                                            style: const TextStyle(
                                                                 color: ascent,
                                                                 fontFamily:
-                                                                    'Montserrat',
-                                                                fontWeight:
-                                                                    FontWeight
-                                                                        .bold),
+                                                                    'Montserrat'),
+                                                            decoration:
+                                                                const InputDecoration(
+                                                                    hintStyle: TextStyle(
+                                                                        color:
+                                                                            ascent,
+                                                                        fontSize:
+                                                                            17,
+                                                                        fontWeight: FontWeight
+                                                                            .w400,
+                                                                        fontFamily:
+                                                                            'Montserrat'),
+                                                                    enabledBorder:
+                                                                        UnderlineInputBorder(
+                                                                      borderSide:
+                                                                          BorderSide(color: ascent),
+                                                                    ),
+                                                                    focusedBorder:
+                                                                        UnderlineInputBorder(
+                                                                      borderSide:
+                                                                          BorderSide(color: ascent),
+                                                                    ),
+                                                                    //enabledBorder: InputBorder.none,
+                                                                    errorBorder:
+                                                                        InputBorder
+                                                                            .none,
+                                                                    //disabledBorder: InputBorder.none,
+                                                                    alignLabelWithHint:
+                                                                        true,
+                                                                    hintText:
+                                                                        "Description "),
+                                                            cursorColor:
+                                                                Colors.pink,
                                                           ),
-                                                          content: SizedBox(
-                                                            width:
-                                                                MediaQuery.of(
-                                                                        context)
-                                                                    .size
-                                                                    .width,
-                                                            child: TextField(
-                                                              maxLines: 5,
-                                                              controller:
-                                                                  description,
-                                                              style: const TextStyle(
-                                                                  color: ascent,
-                                                                  fontFamily:
-                                                                      'Montserrat'),
-                                                              decoration:
-                                                                  const InputDecoration(
-                                                                      hintStyle: TextStyle(
+                                                        ),
+                                                        actions: [
+                                                          updateBool == true
+                                                              ? const SpinKitCircle(
+                                                                  color:
+                                                                      ascent,
+                                                                  size: 20,
+                                                                )
+                                                              : TextButton(
+                                                                  child: const Text(
+                                                                      "Save",
+                                                                      style: TextStyle(
                                                                           color:
                                                                               ascent,
-                                                                          fontSize:
-                                                                              17,
-                                                                          fontWeight: FontWeight
-                                                                              .w400,
                                                                           fontFamily:
-                                                                              'Montserrat'),
-                                                                      enabledBorder:
-                                                                          UnderlineInputBorder(
-                                                                        borderSide:
-                                                                            BorderSide(color: ascent),
-                                                                      ),
-                                                                      focusedBorder:
-                                                                          UnderlineInputBorder(
-                                                                        borderSide:
-                                                                            BorderSide(color: ascent),
-                                                                      ),
-                                                                      //enabledBorder: InputBorder.none,
-                                                                      errorBorder:
-                                                                          InputBorder
-                                                                              .none,
-                                                                      //disabledBorder: InputBorder.none,
-                                                                      alignLabelWithHint:
-                                                                          true,
-                                                                      hintText:
-                                                                          "Description "),
-                                                              cursorColor:
-                                                                  Colors.pink,
-                                                            ),
-                                                          ),
-                                                          actions: [
-                                                            updateBool == true
-                                                                ? const SpinKitCircle(
-                                                                    color:
-                                                                        ascent,
-                                                                    size: 20,
-                                                                  )
-                                                                : TextButton(
-                                                                    child: const Text(
-                                                                        "Save",
-                                                                        style: TextStyle(
-                                                                            color:
-                                                                                ascent,
-                                                                            fontFamily:
-                                                                                'Montserrat')),
-                                                                    onPressed:
+                                                                              'Montserrat')),
+                                                                  onPressed:
+                                                                      () {
+                                                                    setState(
                                                                         () {
-                                                                      setState(
-                                                                          () {
-                                                                        updateBool =
-                                                                            true;
-                                                                      });
-                                                                      updatePost(
-                                                                          posts[index]
-                                                                              .id);
-                                                                    },
-                                                                  ),
-                                                          ],
-                                                        );
-                                                      }),
-                                                    );
-                                                  }
-                                                  if (value == 2) {
-                                                    saveStyle(posts[index].id);
-                                                  }
-                                                  print(value);
-                                                  //Navigator.pushNamed(context, value.toString());
-                                                },
-                                                itemBuilder: (BuildContext bc) {
-                                                  return [
+                                                                      updateBool =
+                                                                          true;
+                                                                    });
+                                                                    updatePost(
+                                                                        posts[index]
+                                                                            .id);
+                                                                  },
+                                                                ),
+                                                        ],
+                                                      );
+                                                    }),
+                                                  );
+                                                }
+                                                if (value == 2) {
+                                                  saveStyle(posts[index].id);
+                                                }
+                                                print(value);
+                                                //Navigator.pushNamed(context, value.toString());
+                                              },
+                                              itemBuilder: (BuildContext bc) {
+                                                return [
+                                                  PopupMenuItem(
+                                                    value: 0,
+                                                    child: Row(
+                                                      children: const [
+                                                        Icon(Icons.report),
+                                                        SizedBox(
+                                                          width: 10,
+                                                        ),
+                                                        Text(
+                                                          "Report",
+                                                          style: TextStyle(
+                                                              fontFamily:
+                                                                  'Montserrat'),
+                                                        ),
+                                                      ],
+                                                    ),
+                                                  ),
+                                                  if (posts[index].userid ==
+                                                      id)
                                                     PopupMenuItem(
-                                                      value: 0,
+                                                      value: 1,
                                                       child: Row(
                                                         children: const [
-                                                          Icon(Icons.report),
+                                                          Icon(Icons.edit),
                                                           SizedBox(
                                                             width: 10,
                                                           ),
                                                           Text(
-                                                            "Report",
+                                                            "Edit Description",
                                                             style: TextStyle(
                                                                 fontFamily:
                                                                     'Montserrat'),
@@ -1802,177 +1817,139 @@ class _HomeFeedScreenState extends State<HomeFeedScreen> {
                                                         ],
                                                       ),
                                                     ),
-                                                    if (posts[index].userid ==
-                                                        id)
-                                                      PopupMenuItem(
-                                                        value: 1,
-                                                        child: Row(
-                                                          children: const [
-                                                            Icon(Icons.edit),
-                                                            SizedBox(
-                                                              width: 10,
-                                                            ),
-                                                            Text(
-                                                              "Edit Description",
-                                                              style: TextStyle(
-                                                                  fontFamily:
-                                                                      'Montserrat'),
-                                                            ),
-                                                          ],
-                                                        ),
-                                                      ),
-                                                    // if (posts[index].userid !=
-                                                    //     id)
-                                                    //   PopupMenuItem(
-                                                    //     value: 2,
-                                                    //     child: Row(
-                                                    //       children: const [
-                                                    //         Icon(Icons.save),
-                                                    //         SizedBox(
-                                                    //           width: 10,
-                                                    //         ),
-                                                    //         Text(
-                                                    //           "Save Post",
-                                                    //           style: TextStyle(
-                                                    //               fontFamily:
-                                                    //                   'Montserrat'),
-                                                    //         ),
-                                                    //       ],
-                                                    //     ),
-                                                    //   ),
-                                                  ];
-                                                })
-                                          ],
-                                        ),
+                                                  // if (posts[index].userid !=
+                                                  //     id)
+                                                  //   PopupMenuItem(
+                                                  //     value: 2,
+                                                  //     child: Row(
+                                                  //       children: const [
+                                                  //         Icon(Icons.save),
+                                                  //         SizedBox(
+                                                  //           width: 10,
+                                                  //         ),
+                                                  //         Text(
+                                                  //           "Save Post",
+                                                  //           style: TextStyle(
+                                                  //               fontFamily:
+                                                  //                   'Montserrat'),
+                                                  //         ),
+                                                  //       ],
+                                                  //     ),
+                                                  //   ),
+                                                ];
+                                              })
+                                        ],
                                       ),
                                     ),
-                                    Row(
-                                      mainAxisAlignment:
-                                          MainAxisAlignment.center,
-                                      children: [
-                                        GestureDetector(
-                                          onTap: () {
-                                            // Navigator.push(context, MaterialPageRoute(builder: (context) => SwapDetail(
-                                            //   userid:posts[index].userid,
-                                            //   image: posts[index].images,
-                                            //   description:  posts[index].description,
-                                            //   style: "Fashion Style 2",
-                                            //   createdBy: posts[index].userName,
-                                            //   profile: posts[index].userPic,
-                                            //   likes: posts[index].likeCount,
-                                            //   dislikes: posts[index].dislikeCount,
-                                            //   mylike: posts[index].mylike,
-                                            // )));
-                                          },
-                                          child: InteractiveViewer(
-                                            panEnabled: true,
-                                            minScale: 1,
-                                            maxScale: 3,
-                                            child: SizedBox(
-                                              height: 450,
-                                              width: MediaQuery.of(context)
-                                                      .size
-                                                      .width *
-                                                  0.97,
-                                              child: CarouselSlider(
-                                                carouselController: _controller,
-                                                options: CarouselOptions(
-                                                    enableInfiniteScroll: false,
-                                                    height: 450.0,
-                                                    autoPlay: false,
-                                                    enlargeCenterPage: true,
-                                                    viewportFraction: 0.99,
-                                                    aspectRatio: 2.0,
-                                                    initialPage: 0,
-                                                    onPageChanged:
-                                                        (ind, reason) {
-                                                      setState(() {
-                                                        _current = ind;
-                                                      });
-                                                    }),
-                                                items: posts[index]
-                                                    .images
-                                                    .map((i) {
-                                                  return i["type"] == "video"
-                                                      ? Container(
-                                                          color: Colors.black,
-                                                          child:
-                                                              UsingVideoControllerExample(
-                                                            path: i["video"],
-                                                          ))
-                                                      : InteractiveViewer(
-                                                          panEnabled: true,
-                                                          minScale: 1,
-                                                          maxScale: 3,
-                                                          child: Builder(
-                                                            builder:
-                                                                (BuildContext
-                                                                    context) {
-                                                              return CachedNetworkImage(
-                                                                imageUrl:
-                                                                    i["image"],
-                                                                imageBuilder:
-                                                                    (context,
-                                                                            imageProvider) =>
-                                                                        Container(
-                                                                  height: MediaQuery.of(
-                                                                          context)
-                                                                      .size
-                                                                      .height,
-                                                                  width: MediaQuery.of(
-                                                                          context)
-                                                                      .size
-                                                                      .width,
-                                                                  decoration:
-                                                                      BoxDecoration(
-                                                                    image:
-                                                                        DecorationImage(
-                                                                      image:
-                                                                          imageProvider,
-                                                                      fit: BoxFit
-                                                                          .cover,
-                                                                    ),
-                                                                  ),
+                                    GestureDetector(
+                                      onTap: () {
+                                      },
+                                      child: InteractiveViewer(
+                                        panEnabled: true,
+                                        minScale: 1,
+                                        maxScale: 3,
+                                        child: SizedBox(
+                                          height: 450,
+                                          width: double.infinity,
+                                          child: Expanded(
+                                            child: CarouselSlider(
+                                              carouselController: _controller,
+                                              options: CarouselOptions(
+                                                  viewportFraction: 1,
+                                                  enableInfiniteScroll: false,
+                                                  height: 450.0,
+                                                  autoPlay: false,
+                                                  enlargeCenterPage: true,
+                                                  aspectRatio: 2.0,
+                                                  initialPage: 0,
+                                                  onPageChanged:
+                                                      (ind, reason) {
+                                                    setState(() {
+                                                      _current = ind;
+                                                    });
+                                                  }),
+                                              items: posts[index]
+                                                  .images
+                                                  .map((i) {
+                                                return i["type"] == "video"
+                                                    ? Container(
+                                                    color: Colors.black,
+                                                    child:
+                                                    UsingVideoControllerExample(
+                                                      path: i["video"],
+                                                    ))
+                                                    : InteractiveViewer(
+                                                  panEnabled: true,
+                                                  minScale: 1,
+                                                  maxScale: 3,
+                                                  child: Builder(
+                                                    builder:
+                                                        (BuildContext
+                                                    context) {
+                                                      return CachedNetworkImage(
+                                                        imageUrl:
+                                                        i["image"],
+                                                        imageBuilder:
+                                                            (context,
+                                                            imageProvider) =>
+                                                            Container(
+                                                              height: MediaQuery.of(
+                                                                  context)
+                                                                  .size
+                                                                  .height,
+                                                              width: MediaQuery.of(
+                                                                  context)
+                                                                  .size
+                                                                  .width * 2,
+                                                              decoration:
+                                                              BoxDecoration(
+                                                                image:
+                                                                DecorationImage(
+                                                                  image:
+                                                                  imageProvider,
+                                                                  fit: BoxFit
+                                                                      .cover,
                                                                 ),
-                                                                placeholder: (context,
-                                                                        url) =>
-                                                                    SpinKitCircle(
-                                                                  color:
-                                                                      primary,
-                                                                  size: 60,
-                                                                ),
-                                                                errorWidget: (context,
-                                                                        url,
-                                                                        error) =>
-                                                                    Container(
-                                                                  height: MediaQuery.of(
-                                                                              context)
-                                                                          .size
-                                                                          .height *
-                                                                      0.9,
-                                                                  width: MediaQuery.of(
-                                                                          context)
-                                                                      .size
-                                                                      .width,
-                                                                  decoration:
-                                                                      BoxDecoration(
-                                                                    image: DecorationImage(
-                                                                        image: Image.network("https://upload.wikimedia.org/wikipedia/commons/thumb/6/65/No-Image-Placeholder.svg/1665px-No-Image-Placeholder.svg.png")
-                                                                            .image,
-                                                                        fit: BoxFit
-                                                                            .fill),
-                                                                  ),
-                                                                ),
-                                                              );
-                                                            },
-                                                          ),
-                                                        );
-                                                }).toList(),
-                                              ),
+                                                              ),
+                                                            ),
+                                                        placeholder: (context,
+                                                            url) =>
+                                                            SpinKitCircle(
+                                                              color:
+                                                              primary,
+                                                              size: 60,
+                                                            ),
+                                                        errorWidget: (context,
+                                                            url,
+                                                            error) =>
+                                                            Container(
+                                                              height: MediaQuery.of(
+                                                                  context)
+                                                                  .size
+                                                                  .height *
+                                                                  0.9,
+                                                              width: MediaQuery.of(
+                                                                  context)
+                                                                  .size
+                                                                  .width,
+                                                              decoration:
+                                                              BoxDecoration(
+                                                                image: DecorationImage(
+                                                                    image: Image.network("https://upload.wikimedia.org/wikipedia/commons/thumb/6/65/No-Image-Placeholder.svg/1665px-No-Image-Placeholder.svg.png")
+                                                                        .image,
+                                                                    fit: BoxFit
+                                                                        .fill),
+                                                              ),
+                                                            ),
+                                                      );
+                                                    },
+                                                  ),
+                                                );
+                                              }).toList(),
                                             ),
                                           ),
                                         ),
-                                      ],
+                                      ),
                                     ),
                                     posts[index].images.length == 1
                                         ? const SizedBox()
@@ -2090,8 +2067,7 @@ class _HomeFeedScreenState extends State<HomeFeedScreen> {
                                                                     color: Colors
                                                                         .orange),
                                                               ),
-                                                            )
-                                                  ,
+                                                            ),
                                                   posts[index].likeCount == "0"
                                                       ?
                                                       const SizedBox()
@@ -2506,14 +2482,15 @@ class _HomeFeedScreenState extends State<HomeFeedScreen> {
                                         )
                                       ],
                                     ),
-                                    Row(
+                                    posts[index].addMeInFashionWeek ==
+                                        true ? Row(
                                       children: [
                                         const SizedBox(
                                           width: 10,
                                         ),
                                         Text("Event - ${posts[index].event["title"]}")
                                       ],
-                                    ),
+                                    ): SizedBox(),
                                     const SizedBox(
                                       height: 10,
                                     ),

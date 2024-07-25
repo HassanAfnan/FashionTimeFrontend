@@ -136,6 +136,25 @@ class _ReelsInterfaceScreenState extends State<ReelsInterfaceScreen> {
       debugPrint('Error loading data: $error');
     }
   }
+  Future<void> addViewToReels(id) async {
+    String apiUrl = '$serverUrl/fashionReel/${id}';
+
+    try {
+      final response = await https.get(Uri.parse(apiUrl), headers: {
+        'Authorization': 'Bearer $token',
+      });
+
+      if (response.statusCode == 200) {
+        final dynamic responseData = jsonDecode(response.body);
+        print("Viewed ==> ${responseData.toString()}");
+        getAllReels(1);
+      } else {
+        debugPrint('Failed to load data. Status code: ${response.statusCode}');
+      }
+    } catch (error) {
+      debugPrint('Error loading data: $error');
+    }
+  }
 
   refreshReels()async{
     getAllReels(1);
@@ -206,14 +225,12 @@ class _ReelsInterfaceScreenState extends State<ReelsInterfaceScreen> {
             scrollDirection: Axis.vertical,
             loop: true,
             onIndexChanged: (value) {
-
                 setState(() {
                   isLastReel = value == reels.length - 1;
                 });
-
+                print("On Scroll ==> ${value}");
+                addViewToReels(reels[value]['id']);
             },
-
-
           ),
           if (isLastReel)
             Positioned(
