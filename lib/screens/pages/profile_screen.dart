@@ -57,6 +57,7 @@ class _ProfileScreenState extends State<ProfileScreen>
   List<SavedPostModel> myPosts = [];
   List<PostModel> commentedPost = [];
   List<PostModel> likedPost = [];
+  List<PostModel> eventsPost = [];
   late List<String> BadgeList = [];
   late List<int> rankingOrders = [];
   List<PostModel> medalPostsModel = [];
@@ -350,7 +351,7 @@ class _ProfileScreenState extends State<ProfileScreen>
       getCommentedPosts();
       getBadges();
       getBadgesHistory();
-      getPostsWithMedal();
+      getEventLikedPosts();
       getAllReels();
       getPinStories();
     } catch (e) {
@@ -435,6 +436,7 @@ class _ProfileScreenState extends State<ProfileScreen>
           //myDuration = Duration(seconds: int.parse(jsonDecode(value.body)["result"]["time_remaining"].));
           loading = false;
         });
+
         jsonDecode(value.body)["result"].forEach((value) {
           if (value['user']['id'].toString() == id.toString()) {
             print("condition is true");
@@ -509,7 +511,6 @@ class _ProfileScreenState extends State<ProfileScreen>
       print("Error --> $e");
     }
   }
-
   getCommentedPosts() {
     commentedPost.clear();
     setState(() {
@@ -589,7 +590,6 @@ class _ProfileScreenState extends State<ProfileScreen>
       print("Error --> $e");
     }
   }
-
   getLikedPosts() {
     likedPost.clear();
     setState(() {
@@ -601,7 +601,7 @@ class _ProfileScreenState extends State<ProfileScreen>
             "Content-Type": "application/json",
             "Authorization": "Bearer $token"
           }).then((value) {
-        print(jsonDecode(value.body));
+        print("Star Post ==> "+jsonDecode(value.body).toString());
         setState(() {
           loading3 = false;
         });
@@ -614,50 +614,140 @@ class _ProfileScreenState extends State<ProfileScreen>
                   128, // specify the width of the thumbnail, let the height auto-scaled to keep the source aspect ratio
               quality: 25,
             ).then((value1) {
+              if(value["addMeInWeekFashion"] == false) {
+                setState(() {
+                  likedPost.add(PostModel(
+                      value["id"].toString(),
+                      value["description"],
+                      value["upload"]["media"],
+                      value["user"]["name"],
+                      value["user"]["pic"] ??
+                          "https://firebasestorage.googleapis.com/v0/b/fashiontime-28e3a.appspot.com/o/WhatsApp_Image_2023-11-08_at_4.48.19_PM-removebg-preview.png?alt=media&token=215bdc12-d53a-4772-bca1-efbbdf6ee955&_gl=1*nea8nk*_ga*NDIyMTUzOTQ2LjE2OTkyODU3MDg.*_ga_CW55HF8NVT*MTY5OTQ0NDE2NS4zMy4xLjE2OTk0NDUxNzcuNTYuMC4w",
+                      false,
+                      value["likesCount"].toString(),
+                      value["disLikesCount"].toString(),
+                      value["commentsCount"].toString(),
+                      value["created"],
+                      value1!,
+                      value["user"]["id"].toString(),
+                      value["myLike"] == null
+                          ? "like"
+                          : value["myLike"].toString(),
+                      {},
+                      {}
+                  ));
+                });
+              }
+            });
+          } else {
+            if(value["addMeInWeekFashion"] == false) {
               setState(() {
                 likedPost.add(PostModel(
                     value["id"].toString(),
                     value["description"],
                     value["upload"]["media"],
                     value["user"]["name"],
-                    value["user"]["pic"] ?? "https://firebasestorage.googleapis.com/v0/b/fashiontime-28e3a.appspot.com/o/WhatsApp_Image_2023-11-08_at_4.48.19_PM-removebg-preview.png?alt=media&token=215bdc12-d53a-4772-bca1-efbbdf6ee955&_gl=1*nea8nk*_ga*NDIyMTUzOTQ2LjE2OTkyODU3MDg.*_ga_CW55HF8NVT*MTY5OTQ0NDE2NS4zMy4xLjE2OTk0NDUxNzcuNTYuMC4w",
+                    value["user"]["pic"] ??
+                        "https://firebasestorage.googleapis.com/v0/b/fashiontime-28e3a.appspot.com/o/WhatsApp_Image_2023-11-08_at_4.48.19_PM-removebg-preview.png?alt=media&token=215bdc12-d53a-4772-bca1-efbbdf6ee955&_gl=1*nea8nk*_ga*NDIyMTUzOTQ2LjE2OTkyODU3MDg.*_ga_CW55HF8NVT*MTY5OTQ0NDE2NS4zMy4xLjE2OTk0NDUxNzcuNTYuMC4w",
                     false,
                     value["likesCount"].toString(),
                     value["disLikesCount"].toString(),
                     value["commentsCount"].toString(),
                     value["created"],
-                    value1!,
+                    "",
                     value["user"]["id"].toString(),
                     value["myLike"] == null
                         ? "like"
                         : value["myLike"].toString(),
                     {},
-                  {}
+                    {}
                 ));
               });
+            }
+          }
+        });
+      });
+    } catch (e) {
+      setState(() {
+        loading3 = false;
+      });
+      print("Error --> $e");
+    }
+  }
+  getEventLikedPosts() {
+    eventsPost.clear();
+    setState(() {
+      loading3 = true;
+    });
+    try {
+      https.get(Uri.parse("$serverUrl/fashionLikes/my-liked-fashions/"),
+          headers: {
+            "Content-Type": "application/json",
+            "Authorization": "Bearer $token"
+          }).then((value) {
+        print("Star Post ==> "+jsonDecode(value.body).toString());
+        setState(() {
+          loading3 = false;
+        });
+        jsonDecode(value.body).forEach((value) {
+          if (value["upload"]["media"][0]["type"] == "video") {
+            VideoThumbnail.thumbnailFile(
+              video: value["upload"]["media"][0]["video"],
+              imageFormat: ImageFormat.JPEG,
+              maxWidth:
+              128, // specify the width of the thumbnail, let the height auto-scaled to keep the source aspect ratio
+              quality: 25,
+            ).then((value1) {
+              if(value["addMeInWeekFashion"] == true) {
+                setState(() {
+                  eventsPost.add(PostModel(
+                      value["id"].toString(),
+                      value["description"],
+                      value["upload"]["media"],
+                      value["user"]["name"],
+                      value["user"]["pic"] ??
+                          "https://firebasestorage.googleapis.com/v0/b/fashiontime-28e3a.appspot.com/o/WhatsApp_Image_2023-11-08_at_4.48.19_PM-removebg-preview.png?alt=media&token=215bdc12-d53a-4772-bca1-efbbdf6ee955&_gl=1*nea8nk*_ga*NDIyMTUzOTQ2LjE2OTkyODU3MDg.*_ga_CW55HF8NVT*MTY5OTQ0NDE2NS4zMy4xLjE2OTk0NDUxNzcuNTYuMC4w",
+                      false,
+                      value["likesCount"].toString(),
+                      value["disLikesCount"].toString(),
+                      value["commentsCount"].toString(),
+                      value["created"],
+                      value1!,
+                      value["user"]["id"].toString(),
+                      value["myLike"] == null
+                          ? "like"
+                          : value["myLike"].toString(),
+                      {},
+                      {}
+                  ));
+                });
+              }
             });
           } else {
-            setState(() {
-              likedPost.add(PostModel(
-                  value["id"].toString(),
-                  value["description"],
-                  value["upload"]["media"],
-                  value["user"]["name"],
-                  value["user"]["pic"] ?? "https://firebasestorage.googleapis.com/v0/b/fashiontime-28e3a.appspot.com/o/WhatsApp_Image_2023-11-08_at_4.48.19_PM-removebg-preview.png?alt=media&token=215bdc12-d53a-4772-bca1-efbbdf6ee955&_gl=1*nea8nk*_ga*NDIyMTUzOTQ2LjE2OTkyODU3MDg.*_ga_CW55HF8NVT*MTY5OTQ0NDE2NS4zMy4xLjE2OTk0NDUxNzcuNTYuMC4w",
-                  false,
-                  value["likesCount"].toString(),
-                  value["disLikesCount"].toString(),
-                  value["commentsCount"].toString(),
-                  value["created"],
-                  "",
-                  value["user"]["id"].toString(),
-                  value["myLike"] == null
-                      ? "like"
-                      : value["myLike"].toString(),
-                  {},
-                {}
-              ));
-            });
+            if(value["addMeInWeekFashion"] == true) {
+              setState(() {
+                eventsPost.add(PostModel(
+                    value["id"].toString(),
+                    value["description"],
+                    value["upload"]["media"],
+                    value["user"]["name"],
+                    value["user"]["pic"] ??
+                        "https://firebasestorage.googleapis.com/v0/b/fashiontime-28e3a.appspot.com/o/WhatsApp_Image_2023-11-08_at_4.48.19_PM-removebg-preview.png?alt=media&token=215bdc12-d53a-4772-bca1-efbbdf6ee955&_gl=1*nea8nk*_ga*NDIyMTUzOTQ2LjE2OTkyODU3MDg.*_ga_CW55HF8NVT*MTY5OTQ0NDE2NS4zMy4xLjE2OTk0NDUxNzcuNTYuMC4w",
+                    false,
+                    value["likesCount"].toString(),
+                    value["disLikesCount"].toString(),
+                    value["commentsCount"].toString(),
+                    value["created"],
+                    "",
+                    value["user"]["id"].toString(),
+                    value["myLike"] == null
+                        ? "like"
+                        : value["myLike"].toString(),
+                    {},
+                    {}
+                ));
+              });
+            }
           }
         });
       });
@@ -686,7 +776,6 @@ class _ProfileScreenState extends State<ProfileScreen>
       print('Error: ${response.statusCode}');
     }
   }
-
   getBadgesHistory() async {
     final response = await https.get(headers: {
       "Content-Type": "application/json",
@@ -1429,8 +1518,8 @@ class _ProfileScreenState extends State<ProfileScreen>
                               loading4: loading4,
                               flicks:videoUrls,
                                 getMyPosts:getMyPosts,
-                              medalsPosts: medalPostsModel,
-                              getMedalsPosts: getPostsWithMedal,
+                              medalsPosts: eventsPost,
+                              getMedalsPosts: getEventLikedPosts,
                               getLikePosts: getLikedPosts,
                         )),
                       ],
