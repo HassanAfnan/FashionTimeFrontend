@@ -1,5 +1,4 @@
 import 'dart:convert';
-
 import 'package:FashionTime/models/story_model.dart';
 import 'package:FashionTime/models/userHistory.dart';
 import 'package:FashionTime/models/user_model.dart';
@@ -11,7 +10,6 @@ import 'package:flutter_spinkit/flutter_spinkit.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:http/http.dart' as https;
 import '../../animations/bottom_animation.dart';
-import '../../models/chats_model.dart';
 import '../../models/search_model.dart';
 import '../../utils/constants.dart';
 import 'friend_profile.dart';

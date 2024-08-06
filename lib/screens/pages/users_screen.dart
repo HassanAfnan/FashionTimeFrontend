@@ -1,6 +1,5 @@
 import 'package:FashionTime/screens/pages/friend_profile.dart';
 import 'package:flutter/material.dart';
-
 import '../../animations/bottom_animation.dart';
 import '../../models/chats_model.dart';
 import '../../utils/constants.dart';
